@@ -3,131 +3,148 @@
  */
 package nl.lxtreme.test;
 
+
 import java.awt.*;
 
 import javax.swing.JComponent;
 
+
 /**
  * @author jajans
- * 
  */
 public class ModelView extends JComponent
 {
-	private static final long serialVersionUID = 1L;
+  // CONSTANTS
 
-	private final Main controller;
+  private static final long serialVersionUID = 1L;
 
-	/**
-	 * @param aMain
-	 */
-	public ModelView(final Main aMain)
-	{
-		this.controller = aMain;
+  // VARIABLES
 
-		setOpaque(true);
+  private final Main controller;
 
-		setBackground(Color.BLACK);
-	}
+  // CONSTRUCTORS
 
-	/**
-	 * @param aOriginalPoint
-	 * @return
-	 */
-	public Rectangle getSignalHover(final Point aOriginalPoint)
-	{
-		final Rectangle rect = new Rectangle();
+  /**
+   * @param aMain
+   */
+  public ModelView( final Main aMain )
+  {
+    this.controller = aMain;
 
-		final Model model = this.controller.getModel();
-		final int signalWidth = model.getWidth();
+    setOpaque( true );
 
-		// XXX 20 = initial dy; 30 = spacing between signals
-		final int y = (aOriginalPoint.y - 20) / 30;
-		if ((y < 0) || (y > (signalWidth - 1)))
-		{
-			return null;
-		}
+    setBackground( Color.BLACK );
+  }
 
-		rect.x = rect.width = 0;
-		rect.y = (y * 30) + 20;
-		rect.height = 20;
+  // METHODS
 
-		// find timevalue...
-		final int[] values = model.getValues();
+  /**
+   * Returns the hover area of the signal under the given coordinate (= mouse
+   * position).
+   * 
+   * @param aPoint
+   *          the mouse coordinate to determine the signal rectangle for, cannot
+   *          be <code>null</code>.
+   * @return the rectangle of the signal the given coordinate contains,
+   *         <code>null</code> if not found.
+   */
+  public Rectangle getSignalHover( final Point aPoint )
+  {
+    final Rectangle rect = new Rectangle();
 
-		final int xPos = aOriginalPoint.x;
-		if ((xPos >= 0) && (xPos < values.length))
-		{
-			final int mask = (1 << y);
+    final Model model = this.controller.getModel();
+    final int signalWidth = model.getWidth();
 
-			final int refValue = (values[xPos] & mask);
+    // XXX 20 = initial dy; 30 = spacing between signals
+    final int y = ( aPoint.y - 20 ) / 30;
+    if ( ( y < 0 ) || ( y > ( signalWidth - 1 ) ) )
+    {
+      return null;
+    }
 
-			rect.x = xPos;
-			do
-			{
-				rect.x--;
-			} while ((rect.x >= 0) && ((values[rect.x] & mask) == refValue));
+    rect.x = rect.width = 0;
+    rect.y = ( y * 30 ) + 20;
+    rect.height = 20;
 
-			rect.width = aOriginalPoint.x;
-			do
-			{
-				rect.width++;
-			} while ((rect.width < values.length) && ((values[rect.width] & mask) == refValue));
-			// correct to actual width...
-			rect.width -= rect.x;
-		}
+    // find timevalue...
+    final int[] values = model.getValues();
 
-		return rect;
-	}
+    final int xPos = aPoint.x;
+    if ( ( xPos >= 0 ) && ( xPos < values.length ) )
+    {
+      final int mask = ( 1 << y );
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	protected void paintComponent(final Graphics aG)
-	{
-		final Graphics2D g2d = (Graphics2D) aG;
+      final int refValue = ( values[xPos] & mask );
 
-		final Rectangle clip = aG.getClipBounds();
-		final Insets insets = getInsets();
+      rect.x = xPos;
+      do
+      {
+        rect.x--;
+      }
+      while ( ( rect.x >= 0 ) && ( ( values[rect.x] & mask ) == refValue ) );
 
-		final Rectangle rect = new Rectangle();
-		rect.x = insets.left + clip.x;
-		rect.y = insets.top + clip.y;
-		rect.width = clip.width - insets.left - insets.right;
-		rect.height = clip.height - insets.top - insets.bottom;
+      rect.width = aPoint.x;
+      do
+      {
+        rect.width++;
+      }
+      while ( ( rect.width < values.length ) && ( ( values[rect.width] & mask ) == refValue ) );
+      // correct to actual width...
+      rect.width -= rect.x;
+    }
 
-		g2d.setColor(getBackground());
-		g2d.fillRect(rect.x, rect.y, rect.width, rect.height);
+    return rect;
+  }
 
-		final Model model = this.controller.getModel();
-		final int[] values = model.getValues();
-		final int[] timestamps = model.getTimestamps();
-		final int width = model.getWidth();
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  protected void paintComponent( final Graphics aGraphics )
+  {
+    final Graphics2D g2d = ( Graphics2D )aGraphics;
 
-		final int size = values.length;
+    final Rectangle clip = aGraphics.getClipBounds();
+    final Insets insets = getInsets();
 
-		final int[] x = new int[size];
-		final int[] y = new int[size];
+    final Rectangle rect = new Rectangle();
+    rect.x = insets.left + clip.x;
+    rect.y = insets.top + clip.y;
+    rect.width = clip.width - insets.left - insets.right;
+    rect.height = clip.height - insets.top - insets.bottom;
 
-		int dy = 20;
+    g2d.setColor( getBackground() );
+    g2d.fillRect( rect.x, rect.y, rect.width, rect.height );
 
-		for (int b = 0; b < width; b++)
-		{
-			final int mask = (1 << b);
+    final Model model = this.controller.getModel();
 
-			for (int i = 0; i < size; i++)
-			{
-				final int value = (values[i] & mask) == 0 ? 0 : 20;
-				final int timestamp = timestamps[i];
+    final int[] values = model.getValues();
+    final int[] timestamps = model.getTimestamps();
+    final int width = model.getWidth();
 
-				x[i] = timestamp;
-				y[i] = dy + value;
-			}
+    final int size = values.length;
+    final int[] x = new int[size];
+    final int[] y = new int[size];
 
-			g2d.setColor(Color.BLUE);
-			g2d.drawPolyline(x, y, size);
+    int dy = 20;
 
-			dy += 30;
-		}
-	}
+    for ( int b = 0; b < width; b++ )
+    {
+      final int mask = ( 1 << b );
+
+      for ( int i = 0; i < size; i++ )
+      {
+        final int value = ( values[i] & mask ) == 0 ? 0 : 20;
+        final int timestamp = timestamps[i];
+
+        x[i] = timestamp;
+        y[i] = dy + value;
+      }
+
+      g2d.setColor( Color.BLUE );
+      g2d.drawPolyline( x, y, size );
+
+      dy += 30;
+    }
+  }
 }
