@@ -3,165 +3,269 @@
  */
 package nl.lxtreme.test;
 
+
 import java.awt.*;
 
 import javax.swing.*;
 
+
 /**
  * @author jajans
  */
-public class ModelView extends JComponent implements Scrollable
+public class ModelView extends JPanel implements Scrollable
 {
-	// CONSTANTS
+  // CONSTANTS
 
-	private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-	// VARIABLES
+  // VARIABLES
 
-	private final ScreenController controller;
+  private final ScreenController controller;
 
-	// CONSTRUCTORS
+  // CONSTRUCTORS
 
-	/**
-	 * Creates a new ModelView instance.
-	 * 
-	 * @param aController
-	 *          the controller to use, cannot be <code>null</code>.
-	 */
-	public ModelView(final ScreenController aController)
-	{
-		this.controller = aController;
+  /**
+   * Creates a new ModelView instance.
+   * 
+   * @param aController
+   *          the controller to use, cannot be <code>null</code>.
+   */
+  public ModelView( final ScreenController aController )
+  {
+    this.controller = aController;
 
-		setOpaque(true);
-		setBackground(Color.BLACK);
+    setOpaque( true );
+    setBackground( Color.BLACK );
 
-		this.controller.setModelView(this);
-	}
+    setDebugGraphicsOptions( DebugGraphics.LOG_OPTION );
+    DebugGraphics.setLogStream( System.err );
 
-	// METHODS
+    this.controller.setModelView( this );
+  }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public Dimension getPreferredScrollableViewportSize()
-	{
-		return getPreferredSize();
-	}
+  // METHODS
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public int getScrollableBlockIncrement(final Rectangle aVisibleRect, final int aOrientation, final int aDirection)
-	{
-		if (aOrientation == SwingConstants.HORIZONTAL)
-		{
-			return aVisibleRect.width - 50;
-		}
-		else
-		{
-			return aVisibleRect.height - this.controller.getScreenModel().getChannelHeight();
-		}
-	}
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public Dimension getPreferredScrollableViewportSize()
+  {
+    return getPreferredSize();
+  }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public boolean getScrollableTracksViewportHeight()
-	{
-		return false;
-	}
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public int getScrollableBlockIncrement( final Rectangle aVisibleRect, final int aOrientation, final int aDirection )
+  {
+    if ( aOrientation == SwingConstants.HORIZONTAL )
+    {
+      return aVisibleRect.width - 50;
+    }
+    else
+    {
+      return aVisibleRect.height - this.controller.getScreenModel().getChannelHeight();
+    }
+  }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public boolean getScrollableTracksViewportWidth()
-	{
-		return false;
-	}
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public boolean getScrollableTracksViewportHeight()
+  {
+    return false;
+  }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public int getScrollableUnitIncrement(final Rectangle aVisibleRect, final int aOrientation, final int aDirection)
-	{
-		int currentPosition = 0;
-		final int maxUnitIncrement;
-		if (aOrientation == SwingConstants.HORIZONTAL)
-		{
-			currentPosition = aVisibleRect.x;
-			maxUnitIncrement = 50;
-		}
-		else
-		{
-			currentPosition = aVisibleRect.y;
-			maxUnitIncrement = this.controller.getScreenModel().getChannelHeight();
-		}
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public boolean getScrollableTracksViewportWidth()
+  {
+    return false;
+  }
 
-		// Return the number of pixels between currentPosition
-		// and the nearest tick mark in the indicated direction.
-		if (aDirection < 0)
-		{
-			final int newPosition = currentPosition - (currentPosition / maxUnitIncrement) * maxUnitIncrement;
-			return (newPosition == 0) ? maxUnitIncrement : newPosition;
-		}
-		else
-		{
-			return ((currentPosition / maxUnitIncrement) + 1) * maxUnitIncrement - currentPosition;
-		}
-	}
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public int getScrollableUnitIncrement( final Rectangle aVisibleRect, final int aOrientation, final int aDirection )
+  {
+    int currentPosition = 0;
+    final int maxUnitIncrement;
+    if ( aOrientation == SwingConstants.HORIZONTAL )
+    {
+      currentPosition = aVisibleRect.x;
+      maxUnitIncrement = 50;
+    }
+    else
+    {
+      currentPosition = aVisibleRect.y;
+      maxUnitIncrement = this.controller.getScreenModel().getChannelHeight();
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	protected void paintComponent(final Graphics aGraphics)
-	{
-		final Graphics2D g2d = (Graphics2D) aGraphics;
+    // Return the number of pixels between currentPosition
+    // and the nearest tick mark in the indicated direction.
+    if ( aDirection < 0 )
+    {
+      final int newPosition = currentPosition - ( currentPosition / maxUnitIncrement ) * maxUnitIncrement;
+      return ( newPosition == 0 ) ? maxUnitIncrement : newPosition;
+    }
+    else
+    {
+      return ( ( currentPosition / maxUnitIncrement ) + 1 ) * maxUnitIncrement - currentPosition;
+    }
+  }
 
-		final Rectangle clip = aGraphics.getClipBounds();
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  protected void paintComponent( final Graphics aGraphics )
+  {
+    super.paintComponent( aGraphics );
 
-		g2d.setColor(getBackground());
-		g2d.fillRect(clip.x, clip.y, clip.width, clip.height);
+    Graphics canvas = aGraphics.create();
 
-		final DataModel dataModel = this.controller.getDataModel();
+    try
+    {
+      final Rectangle clip = aGraphics.getClipBounds();
 
-		final int[] values = dataModel.getValues();
-		final int[] timestamps = dataModel.getTimestamps();
+      final DataModel dataModel = this.controller.getDataModel();
 
-		final int startIdx = Math.max(0, this.controller.toTimestampIndex(clip.getLocation()) - 1);
-		final int endIdx = Math.min(this.controller.toTimestampIndex(new Point(clip.x + clip.width, 0)) + 1, values.length - 1);
+      final int[] values = dataModel.getValues();
 
-		final int size = (endIdx - startIdx);
-		final int[] x = new int[size];
-		final int[] y = new int[size];
+      final int startIdx = Math.max( 0, this.controller.toTimestampIndex( clip.getLocation() ) - 1 );
+      final int endIdx = Math.min( this.controller.toTimestampIndex( new Point( clip.x + clip.width, 0 ) ) + 1,
+          values.length - 1 );
 
-		final ScreenModel screenModel = this.controller.getScreenModel();
-		int dy = screenModel.getSignalHeight();
+      final int size = ( endIdx - startIdx );
+      if ( size > 1000000 )
+      {
+        // Too many samples on one screen?!?
+        paintLargeDataSet( canvas, size, startIdx, clip );
+        // paintNormalDataSet( canvas, size, startIdx );
+      }
+      else
+      {
+        // This data set might reasonably well fit on screen...
+        paintNormalDataSet( canvas, size, startIdx );
+      }
+    }
+    finally
+    {
+      canvas.dispose();
+      canvas = null;
+    }
+  }
 
-		final int width = dataModel.getWidth();
-		for (int b = 0; b < width; b++)
-		{
-			final int mask = (1 << b);
+  /**
+   * @param aValues
+   * @param aMask
+   * @param aStartIdx
+   * @param aEndIndx
+   * @return
+   */
+  private int getMean( final int[] aValues, final int aMask, final int aStartIdx, final int aEndIndx )
+  {
+    int result = 0;
+    for ( int i = aStartIdx; i < aEndIndx; i++ )
+    {
+      result += ( aValues[i] & aMask );
+    }
+    double count = ( aEndIndx - aStartIdx );
+    double retval = result / count;
+    return ( int )( retval );
+  }
 
-			for (int i = 0; i < size; i++)
-			{
-				final int sampleIdx = i + startIdx;
-				final int value = (values[sampleIdx] & mask) == 0 ? 0 : screenModel.getSignalHeight();
-				final int timestamp = timestamps[sampleIdx];
+  /**
+   * @param aCanvas
+   * @param aSize
+   * @param aStartSampleIdx
+   * @param aClip
+   */
+  private void paintLargeDataSet( final Graphics aCanvas, final int aSize, final int aStartSampleIdx,
+      final Rectangle aClip )
+  {
+    final DataModel dataModel = this.controller.getDataModel();
 
-				x[i] = this.controller.toScaledScreenCoordinate(timestamp).x;
-				y[i] = dy + value;
-			}
+    final int[] values = dataModel.getValues();
+    final int[] timestamps = dataModel.getTimestamps();
 
-			g2d.setColor(Color.GREEN.darker().darker());
-			g2d.drawPolyline(x, y, size);
+    final double scaleFactor = 1.0 / this.controller.getScreenModel().getZoomFactor();
+    final int newSize = ( int )Math.ceil( aSize / scaleFactor ) + 1;
 
-			dy += screenModel.getChannelHeight();
-		}
-	}
+    final ScreenModel screenModel = this.controller.getScreenModel();
+    final int signalHeight = screenModel.getSignalHeight();
+
+    int dy = signalHeight;
+
+    aCanvas.setColor( Color.GREEN.darker().darker() );
+
+    final int width = dataModel.getWidth();
+    for ( int b = 0; b < width; b++ )
+    {
+      final int mask = ( 1 << b );
+
+      int oldX = aClip.x;
+      for ( int i = 0; i < aSize; i += scaleFactor )
+      {
+        final int sampleIdx = Math.min( i + aStartSampleIdx, values.length - 1 );
+
+        final int value = getMean( values, mask, sampleIdx, sampleIdx + newSize ) == 0 ? 0 : signalHeight;
+        final int timestamp = timestamps[sampleIdx];
+
+        int newX = this.controller.toScaledScreenCoordinate( timestamp ).x;
+        aCanvas.drawRect( oldX, dy, newX - oldX, value );
+
+        oldX = newX;
+      }
+
+      dy += screenModel.getChannelHeight();
+    }
+  }
+
+  /**
+   * @param aCanvas
+   * @param aSize
+   * @param aStartSampleIdx
+   */
+  private void paintNormalDataSet( final Graphics aCanvas, final int aSize, final int aStartSampleIdx )
+  {
+    final DataModel dataModel = this.controller.getDataModel();
+
+    final int[] values = dataModel.getValues();
+    final int[] timestamps = dataModel.getTimestamps();
+
+    final int[] x = new int[aSize];
+    final int[] y = new int[aSize];
+
+    aCanvas.setColor( Color.GREEN.darker().darker() );
+
+    final ScreenModel screenModel = this.controller.getScreenModel();
+    int dy = screenModel.getSignalHeight();
+
+    final int width = dataModel.getWidth();
+    for ( int b = 0; b < width; b++ )
+    {
+      final int mask = ( 1 << b );
+
+      for ( int i = 0; i < aSize; i++ )
+      {
+        final int sampleIdx = i + aStartSampleIdx;
+        final int value = ( values[sampleIdx] & mask ) == 0 ? 0 : screenModel.getSignalHeight();
+        final int timestamp = timestamps[sampleIdx];
+
+        x[i] = this.controller.toScaledScreenCoordinate( timestamp ).x;
+        y[i] = dy + value;
+      }
+
+      aCanvas.drawPolyline( x, y, aSize );
+
+      dy += screenModel.getChannelHeight();
+    }
+  }
 }
