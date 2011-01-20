@@ -3,125 +3,162 @@
  */
 package nl.lxtreme.test;
 
-
 import java.awt.*;
 
 import javax.swing.JComponent;
-
 
 /**
  * @author jajans
  */
 public class CursorView extends JComponent
 {
-  // CONSTANTS
+	// CONSTANTS
 
-  private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 
-  // VARIABLES
+	// VARIABLES
 
-  private final Main controller;
+	private final ScreenController controller;
+	private boolean snapMode;
 
-  // CONSTRUCTORS
+	private Point lastPoint;
 
-  /**
-   * Creates a new CursorView instance.
-   * 
-   * @param aController
-   *          the controller to use, cannot be <code>null</code>.
-   */
-  public CursorView( final Main aController )
-  {
-    this.controller = aController;
+	// CONSTRUCTORS
 
-    setOpaque( false );
-  }
+	/**
+	 * Creates a new CursorView instance.
+	 * 
+	 * @param aController
+	 *          the controller to use, cannot be <code>null</code>.
+	 */
+	public CursorView(final ScreenController aController)
+	{
+		this.controller = aController;
 
-  // METHODS
+		setOpaque(false);
 
-  /**
-   * Finds the cursor under the given point.
-   * 
-   * @param aPoint
-   *          the coordinate of the potential cursor, cannot be
-   *          <code>null</code>.
-   * @return the cursor index, or -1 if not found.
-   */
-  public int findCursor( final Point aPoint )
-  {
-    final int[] cursors = this.controller.getModel().getCursors();
-    for ( int i = 0; i < cursors.length; i++ )
-    {
-      if ( ( aPoint.x > ( cursors[i] - 5 ) ) && ( aPoint.x < ( cursors[i] + 5 ) ) )
-      {
-        return i;
-      }
-    }
+		this.controller.setCursorView(this);
+	}
 
-    return -1;
-  }
+	// METHODS
 
-  /**
-   * Moves the cursor with the given index to the given coordinate.
-   * 
-   * @param aCursorIdx
-   *          the index of the cursor to move;
-   * @param aPoint
-   *          the coordinate to move the cursor to, cannot be <code>null</code>.
-   */
-  public void moveCursor( final int aCursorIdx, final Point aPoint )
-  {
-    repaintPartially( aCursorIdx );
+	private static boolean inArea(final Point aPoint, final int aX)
+	{
+		if (aPoint == null)
+		{
+			return false;
+		}
+		return (aX >= aPoint.x - 5) && (aX <= aPoint.x + 5);
+	}
 
-    final int[] cursors = this.controller.getModel().getCursors();
-    cursors[aCursorIdx] = aPoint.x;
+	/**
+	 * @return
+	 */
+	public boolean isSnapModeEnabled()
+	{
+		return this.snapMode;
+	}
 
-    repaintPartially( aCursorIdx );
-  }
+	/**
+	 * Moves the cursor with the given index to the given coordinate.
+	 * 
+	 * @param aCursorIdx
+	 *          the index of the cursor to move;
+	 * @param aPoint
+	 *          the coordinate to move the cursor to, cannot be <code>null</code>;
+	 * @param aSnap
+	 *          if <code>true</code> snaps to the signal value, <code>false</code>
+	 *          otherwise.
+	 */
+	public void moveCursor(final int aCursorIdx, final Point aPoint)
+	{
+		repaintPartially(aCursorIdx);
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  protected void paintComponent( final Graphics aGraphics )
-  {
-    final Graphics2D g2d = ( Graphics2D )aGraphics;
+		final int[] cursors = this.controller.getDataModel().getCursors();
+		cursors[aCursorIdx] = this.controller.toUnscaledScreenCoordinate(aPoint);
 
-    final Rectangle clip = aGraphics.getClipBounds();
+		if (this.snapMode)
+		{
+			this.lastPoint = aPoint;
+		}
+		else
+		{
+			this.lastPoint = null;
+		}
 
-    final int y1 = clip.y;
-    final int y2 = clip.y + clip.height;
+		repaintPartially(aCursorIdx);
+	}
 
-    final int[] cursors = this.controller.getModel().getCursors();
-    final Color[] colors = new Color[] { Color.RED, Color.GREEN };
+	/**
+	 * @param aSnapMode
+	 */
+	public synchronized void setSnapMode(final boolean aSnapMode)
+	{
+		this.snapMode = aSnapMode;
+	}
 
-    for ( int i = 0; i < cursors.length; i++ )
-    {
-      final int x = cursors[i];
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	protected void paintComponent(final Graphics aGraphics)
+	{
+		final Graphics2D g2d = (Graphics2D) aGraphics.create();
 
-      if ( clip.contains( x, y1 ) || clip.contains( x, y2 ) )
-      {
-        g2d.setColor( colors[i] );
-        g2d.drawLine( x, y1, x, y2 );
-      }
-    }
-  }
+		final Rectangle clip = aGraphics.getClipBounds();
 
-  /**
-   * Repaints the areas that were affected by the last paint() call.
-   * 
-   * @param aCursorIdx
-   *          the cursor index of the cursor to repaint.
-   */
-  private void repaintPartially( final int aCursorIdx )
-  {
-    final int[] cursors = this.controller.getModel().getCursors();
+		final int y1 = clip.y;
+		final int y2 = clip.y + clip.height;
 
-    final int x = cursors[aCursorIdx] - 1;
-    final int y = 0;
-    final int w = 2;
-    final int h = getHeight();
+		final int[] cursors = this.controller.getDataModel().getCursors();
+		final Color[] colors = new Color[] { Color.RED, Color.GREEN };
 
-    repaint( x, y, w, h );
-  }
+		for (int i = 0; i < cursors.length; i++)
+		{
+			final int x = this.controller.toScaledScreenCoordinate(cursors[i]).x;
+
+			if (clip.contains(x, y1) || clip.contains(x, y2))
+			{
+				g2d.setColor(colors[i]);
+				g2d.drawLine(x, y1, x, y2);
+
+				if (this.snapMode && inArea(this.lastPoint, x))
+				{
+					g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+					g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+
+					g2d.drawOval(x - 4, this.lastPoint.y - 4, 8, 8);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Repaints the areas that were affected by the last paint() call.
+	 * 
+	 * @param aCursorIdx
+	 *          the cursor index of the cursor to repaint.
+	 */
+	private void repaintPartially(final int aCursorIdx)
+	{
+		int x, y, w, h;
+
+		final int[] cursors = this.controller.getDataModel().getCursors();
+		x = this.controller.toScaledScreenCoordinate(cursors[aCursorIdx]).x - 1;
+		y = 0;
+		w = 2;
+		h = getHeight();
+
+		repaint(x, y, w, h);
+
+		if (this.lastPoint != null)
+		{
+			x = this.lastPoint.x - 5;
+			y = this.lastPoint.y - 5;
+			w = 10;
+			h = 10;
+
+			repaint(x, y, w, h);
+		}
+	}
 }
