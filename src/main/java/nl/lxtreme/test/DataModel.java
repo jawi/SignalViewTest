@@ -10,7 +10,7 @@ package nl.lxtreme.test;
 public class DataModel
 {
   private final int[] values;
-  private final int[] timestamps;
+  private final long[] timestamps;
   private final int[] cursors;
 
   /**
@@ -23,9 +23,9 @@ public class DataModel
       throw new IllegalArgumentException();
     }
     this.values = new int[aSize];
-    this.timestamps = new int[aSize];
+    this.timestamps = new long[aSize];
 
-    final boolean run1 = true;
+    final boolean run1 = false;
     if ( run1 )
     {
       int value = 0xAA;
@@ -45,7 +45,7 @@ public class DataModel
       for ( int i = 0; i < aSize; i++ )
       {
         this.values[i] = ( i % 1024 ) + 2;
-        this.timestamps[i] = i;
+        this.timestamps[i] = 100 * i;
       }
     }
     this.cursors = new int[] { 100, 200 };
@@ -71,7 +71,7 @@ public class DataModel
    *         the value less or equal to the given key.
    * @see Arrays#binarySearch(long[], long)
    */
-  static final int binarySearch( final int[] aArray, final int aFromIndex, final int aToIndex, final Integer aKey )
+  static final int binarySearch( final long[] aArray, final int aFromIndex, final int aToIndex, final Long aKey )
   {
     int mid = -1;
     int low = aFromIndex;
@@ -80,7 +80,7 @@ public class DataModel
     while ( low <= high )
     {
       mid = ( low + high ) >>> 1;
-      final Integer midVal = aArray[mid];
+      final Long midVal = aArray[mid];
 
       final int c = aKey.compareTo( midVal );
       if ( c > 0 )
@@ -116,7 +116,7 @@ public class DataModel
     return mid;
   }
 
-  public int getAbsoluteLength()
+  public long getAbsoluteLength()
   {
     int idx = this.timestamps.length - 1;
     if ( idx >= 0 )
@@ -136,12 +136,12 @@ public class DataModel
     return this.values.length;
   }
 
-  public int getTimestampIndex( final int aValue )
+  public int getTimestampIndex( final long aValue )
   {
     return binarySearch( this.timestamps, 0, this.timestamps.length, aValue );
   }
 
-  public int[] getTimestamps()
+  public long[] getTimestamps()
   {
     return this.timestamps;
   }

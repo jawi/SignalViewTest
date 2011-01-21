@@ -138,18 +138,18 @@ public class ModelView extends JPanel implements Scrollable
 
       final int[] values = dataModel.getValues();
 
-      final int startIdx = Math.max( 0, this.controller.toTimestampIndex( clip.getLocation() ) - 1 );
-      final int endIdx = Math.min( this.controller.toTimestampIndex( new Point( clip.x + clip.width, 0 ) ) + 1,
-          values.length - 1 );
+      final int startIdx = getStartIndex( clip );
+      final int endIdx = getEndIndex( clip, values.length );
 
       final int size = ( endIdx - startIdx );
+      System.out.println( "size = " + size + ", start = " + startIdx + ", end = " + endIdx );
       if ( size > 1000000 )
       {
         // Too many samples on one screen?!?
         paintLargeDataSet( canvas, size, startIdx, clip );
         // paintNormalDataSet( canvas, size, startIdx );
       }
-      else
+      else if ( size > 0 )
       {
         // This data set might reasonably well fit on screen...
         paintNormalDataSet( canvas, size, startIdx );
@@ -160,6 +160,16 @@ public class ModelView extends JPanel implements Scrollable
       canvas.dispose();
       canvas = null;
     }
+  }
+
+  /**
+   * @param aClip
+   * @return
+   */
+  private int getEndIndex( final Rectangle aClip, final int aLength )
+  {
+    final Point location = new Point( aClip.x + aClip.width, 0 );
+    return Math.min( this.controller.toTimestampIndex( location ) + 1, aLength - 1 );
   }
 
   /**
@@ -182,6 +192,16 @@ public class ModelView extends JPanel implements Scrollable
   }
 
   /**
+   * @param aClip
+   * @return
+   */
+  private int getStartIndex( final Rectangle aClip )
+  {
+    final Point location = aClip.getLocation();
+    return Math.max( this.controller.toTimestampIndex( location ) - 1, 0 );
+  }
+
+  /**
    * @param aCanvas
    * @param aSize
    * @param aStartSampleIdx
@@ -193,9 +213,9 @@ public class ModelView extends JPanel implements Scrollable
     final DataModel dataModel = this.controller.getDataModel();
 
     final int[] values = dataModel.getValues();
-    final int[] timestamps = dataModel.getTimestamps();
+    final long[] timestamps = dataModel.getTimestamps();
 
-    final double scaleFactor = 2.0 / this.controller.getScreenModel().getZoomFactor();
+    final double scaleFactor = Math.abs( 2.0 / this.controller.getScreenModel().getZoomFactor() );
     final int newSize = ( int )Math.ceil( aSize / scaleFactor ) + 1;
 
     final ScreenModel screenModel = this.controller.getScreenModel();
@@ -216,7 +236,7 @@ public class ModelView extends JPanel implements Scrollable
         final int sampleIdx = Math.min( i + aStartSampleIdx, values.length - 1 );
 
         final int value = getMean( values, mask, sampleIdx, sampleIdx + newSize ) <= 0.25 ? 0 : signalHeight;
-        final int timestamp = timestamps[sampleIdx];
+        final long timestamp = timestamps[sampleIdx];
 
         int newX = this.controller.toScaledScreenCoordinate( timestamp ).x;
         aCanvas.drawRect( oldX, dy, newX - oldX, value );
@@ -238,7 +258,7 @@ public class ModelView extends JPanel implements Scrollable
     final DataModel dataModel = this.controller.getDataModel();
 
     final int[] values = dataModel.getValues();
-    final int[] timestamps = dataModel.getTimestamps();
+    final long[] timestamps = dataModel.getTimestamps();
 
     final int[] x = new int[aSize];
     final int[] y = new int[aSize];
@@ -257,7 +277,7 @@ public class ModelView extends JPanel implements Scrollable
       {
         final int sampleIdx = i + aStartSampleIdx;
         final int value = ( values[sampleIdx] & mask ) == 0 ? 0 : screenModel.getSignalHeight();
-        final int timestamp = timestamps[sampleIdx];
+        final long timestamp = timestamps[sampleIdx];
 
         x[i] = this.controller.toScaledScreenCoordinate( timestamp ).x;
         y[i] = dy + value;

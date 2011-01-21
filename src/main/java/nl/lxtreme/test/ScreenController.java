@@ -107,10 +107,10 @@ public final class ScreenController
   /**
    * @return
    */
-  public int getAbsoluteLength()
+  public long getAbsoluteLength()
   {
-    final int[] timestamps = this.dataModel.getTimestamps();
-    return ( int )( ( timestamps[timestamps.length - 1] + 1 ) * this.screenModel.getZoomFactor() );
+    final long[] timestamps = this.dataModel.getTimestamps();
+    return ( long )( ( timestamps[timestamps.length - 1] + 1 ) * this.screenModel.getZoomFactor() );
   }
 
   /**
@@ -164,7 +164,7 @@ public final class ScreenController
     final int[] values = this.dataModel.getValues();
     if ( ( refIdx >= 0 ) && ( refIdx < values.length ) )
     {
-      final int[] timestamps = this.dataModel.getTimestamps();
+      final long[] timestamps = this.dataModel.getTimestamps();
 
       final int mask = ( 1 << y );
       final int refValue = ( values[refIdx] & mask );
@@ -226,7 +226,7 @@ public final class ScreenController
     final JScrollPane scrollPane = ( JScrollPane )SwingUtilities.getAncestorOfClass( JScrollPane.class, this.arrowView );
     if ( scrollPane != null )
     {
-      final int width = getAbsoluteLength();
+      final int width = ( int )Math.min( Integer.MAX_VALUE, getAbsoluteLength() );
 
       final int height = this.screenModel.getChannelHeight() * this.dataModel.getWidth()
           + this.screenModel.getSignalHeight();
@@ -257,7 +257,7 @@ public final class ScreenController
    * @param aTimestamp
    * @return
    */
-  public Point toScaledScreenCoordinate( final int aTimestamp )
+  public Point toScaledScreenCoordinate( final long aTimestamp )
   {
     final int xPos = ( int )( this.screenModel.getZoomFactor() * aTimestamp );
     final int yPos = 0;
@@ -285,7 +285,7 @@ public final class ScreenController
    */
   public int toUnscaledScreenCoordinate( final Point aPoint )
   {
-    return ( int )( aPoint.getX() / this.screenModel.getZoomFactor() );
+    return ( int )Math.abs( aPoint.getX() / this.screenModel.getZoomFactor() );
   }
 
   /**
