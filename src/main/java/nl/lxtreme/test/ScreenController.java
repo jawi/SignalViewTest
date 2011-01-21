@@ -303,8 +303,17 @@ public final class ScreenController
    */
   public void zoomIn()
   {
-    zoom( 1.5 );
+    zoomRelative( 1.5 );
 
+    recalculateDimensions();
+  }
+
+  /**
+   * 
+   */
+  public void zoomOriginal()
+  {
+    zoomAbsolute( 1.0 );
     recalculateDimensions();
   }
 
@@ -313,7 +322,7 @@ public final class ScreenController
    */
   public void zoomOut()
   {
-    zoom( 1.0 / 1.5 );
+    zoomRelative( 1.0 / 1.5 );
 
     recalculateDimensions();
   }
@@ -364,10 +373,18 @@ public final class ScreenController
   /**
    * @param aFactor
    */
-  private void zoom( final double aFactor )
+  private void zoomAbsolute( final double aFactor )
+  {
+    this.screenModel.setZoomFactor( aFactor );
+    System.out.println( "Zoom factor = " + this.screenModel.getZoomFactor() );
+  }
+
+  /**
+   * @param aFactor
+   */
+  private void zoomRelative( final double aFactor )
   {
     final double factor = this.screenModel.getZoomFactor();
-    this.screenModel.setZoomFactor( factor * aFactor );
-    System.out.println( "Zoom factor = " + this.screenModel.getZoomFactor() );
+    zoomAbsolute( aFactor * factor );
   }
 }

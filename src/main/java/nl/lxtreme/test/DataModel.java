@@ -25,23 +25,29 @@ public class DataModel
     this.values = new int[aSize];
     this.timestamps = new int[aSize];
 
-    int value = 0xAA;
-    for ( int i = 0; i < aSize; i++ )
+    final boolean run1 = true;
+    if ( run1 )
     {
-      if ( ( i % 4000000 ) == 0 )
+      int value = 0xAA;
+      for ( int i = 0; i < aSize; i++ )
       {
-        value = ( value == 0xAA ) ? 0x00 : 0xAA;
+        if ( ( i % 4000000 ) == 0 )
+        {
+          value = ( value == 0xAA ) ? 0x00 : 0xAA;
+        }
+
+        this.values[i] = value;
+        this.timestamps[i] = 2 * i;
       }
-
-      this.values[i] = value;
-      this.timestamps[i] = 2 * i;
     }
-    // for ( int i = 0; i < aSize; i++ )
-    // {
-    // this.values[i] = ( i % 1024 ) + 2;
-    // this.timestamps[i] = i;
-    // }
-
+    else
+    {
+      for ( int i = 0; i < aSize; i++ )
+      {
+        this.values[i] = ( i % 1024 ) + 2;
+        this.timestamps[i] = i;
+      }
+    }
     this.cursors = new int[] { 100, 200 };
   }
 

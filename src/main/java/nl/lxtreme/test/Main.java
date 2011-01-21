@@ -104,6 +104,15 @@ public class Main
       {
         this.controller.zoomOut();
       }
+      else if ( '0' == aEvent.getKeyChar() )
+      {
+        final Component comp = SwingUtilities.getRootPane( aEvent.getComponent() );
+        this.controller.zoomAll( comp.getSize() );
+      }
+      else if ( '1' == aEvent.getKeyChar() )
+      {
+        this.controller.zoomOriginal();
+      }
     }
   }
 

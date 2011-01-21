@@ -37,8 +37,8 @@ public class ModelView extends JPanel implements Scrollable
     setOpaque( true );
     setBackground( Color.BLACK );
 
-    setDebugGraphicsOptions( DebugGraphics.LOG_OPTION );
-    DebugGraphics.setLogStream( System.err );
+    // setDebugGraphicsOptions( DebugGraphics.LOG_OPTION );
+    // DebugGraphics.setLogStream( System.err );
 
     this.controller.setModelView( this );
   }
@@ -169,7 +169,7 @@ public class ModelView extends JPanel implements Scrollable
    * @param aEndIndx
    * @return
    */
-  private int getMean( final int[] aValues, final int aMask, final int aStartIdx, final int aEndIndx )
+  private double getMean( final int[] aValues, final int aMask, final int aStartIdx, final int aEndIndx )
   {
     int result = 0;
     for ( int i = aStartIdx; i < aEndIndx; i++ )
@@ -178,7 +178,7 @@ public class ModelView extends JPanel implements Scrollable
     }
     double count = ( aEndIndx - aStartIdx );
     double retval = result / count;
-    return ( int )( retval );
+    return retval;
   }
 
   /**
@@ -195,7 +195,7 @@ public class ModelView extends JPanel implements Scrollable
     final int[] values = dataModel.getValues();
     final int[] timestamps = dataModel.getTimestamps();
 
-    final double scaleFactor = 1.0 / this.controller.getScreenModel().getZoomFactor();
+    final double scaleFactor = 2.0 / this.controller.getScreenModel().getZoomFactor();
     final int newSize = ( int )Math.ceil( aSize / scaleFactor ) + 1;
 
     final ScreenModel screenModel = this.controller.getScreenModel();
@@ -215,7 +215,7 @@ public class ModelView extends JPanel implements Scrollable
       {
         final int sampleIdx = Math.min( i + aStartSampleIdx, values.length - 1 );
 
-        final int value = getMean( values, mask, sampleIdx, sampleIdx + newSize ) == 0 ? 0 : signalHeight;
+        final int value = getMean( values, mask, sampleIdx, sampleIdx + newSize ) <= 0.25 ? 0 : signalHeight;
         final int timestamp = timestamps[sampleIdx];
 
         int newX = this.controller.toScaledScreenCoordinate( timestamp ).x;
