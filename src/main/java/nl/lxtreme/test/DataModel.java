@@ -139,18 +139,6 @@ public class DataModel
   public int getTimestampIndex( final long aValue )
   {
     final int length = this.timestamps.length;
-    // if ( length > 0 )
-    // {
-    // if ( aValue <= this.timestamps[0] )
-    // {
-    // return 0;
-    // }
-    // else if ( aValue >= this.timestamps[length - 1] )
-    // {
-    // return length - 1;
-    // }
-    // }
-
     return binarySearch( this.timestamps, 0, length, aValue );
   }
 
