@@ -45,7 +45,7 @@ public class DataModel
       for ( int i = 0; i < aSize; i++ )
       {
         this.values[i] = ( i % 1024 ) + 2;
-        this.timestamps[i] = 100 * i;
+        this.timestamps[i] = 100L * i;
       }
     }
     this.cursors = new int[] { 100, 200 };
@@ -71,7 +71,7 @@ public class DataModel
    *         the value less or equal to the given key.
    * @see Arrays#binarySearch(long[], long)
    */
-  static final int binarySearch( final long[] aArray, final int aFromIndex, final int aToIndex, final Long aKey )
+  static final int binarySearch( final long[] aArray, final int aFromIndex, final int aToIndex, final long aKey )
   {
     int mid = -1;
     int low = aFromIndex;
@@ -80,9 +80,9 @@ public class DataModel
     while ( low <= high )
     {
       mid = ( low + high ) >>> 1;
-      final Long midVal = aArray[mid];
+      final long midVal = aArray[mid];
 
-      final int c = aKey.compareTo( midVal );
+      final int c = ( aKey < midVal ? -1 : ( aKey == midVal ? 0 : 1 ) );
       if ( c > 0 )
       {
         low = mid + 1;
@@ -138,7 +138,20 @@ public class DataModel
 
   public int getTimestampIndex( final long aValue )
   {
-    return binarySearch( this.timestamps, 0, this.timestamps.length, aValue );
+    final int length = this.timestamps.length;
+    // if ( length > 0 )
+    // {
+    // if ( aValue <= this.timestamps[0] )
+    // {
+    // return 0;
+    // }
+    // else if ( aValue >= this.timestamps[length - 1] )
+    // {
+    // return length - 1;
+    // }
+    // }
+
+    return binarySearch( this.timestamps, 0, length, aValue );
   }
 
   public long[] getTimestamps()
