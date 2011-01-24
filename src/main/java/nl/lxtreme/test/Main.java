@@ -5,8 +5,6 @@ package nl.lxtreme.test;
 
 
 import java.awt.*;
-import java.awt.event.*;
-
 import javax.swing.*;
 
 
@@ -15,15 +13,9 @@ import javax.swing.*;
  */
 public class Main
 {
-
-  private static final Cursor DEFAULT = Cursor.getDefaultCursor();
-  private static final Cursor CURSOR_HOVER = Cursor.getPredefinedCursor( Cursor.CROSSHAIR_CURSOR );
-  private static final Cursor CURSOR_MOVE_CURSOR = Cursor.getPredefinedCursor( Cursor.MOVE_CURSOR );
-
   // VARIABLES
 
   private ScreenController controller;
-
   private JFrame mainFrame;
 
   // METHODS
@@ -37,18 +29,6 @@ public class Main
     main.init();
     main.build();
     main.run();
-  }
-
-  /**
-   * @param <T>
-   * @param aComponent
-   * @param aListener
-   */
-  private static <T extends MouseListener & MouseMotionListener> void installMouseListener(
-      final JComponent aComponent, final T aListener )
-  {
-    aComponent.addMouseListener( aListener );
-    aComponent.addMouseMotionListener( aListener );
   }
 
   /**
