@@ -16,7 +16,7 @@ public final class ScreenController
 {
   // CONSTANTS
 
-  private static final int CURSOR_SENSITIVITY_AREA = 5;
+  private static final int CURSOR_SENSITIVITY_AREA = 10;
 
   // VARIABLES
 
@@ -208,7 +208,6 @@ public final class ScreenController
     }
 
     final int realRow = this.screenModel.toRealRow( row );
-    System.out.println( "signal row, calculated = " + row + ", real = " + realRow );
     return realRow;
   }
 
@@ -257,9 +256,7 @@ public final class ScreenController
     final int row = this.screenModel.toVirtualRow( aMovedRow );
     final int newRow = this.screenModel.toVirtualRow( aInsertRow );
 
-    System.out.println( "Dropped row from " + row + " to " + newRow );
-
-    this.screenModel.swapVirtualRows( row, newRow );
+    this.screenModel.moveVirtualRows( row, newRow );
 
     final JScrollPane scrollPane = ( JScrollPane )SwingUtilities.getAncestorOfClass( JScrollPane.class, this.arrowView );
     if ( scrollPane != null )
@@ -268,19 +265,19 @@ public final class ScreenController
       final int channelHeight = this.screenModel.getChannelHeight();
 
       final Rectangle rect = scrollPane.getVisibleRect();
-      rect.y = ( row * channelHeight ) + signalHeight - 1;
-      rect.height = signalHeight + 2;
+      rect.y = ( row * channelHeight ) + signalHeight - 3;
+      rect.height = signalHeight + 6;
       scrollPane.repaint( rect );
 
-      rect.y = ( newRow * channelHeight ) + signalHeight - 1;
-      rect.height = signalHeight + 2;
+      rect.y = ( newRow * channelHeight ) + signalHeight - 3;
+      rect.height = signalHeight + 6;
       scrollPane.repaint( rect );
     }
   }
 
   /**
-	 * 
-	 */
+   * Recalculates the dimensions of the view.
+   */
   public void recalculateDimensions()
   {
     final JScrollPane scrollPane = ( JScrollPane )SwingUtilities.getAncestorOfClass( JScrollPane.class, this.arrowView );

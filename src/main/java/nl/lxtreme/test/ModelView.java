@@ -16,7 +16,7 @@ import nl.lxtreme.test.dnd.SampleRowTransferable;
 /**
  * @author jajans
  */
-public class ModelView extends JPanel implements Scrollable
+public class ModelView extends JPanel
 {
   // INNER TYPES
 
@@ -112,81 +112,6 @@ public class ModelView extends JPanel implements Scrollable
   }
 
   // METHODS
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public Dimension getPreferredScrollableViewportSize()
-  {
-    return getPreferredSize();
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public int getScrollableBlockIncrement( final Rectangle aVisibleRect, final int aOrientation, final int aDirection )
-  {
-    if ( aOrientation == SwingConstants.HORIZONTAL )
-    {
-      return aVisibleRect.width - 150;
-    }
-    else
-    {
-      return aVisibleRect.height - this.controller.getScreenModel().getChannelHeight();
-    }
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public boolean getScrollableTracksViewportHeight()
-  {
-    return false;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public boolean getScrollableTracksViewportWidth()
-  {
-    return false;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public int getScrollableUnitIncrement( final Rectangle aVisibleRect, final int aOrientation, final int aDirection )
-  {
-    int currentPosition = 0;
-    final int maxUnitIncrement;
-    if ( aOrientation == SwingConstants.HORIZONTAL )
-    {
-      currentPosition = aVisibleRect.x;
-      maxUnitIncrement = 50;
-    }
-    else
-    {
-      currentPosition = aVisibleRect.y;
-      maxUnitIncrement = this.controller.getScreenModel().getChannelHeight();
-    }
-
-    // Return the number of pixels between currentPosition
-    // and the nearest tick mark in the indicated direction.
-    if ( aDirection < 0 )
-    {
-      final int newPosition = currentPosition - ( currentPosition / maxUnitIncrement ) * maxUnitIncrement;
-      return ( newPosition == 0 ) ? maxUnitIncrement : newPosition;
-    }
-    else
-    {
-      return ( ( currentPosition / maxUnitIncrement ) + 1 ) * maxUnitIncrement - currentPosition;
-    }
-  }
 
   /**
    * {@inheritDoc}

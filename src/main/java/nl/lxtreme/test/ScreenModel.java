@@ -91,6 +91,19 @@ public class ScreenModel
   }
 
   /**
+   * Moves the given "old" row index to the new row index position.
+   * 
+   * @param aOldRowIdx
+   *          the old (virtual) row to move;
+   * @param aNewRowIdx
+   *          the new (virtual) row to insert the "old" row to.
+   */
+  public void moveVirtualRows( final int aOldRowIdx, final int aNewRowIdx )
+  {
+    shiftElements( this.virtualRowMapping, aOldRowIdx, aNewRowIdx );
+  }
+
+  /**
    * @param aChannelHeight
    */
   public void setChannelHeight( final int aChannelHeight )
@@ -112,19 +125,6 @@ public class ScreenModel
   public void setZoomFactor( final double aZoomFactor )
   {
     this.zoomFactor = aZoomFactor;
-  }
-
-  /**
-   * Moves the given "old" row index to the new row index position.
-   * 
-   * @param aOldRowIdx
-   *          the old (virtual) row to move;
-   * @param aNewRowIdx
-   *          the new (virtual) row to insert the "old" row to.
-   */
-  public void swapVirtualRows( final int aOldRowIdx, final int aNewRowIdx )
-  {
-    shiftElements( this.virtualRowMapping, aOldRowIdx, aNewRowIdx );
   }
 
   /**

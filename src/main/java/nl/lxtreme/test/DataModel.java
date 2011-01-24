@@ -9,13 +9,17 @@ package nl.lxtreme.test;
  */
 public class DataModel
 {
+  // VARIABLES
+
   private final int[] values;
   private final long[] timestamps;
   private final int[] cursors;
 
+  // CONSTRUCTORS
+
   /**
-	 * 
-	 */
+   * @param aSize
+   */
   public DataModel( final int aSize )
   {
     if ( aSize <= 0 )
@@ -45,11 +49,13 @@ public class DataModel
       for ( int i = 0; i < aSize; i++ )
       {
         this.values[i] = ( i % 1024 ) + 2;
-        this.timestamps[i] = i;
+        this.timestamps[i] = 100L * i;
       }
     }
     this.cursors = new int[] { 100, 200 };
   }
+
+  // METHODS
 
   /**
    * Provides a binary search for arrays of long-values.
