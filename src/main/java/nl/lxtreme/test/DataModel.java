@@ -45,7 +45,7 @@ public class DataModel
       for ( int i = 0; i < aSize; i++ )
       {
         this.values[i] = ( i % 1024 ) + 2;
-        this.timestamps[i] = 100L * i;
+        this.timestamps[i] = i;
       }
     }
     this.cursors = new int[] { 100, 200 };

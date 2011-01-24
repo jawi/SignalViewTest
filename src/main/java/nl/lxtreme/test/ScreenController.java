@@ -150,9 +150,9 @@ public final class ScreenController
       return null;
     }
 
-    final Rectangle rect = new Rectangle();
     final int virtualRow = this.screenModel.toVirtualRow( row );
 
+    final Rectangle rect = new Rectangle();
     rect.x = rect.width = 0;
     rect.y = ( virtualRow * channelHeight ) + signalHeight;
     rect.height = signalHeight;
@@ -207,7 +207,9 @@ public final class ScreenController
       return -1;
     }
 
-    return this.screenModel.toRealRow( row );
+    final int realRow = this.screenModel.toRealRow( row );
+    System.out.println( "signal row, calculated = " + row + ", real = " + realRow );
+    return realRow;
   }
 
   /**
@@ -235,6 +237,45 @@ public final class ScreenController
   {
     final Rectangle signalHover = getSignalHover( convertToPointOf( this.modelView, aPoint ) );
     this.arrowView.moveHover( signalHover );
+  }
+
+  /**
+   * Moves a given sample row to another position.
+   * 
+   * @param aMovedRow
+   *          the real row that is to be moved;
+   * @param aInsertRow
+   *          the real row that the moved row is moved to.
+   */
+  public void moveSampleRows( final int aMovedRow, final int aInsertRow )
+  {
+    if ( aMovedRow == aInsertRow )
+    {
+      return;
+    }
+
+    final int row = this.screenModel.toVirtualRow( aMovedRow );
+    final int newRow = this.screenModel.toVirtualRow( aInsertRow );
+
+    System.out.println( "Dropped row from " + row + " to " + newRow );
+
+    this.screenModel.swapVirtualRows( row, newRow );
+
+    final JScrollPane scrollPane = ( JScrollPane )SwingUtilities.getAncestorOfClass( JScrollPane.class, this.arrowView );
+    if ( scrollPane != null )
+    {
+      final int signalHeight = this.screenModel.getSignalHeight();
+      final int channelHeight = this.screenModel.getChannelHeight();
+
+      final Rectangle rect = scrollPane.getVisibleRect();
+      rect.y = ( row * channelHeight ) + signalHeight - 1;
+      rect.height = signalHeight + 2;
+      scrollPane.repaint( rect );
+
+      rect.y = ( newRow * channelHeight ) + signalHeight - 1;
+      rect.height = signalHeight + 2;
+      scrollPane.repaint( rect );
+    }
   }
 
   /**
@@ -270,19 +311,6 @@ public final class ScreenController
     this.arrowView.showHover( signalHover );
 
     return true;
-  }
-
-  /**
-   * @param aRow1
-   * @param aRow2
-   */
-  public void swapSampleRows( final int aRow1, final int aRow2 )
-  {
-    if ( aRow1 != aRow2 )
-    {
-      this.screenModel.swapVirtualRows( aRow1, aRow2 );
-      this.modelView.repaint();
-    }
   }
 
   /**

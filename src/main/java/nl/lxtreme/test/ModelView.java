@@ -52,26 +52,25 @@ public class ModelView extends JPanel implements Scrollable
 
           final Transferable transferable = aEvent.getTransferable();
 
-          Integer row = null;
+          Integer realRow = null;
           try
           {
-            row = ( Integer )transferable.getTransferData( SampleRowTransferable.FLAVOR );
+            realRow = ( Integer )transferable.getTransferData( SampleRowTransferable.FLAVOR );
           }
           catch ( final Exception exception )
           {
             // NO-op
           }
 
-          if ( ( row == null ) || ( row < 0 ) )
+          if ( ( realRow == null ) || ( realRow < 0 ) )
           {
             return;
           }
 
           final Point coordinate = ( Point )aEvent.getLocation().clone();
-          final int newRow = this._controller.getSignalRow( coordinate );
+          final int newRealRow = this._controller.getSignalRow( coordinate );
 
-          System.out.println( "Dropped row from " + row + " to " + newRow );
-          this._controller.swapSampleRows( row, newRow );
+          this._controller.moveSampleRows( realRow, newRealRow );
 
           aEvent.dropComplete( true );
           loop = false;
@@ -131,7 +130,7 @@ public class ModelView extends JPanel implements Scrollable
   {
     if ( aOrientation == SwingConstants.HORIZONTAL )
     {
-      return aVisibleRect.width - 50;
+      return aVisibleRect.width - 150;
     }
     else
     {
@@ -275,8 +274,8 @@ public class ModelView extends JPanel implements Scrollable
     for ( int b = 0; b < width; b++ )
     {
       final int mask = ( 1 << b );
-      final int realRow = screenModel.toRealRow( b );
-      final int dy = signalHeight + ( channelHeight * realRow );
+      // determine where we really should draw the signal...
+      final int dy = signalHeight + ( channelHeight * screenModel.toRealRow( b ) );
 
       for ( int i = 0; i < aSize; i++ )
       {

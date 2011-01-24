@@ -143,7 +143,8 @@ public class Main
     @Override
     public void dragGestureRecognized( final DragGestureEvent aEvent )
     {
-      if ( aEvent.getTriggerEvent().isAltDown() || aEvent.getTriggerEvent().isControlDown() )
+      if ( this.showing || ( this.lastCursor >= 0 ) || aEvent.getTriggerEvent().isAltDown()
+          || aEvent.getTriggerEvent().isControlDown() )
       {
         return;
       }
@@ -367,7 +368,7 @@ public class Main
     this.mainFrame.setPreferredSize( dims );
     this.mainFrame.setSize( dims );
 
-    final DataModel model = new DataModel( 1024 * 64 /* * 1024 */);
+    final DataModel model = new DataModel( 1024 * 4 /* * 1024 */);
     this.controller = new ScreenController( model );
 
     this.modelView = new ModelView( this.controller );

@@ -4,9 +4,6 @@
 package nl.lxtreme.test;
 
 
-import java.util.Arrays;
-
-
 /**
  * @author jajans
  */
@@ -34,8 +31,8 @@ public class ScreenModel
     this.virtualRowMapping = new int[aDataWidth];
     for ( int i = 0; i < aDataWidth; i++ )
     {
-      this.virtualRowMapping[i] = i;
-      // this.virtualRowMapping[i] = (aDataWidth - 1) - i;
+      // this.virtualRowMapping[i] = i;
+      this.virtualRowMapping[i] = ( aDataWidth - 1 ) - i;
     }
   }
 
@@ -118,14 +115,16 @@ public class ScreenModel
   }
 
   /**
-   * @param aRow1
-   * @param aRow2
+   * Moves the given "old" row index to the new row index position.
+   * 
+   * @param aOldRowIdx
+   *          the old (virtual) row to move;
+   * @param aNewRowIdx
+   *          the new (virtual) row to insert the "old" row to.
    */
   public void swapVirtualRows( final int aOldRowIdx, final int aNewRowIdx )
   {
-    System.out.println( "BEFORE = " + Arrays.toString( this.virtualRowMapping ) );
     shiftElements( this.virtualRowMapping, aOldRowIdx, aNewRowIdx );
-    System.out.println( "AFTER  = " + Arrays.toString( this.virtualRowMapping ) );
   }
 
   /**
@@ -134,16 +133,14 @@ public class ScreenModel
    */
   public int toRealRow( final int aVirtualRowIdx )
   {
-    int result = -1;
     for ( int i = 0; i < this.virtualRowMapping.length; i++ )
     {
       if ( this.virtualRowMapping[i] == aVirtualRowIdx )
       {
-        result = i;
-        break;
+        return i;
       }
     }
-    return result;
+    return -1;
   }
 
   /**
