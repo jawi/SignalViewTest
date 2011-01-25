@@ -3,445 +3,447 @@
  */
 package nl.lxtreme.test;
 
-
 import java.awt.*;
 
 import javax.swing.*;
-
 
 /**
  * @author jajans
  */
 public final class ScreenController
 {
-  // CONSTANTS
+	// CONSTANTS
 
-  private static final int CURSOR_SENSITIVITY_AREA = 10;
+	/**
+	 * Defines the area around each cursor in which the mouse cursor should be in
+	 * before the cursor can be moved.
+	 */
+	private static final int CURSOR_SENSITIVITY_AREA = 4;
 
-  // VARIABLES
+	// VARIABLES
 
-  private final DataModel dataModel;
-  private final ScreenModel screenModel;
+	private final DataModel dataModel;
+	private final ScreenModel screenModel;
 
-  private ModelView modelView;
-  private CursorView cursorView;
-  private ArrowView arrowView;
+	private ModelView modelView;
+	private CursorView cursorView;
+	private ArrowView arrowView;
 
-  // CONSTRUCTORS
+	// CONSTRUCTORS
 
-  /**
-   * @param aModel
-   */
-  public ScreenController( final DataModel aModel )
-  {
-    this.dataModel = aModel;
-    this.screenModel = new ScreenModel( aModel.getWidth() );
-  }
+	/**
+	 * @param aModel
+	 */
+	public ScreenController(final DataModel aModel)
+	{
+		this.dataModel = aModel;
+		this.screenModel = new ScreenModel(aModel.getWidth());
+	}
 
-  // METHODS
+	// METHODS
 
-  /**
+	/**
 	 * 
 	 */
-  public void disableSnapMode()
-  {
-    this.cursorView.setSnapMode( false );
-  }
+	public void disableSnapMode()
+	{
+		this.cursorView.setSnapMode(false);
+	}
 
-  /**
-   * @param aCursorIdx
-   * @param aPoint
-   */
-  public void dragCursor( final int aCursorIdx, final Point aPoint, final boolean aSnap )
-  {
-    final Point point = convertToPointOf( this.cursorView, aPoint );
+	/**
+	 * @param aCursorIdx
+	 * @param aPoint
+	 */
+	public void dragCursor(final int aCursorIdx, final Point aPoint, final boolean aSnap)
+	{
+		final Point point = convertToPointOf(this.cursorView, aPoint);
 
-    if ( aSnap )
-    {
-      final Rectangle signalHover = getSignalHover( aPoint );
-      if ( signalHover != null )
-      {
-        point.x = signalHover.x;
-        point.y = ( int )signalHover.getCenterY();
-      }
-    }
+		if (aSnap)
+		{
+			final Rectangle signalHover = getSignalHover(aPoint);
+			if (signalHover != null)
+			{
+				point.x = signalHover.x;
+				point.y = (int) signalHover.getCenterY();
+			}
+		}
 
-    this.cursorView.moveCursor( aCursorIdx, point );
-  }
+		this.cursorView.moveCursor(aCursorIdx, point);
+	}
 
-  /**
+	/**
 	 * 
 	 */
-  public void enableSnapMode()
-  {
-    this.cursorView.setSnapMode( true );
-  }
+	public void enableSnapMode()
+	{
+		this.cursorView.setSnapMode(true);
+	}
 
-  /**
-   * Finds the cursor under the given point.
-   * 
-   * @param aPoint
-   *          the coordinate of the potential cursor, cannot be
-   *          <code>null</code>.
-   * @return the cursor index, or -1 if not found.
-   */
-  public int findCursor( final Point aPoint )
-  {
-    final int[] cursors = this.dataModel.getCursors();
+	/**
+	 * Finds the cursor under the given point.
+	 * 
+	 * @param aPoint
+	 *          the coordinate of the potential cursor, cannot be
+	 *          <code>null</code>.
+	 * @return the cursor index, or -1 if not found.
+	 */
+	public int findCursor(final Point aPoint)
+	{
+		final Point point = convertToPointOf(this.cursorView, aPoint);
+		final int refIdx = toUnscaledScreenCoordinate(point);
 
-    final Point point = convertToPointOf( this.cursorView, aPoint );
-    final int refIdx = toUnscaledScreenCoordinate( point );
+		final double snapArea = CURSOR_SENSITIVITY_AREA / this.screenModel.getZoomFactor();
 
-    for ( int i = 0; i < cursors.length; i++ )
-    {
-      if ( ( refIdx > ( cursors[i] - CURSOR_SENSITIVITY_AREA ) )
-          && ( refIdx < ( cursors[i] + CURSOR_SENSITIVITY_AREA ) ) )
-      {
-        return i;
-      }
-    }
+		final int[] cursors = this.dataModel.getCursors();
+		for (int i = 0; i < cursors.length; i++)
+		{
+			final double min = cursors[i] - snapArea;
+			final double max = cursors[i] + snapArea;
 
-    return -1;
-  }
+			if ((refIdx >= min) && (refIdx <= max))
+			{
+				return i;
+			}
+		}
 
-  /**
-   * @return
-   */
-  public long getAbsoluteLength()
-  {
-    final long[] timestamps = this.dataModel.getTimestamps();
-    return ( long )( ( timestamps[timestamps.length - 1] + 1 ) * this.screenModel.getZoomFactor() );
-  }
+		return -1;
+	}
 
-  /**
-   * @return
-   */
-  public DataModel getDataModel()
-  {
-    return this.dataModel;
-  }
+	/**
+	 * @return
+	 */
+	public long getAbsoluteLength()
+	{
+		final long[] timestamps = this.dataModel.getTimestamps();
+		return (long) ((timestamps[timestamps.length - 1] + 1) * this.screenModel.getZoomFactor());
+	}
 
-  /**
-   * @return
-   */
-  public ScreenModel getScreenModel()
-  {
-    return this.screenModel;
-  }
+	/**
+	 * @return
+	 */
+	public DataModel getDataModel()
+	{
+		return this.dataModel;
+	}
 
-  /**
-   * Returns the hover area of the signal under the given coordinate (= mouse
-   * position).
-   * 
-   * @param aPoint
-   *          the mouse coordinate to determine the signal rectangle for, cannot
-   *          be <code>null</code>.
-   * @return the rectangle of the signal the given coordinate contains,
-   *         <code>null</code> if not found.
-   */
-  public Rectangle getSignalHover( final Point aPoint )
-  {
-    final int signalHeight = this.screenModel.getSignalHeight();
-    final int channelHeight = this.screenModel.getChannelHeight();
+	/**
+	 * @return
+	 */
+	public ScreenModel getScreenModel()
+	{
+		return this.screenModel;
+	}
 
-    final int row = getSignalRow( aPoint );
-    if ( row < 0 )
-    {
-      return null;
-    }
+	/**
+	 * Returns the hover area of the signal under the given coordinate (= mouse
+	 * position).
+	 * 
+	 * @param aPoint
+	 *          the mouse coordinate to determine the signal rectangle for, cannot
+	 *          be <code>null</code>.
+	 * @return the rectangle of the signal the given coordinate contains,
+	 *         <code>null</code> if not found.
+	 */
+	public Rectangle getSignalHover(final Point aPoint)
+	{
+		final int signalHeight = this.screenModel.getSignalHeight();
+		final int channelHeight = this.screenModel.getChannelHeight();
 
-    final int virtualRow = this.screenModel.toVirtualRow( row );
+		final int row = getSignalRow(aPoint);
+		if (row < 0)
+		{
+			return null;
+		}
 
-    final Rectangle rect = new Rectangle();
-    rect.x = rect.width = 0;
-    rect.y = ( virtualRow * channelHeight ) + signalHeight;
-    rect.height = signalHeight;
+		final int virtualRow = this.screenModel.toVirtualRow(row);
 
-    // find the reference time value; which is the "timestamp" under the
-    // cursor...
-    final int refIdx = toTimestampIndex( aPoint );
+		final Rectangle rect = new Rectangle();
+		rect.x = rect.width = 0;
+		rect.y = (virtualRow * channelHeight) + signalHeight;
+		rect.height = signalHeight;
 
-    final int[] values = this.dataModel.getValues();
-    if ( ( refIdx >= 0 ) && ( refIdx < values.length ) )
-    {
-      final long[] timestamps = this.dataModel.getTimestamps();
+		// find the reference time value; which is the "timestamp" under the
+		// cursor...
+		final int refIdx = toTimestampIndex(aPoint);
 
-      final int mask = ( 1 << row );
-      final int refValue = ( values[refIdx] & mask );
+		final int[] values = this.dataModel.getValues();
+		if ((refIdx >= 0) && (refIdx < values.length))
+		{
+			final long[] timestamps = this.dataModel.getTimestamps();
 
-      int idx = refIdx;
-      do
-      {
-        idx--;
-      }
-      while ( ( idx >= 0 ) && ( ( values[idx] & mask ) == refValue ) );
-      // convert the found index back to "screen" values...
-      rect.x = toScaledScreenCoordinate( timestamps[Math.max( 0, idx )] ).x;
+			final int mask = (1 << row);
+			final int refValue = (values[refIdx] & mask);
 
-      idx = refIdx;
-      do
-      {
-        idx++;
-      }
-      while ( ( idx < values.length ) && ( ( values[idx] & mask ) == refValue ) );
-      // convert the found index back to "screen" values...
-      rect.width = toScaledScreenCoordinate( timestamps[Math.min( idx, timestamps.length - 1 )] ).x - rect.x;
-    }
+			int idx = refIdx;
+			do
+			{
+				idx--;
+			} while ((idx >= 0) && ((values[idx] & mask) == refValue));
+			// convert the found index back to "screen" values...
+			rect.x = toScaledScreenCoordinate(timestamps[Math.max(0, idx)]).x;
 
-    return rect;
-  }
+			idx = refIdx;
+			do
+			{
+				idx++;
+			} while ((idx < values.length) && ((values[idx] & mask) == refValue));
+			// convert the found index back to "screen" values...
+			rect.width = toScaledScreenCoordinate(timestamps[Math.min(idx, timestamps.length - 1)]).x - rect.x;
+		}
 
-  /**
-   * @param aCoordinate
-   * @return
-   */
-  public int getSignalRow( final Point aCoordinate )
-  {
-    final int signalWidth = this.dataModel.getWidth();
-    final int signalHeight = this.screenModel.getSignalHeight();
-    final int channelHeight = this.screenModel.getChannelHeight();
+		return rect;
+	}
 
-    final int row = ( aCoordinate.y - signalHeight ) / channelHeight;
-    if ( ( row < 0 ) || ( row > ( signalWidth - 1 ) ) )
-    {
-      return -1;
-    }
+	/**
+	 * @param aCoordinate
+	 * @return
+	 */
+	public int getSignalRow(final Point aCoordinate)
+	{
+		final int signalWidth = this.dataModel.getWidth();
+		final int signalHeight = this.screenModel.getSignalHeight();
+		final int channelHeight = this.screenModel.getChannelHeight();
 
-    final int realRow = this.screenModel.toRealRow( row );
-    return realRow;
-  }
+		final int row = (aCoordinate.y - signalHeight) / channelHeight;
+		if ((row < 0) || (row > (signalWidth - 1)))
+		{
+			return -1;
+		}
 
-  /**
-   * @param aPoint
-   * @return
-   */
-  public boolean hideHover()
-  {
-    this.arrowView.hideHover();
-    return false;
-  }
+		final int realRow = this.screenModel.toRealRow(row);
+		return realRow;
+	}
 
-  /**
-   * @return
-   */
-  public boolean isSnapModeEnabled()
-  {
-    return this.cursorView.isSnapModeEnabled();
-  }
+	/**
+	 * @param aPoint
+	 * @return
+	 */
+	public boolean hideHover()
+	{
+		this.arrowView.hideHover();
+		return false;
+	}
 
-  /**
-   * @param aPoint
-   */
-  public void moveHover( final Point aPoint )
-  {
-    final Rectangle signalHover = getSignalHover( convertToPointOf( this.modelView, aPoint ) );
-    this.arrowView.moveHover( signalHover );
-  }
+	/**
+	 * @return
+	 */
+	public boolean isSnapModeEnabled()
+	{
+		return this.cursorView.isSnapModeEnabled();
+	}
 
-  /**
-   * Moves a given sample row to another position.
-   * 
-   * @param aMovedRow
-   *          the real row that is to be moved;
-   * @param aInsertRow
-   *          the real row that the moved row is moved to.
-   */
-  public void moveSampleRows( final int aMovedRow, final int aInsertRow )
-  {
-    if ( aMovedRow == aInsertRow )
-    {
-      return;
-    }
+	/**
+	 * @param aPoint
+	 */
+	public void moveHover(final Point aPoint)
+	{
+		final Rectangle signalHover = getSignalHover(convertToPointOf(this.modelView, aPoint));
+		this.arrowView.moveHover(signalHover);
+	}
 
-    final int row = this.screenModel.toVirtualRow( aMovedRow );
-    final int newRow = this.screenModel.toVirtualRow( aInsertRow );
+	/**
+	 * Moves a given sample row to another position.
+	 * 
+	 * @param aMovedRow
+	 *          the real row that is to be moved;
+	 * @param aInsertRow
+	 *          the real row that the moved row is moved to.
+	 */
+	public void moveSampleRows(final int aMovedRow, final int aInsertRow)
+	{
+		if (aMovedRow == aInsertRow)
+		{
+			return;
+		}
 
-    this.screenModel.moveVirtualRows( row, newRow );
+		final int row = this.screenModel.toVirtualRow(aMovedRow);
+		final int newRow = this.screenModel.toVirtualRow(aInsertRow);
 
-    final JScrollPane scrollPane = ( JScrollPane )SwingUtilities.getAncestorOfClass( JScrollPane.class, this.arrowView );
-    if ( scrollPane != null )
-    {
-      final int signalHeight = this.screenModel.getSignalHeight();
-      final int channelHeight = this.screenModel.getChannelHeight();
+		this.screenModel.moveVirtualRows(row, newRow);
 
-      final Rectangle rect = scrollPane.getVisibleRect();
-      rect.y = ( row * channelHeight ) + signalHeight - 3;
-      rect.height = signalHeight + 6;
-      scrollPane.repaint( rect );
+		final JScrollPane scrollPane = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, this.arrowView);
+		if (scrollPane != null)
+		{
+			final int signalHeight = this.screenModel.getSignalHeight();
+			final int channelHeight = this.screenModel.getChannelHeight();
 
-      rect.y = ( newRow * channelHeight ) + signalHeight - 3;
-      rect.height = signalHeight + 6;
-      scrollPane.repaint( rect );
-    }
-  }
+			final Rectangle rect = scrollPane.getVisibleRect();
+			rect.y = (row * channelHeight) + signalHeight - 3;
+			rect.height = signalHeight + 6;
+			scrollPane.repaint(rect);
 
-  /**
-   * Recalculates the dimensions of the view.
-   */
-  public void recalculateDimensions()
-  {
-    final JScrollPane scrollPane = ( JScrollPane )SwingUtilities.getAncestorOfClass( JScrollPane.class, this.arrowView );
-    if ( scrollPane != null )
-    {
-      final int width = ( int )Math.min( Integer.MAX_VALUE, getAbsoluteLength() );
+			rect.y = (newRow * channelHeight) + signalHeight - 3;
+			rect.height = signalHeight + 6;
+			scrollPane.repaint(rect);
+		}
+	}
 
-      final int height = this.screenModel.getChannelHeight() * this.dataModel.getWidth()
-          + this.screenModel.getSignalHeight();
+	/**
+	 * Recalculates the dimensions of the view.
+	 */
+	public void recalculateDimensions()
+	{
+		final JScrollPane scrollPane = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, this.arrowView);
+		if (scrollPane != null)
+		{
+			final int width = (int) Math.min(Integer.MAX_VALUE, getAbsoluteLength());
 
-      final Dimension newSize = new Dimension( width, height );
+			final int height = this.screenModel.getChannelHeight() * this.dataModel.getWidth() + this.screenModel.getSignalHeight();
 
-      final JComponent view = ( JComponent )scrollPane.getViewport().getView();
-      view.setPreferredSize( newSize );
-      view.revalidate();
+			final Dimension newSize = new Dimension(width, height);
 
-      scrollPane.repaint();
-    }
-  }
+			final JComponent view = (JComponent) scrollPane.getViewport().getView();
+			view.setPreferredSize(newSize);
+			view.revalidate();
 
-  /**
-   * @param aPoint
-   * @return
-   */
-  public boolean showHover( final Point aPoint )
-  {
-    final Rectangle signalHover = getSignalHover( convertToPointOf( this.modelView, aPoint ) );
-    this.arrowView.showHover( signalHover );
+			scrollPane.repaint();
+		}
+	}
 
-    return true;
-  }
+	/**
+	 * @param aPoint
+	 * @return
+	 */
+	public boolean showHover(final Point aPoint)
+	{
+		final Rectangle signalHover = getSignalHover(convertToPointOf(this.modelView, aPoint));
+		this.arrowView.showHover(signalHover);
 
-  /**
-   * @param aTimestamp
-   * @return
-   */
-  public Point toScaledScreenCoordinate( final long aTimestamp )
-  {
-    final int xPos = ( int )( this.screenModel.getZoomFactor() * aTimestamp );
-    final int yPos = 0;
-    return new Point( xPos, yPos );
-  }
+		return true;
+	}
 
-  /**
-   * Finds the timestamp that corresponds to the X-position of the given
-   * coordinate.
-   * 
-   * @param aPoint
-   *          the screen coordinate to find a corresponding timestamp for,
-   *          cannot be <code>null</code>.
-   * @return a timestamp corresponding to the given coordinate, or -1 if no such
-   *         timestamp could be found.
-   */
-  public int toTimestampIndex( final Point aPoint )
-  {
-    return this.dataModel.getTimestampIndex( toUnscaledScreenCoordinate( aPoint ) );
-  }
+	/**
+	 * @param aTimestamp
+	 * @return
+	 */
+	public Point toScaledScreenCoordinate(final long aTimestamp)
+	{
+		final int xPos = (int) (this.screenModel.getZoomFactor() * aTimestamp);
+		final int yPos = 0;
+		return new Point(xPos, yPos);
+	}
 
-  /**
-   * @param aXpos
-   * @return
-   */
-  public int toUnscaledScreenCoordinate( final Point aPoint )
-  {
-    return ( int )Math.abs( aPoint.getX() / this.screenModel.getZoomFactor() );
-  }
+	/**
+	 * Finds the timestamp that corresponds to the X-position of the given
+	 * coordinate.
+	 * 
+	 * @param aPoint
+	 *          the screen coordinate to find a corresponding timestamp for,
+	 *          cannot be <code>null</code>.
+	 * @return a timestamp corresponding to the given coordinate, or -1 if no such
+	 *         timestamp could be found.
+	 */
+	public int toTimestampIndex(final Point aPoint)
+	{
+		return this.dataModel.getTimestampIndex(toUnscaledScreenCoordinate(aPoint));
+	}
 
-  /**
+	/**
+	 * @param aXpos
+	 * @return
+	 */
+	public int toUnscaledScreenCoordinate(final Point aPoint)
+	{
+		return (int) Math.ceil(Math.abs(aPoint.getX() / this.screenModel.getZoomFactor()));
+	}
+
+	/**
 	 * 
 	 */
-  public void zoomAll( final Dimension aViewSize )
-  {
-    this.screenModel.setZoomFactor( aViewSize.getWidth() / this.dataModel.getAbsoluteLength() );
+	public void zoomAll(final Dimension aViewSize)
+	{
+		this.screenModel.setZoomFactor(aViewSize.getWidth() / this.dataModel.getAbsoluteLength());
 
-    recalculateDimensions();
-  }
+		recalculateDimensions();
+	}
 
-  /**
-   * Zooms in with a factor 1.5
-   */
-  public void zoomIn()
-  {
-    zoomRelative( 1.5 );
+	/**
+	 * Zooms in with a factor 1.5
+	 */
+	public void zoomIn()
+	{
+		zoomRelative(1.5);
 
-    recalculateDimensions();
-  }
+		recalculateDimensions();
+	}
 
-  /**
+	/**
    * 
    */
-  public void zoomOriginal()
-  {
-    zoomAbsolute( 1.0 );
-    recalculateDimensions();
-  }
+	public void zoomOriginal()
+	{
+		zoomAbsolute(1.0);
+		recalculateDimensions();
+	}
 
-  /**
-   * Zooms out with a factor 1.5
-   */
-  public void zoomOut()
-  {
-    zoomRelative( 1.0 / 1.5 );
+	/**
+	 * Zooms out with a factor 1.5
+	 */
+	public void zoomOut()
+	{
+		zoomRelative(1.0 / 1.5);
 
-    recalculateDimensions();
-  }
+		recalculateDimensions();
+	}
 
-  /**
-   * @param aArrowView
-   */
-  final void setArrowView( final ArrowView aArrowView )
-  {
-    this.arrowView = aArrowView;
-  }
+	/**
+	 * @param aArrowView
+	 */
+	final void setArrowView(final ArrowView aArrowView)
+	{
+		this.arrowView = aArrowView;
+	}
 
-  /**
-   * @param aCursorView
-   */
-  final void setCursorView( final CursorView aCursorView )
-  {
-    this.cursorView = aCursorView;
-  }
+	/**
+	 * @param aCursorView
+	 */
+	final void setCursorView(final CursorView aCursorView)
+	{
+		this.cursorView = aCursorView;
+	}
 
-  /**
-   * @param aModelView
-   */
-  final void setModelView( final ModelView aModelView )
-  {
-    this.modelView = aModelView;
-  }
+	/**
+	 * @param aModelView
+	 */
+	final void setModelView(final ModelView aModelView)
+	{
+		this.modelView = aModelView;
+	}
 
-  /**
-   * @param aDestination
-   * @param aOriginal
-   * @return
-   */
-  private Point convertToPointOf( final Component aDestination, final Point aOriginal )
-  {
-    Component view = SwingUtilities.getAncestorOfClass( JScrollPane.class, aDestination );
-    if ( view instanceof JScrollPane )
-    {
-      view = ( ( JScrollPane )view ).getViewport().getView();
-    }
-    else
-    {
-      view = SwingUtilities.getRootPane( aDestination );
-    }
-    return SwingUtilities.convertPoint( view, aOriginal, aDestination );
-  }
+	/**
+	 * @param aDestination
+	 * @param aOriginal
+	 * @return
+	 */
+	private Point convertToPointOf(final Component aDestination, final Point aOriginal)
+	{
+		Component view = SwingUtilities.getAncestorOfClass(JScrollPane.class, aDestination);
+		if (view instanceof JScrollPane)
+		{
+			view = ((JScrollPane) view).getViewport().getView();
+		}
+		else
+		{
+			view = SwingUtilities.getRootPane(aDestination);
+		}
+		return SwingUtilities.convertPoint(view, aOriginal, aDestination);
+	}
 
-  /**
-   * @param aFactor
-   */
-  private void zoomAbsolute( final double aFactor )
-  {
-    this.screenModel.setZoomFactor( aFactor );
-    System.out.println( "Zoom factor = " + this.screenModel.getZoomFactor() );
-  }
+	/**
+	 * @param aFactor
+	 */
+	private void zoomAbsolute(final double aFactor)
+	{
+		this.screenModel.setZoomFactor(aFactor);
+		System.out.println("Zoom factor = " + this.screenModel.getZoomFactor());
+	}
 
-  /**
-   * @param aFactor
-   */
-  private void zoomRelative( final double aFactor )
-  {
-    final double factor = this.screenModel.getZoomFactor();
-    zoomAbsolute( aFactor * factor );
-  }
+	/**
+	 * @param aFactor
+	 */
+	private void zoomRelative(final double aFactor)
+	{
+		final double factor = this.screenModel.getZoomFactor();
+		zoomAbsolute(aFactor * factor);
+	}
 }
