@@ -54,14 +54,14 @@ public class Main
    */
   private void init()
   {
-    final Dimension dims = new Dimension( 1240, 600 );
+    final Dimension dims = new Dimension( 800, 600 );
 
     this.mainFrame = new JFrame( "JLayeredPane test" );
     this.mainFrame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
     this.mainFrame.setPreferredSize( dims );
     this.mainFrame.setSize( dims );
 
-    final DataModel model = new DataModel( 1024 * 4 /* * 1024 */);
+    final DataModel model = new DataModel( 1024 * 64 /* * 1024 */);
     this.controller = new ScreenController( model );
   }
 

@@ -25,7 +25,7 @@ public class ScreenModel
   public ScreenModel( final int aDataWidth )
   {
     this.signalHeight = 20;
-    this.channelHeight = 30;
+    this.channelHeight = 40;
     this.zoomFactor = 0.01;
 
     this.virtualRowMapping = new int[aDataWidth];

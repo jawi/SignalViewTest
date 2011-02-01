@@ -48,7 +48,7 @@ public class DataModel
     {
       for ( int i = 0; i < aSize; i++ )
       {
-        this.values[i] = ( i % 1024 ) + 2;
+        this.values[i] = ( i % 1024 );
         this.timestamps[i] = 100L * i;
       }
     }
