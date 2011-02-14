@@ -14,14 +14,14 @@ public class ScreenModel
   private double zoomFactor;
   private int signalHeight;
   private int channelHeight;
-
+  private boolean measurementMode;
   private final int[] virtualRowMapping;
 
   // CONSTRUCTORS
 
   /**
-	 * 
-	 */
+   * 
+   */
   public ScreenModel( final int aDataWidth )
   {
     this.signalHeight = 20;
@@ -90,6 +90,11 @@ public class ScreenModel
     return this.zoomFactor;
   }
 
+  public boolean isMeasurementMode()
+  {
+    return this.measurementMode;
+  }
+
   /**
    * Moves the given "old" row index to the new row index position.
    * 
@@ -109,6 +114,11 @@ public class ScreenModel
   public void setChannelHeight( final int aChannelHeight )
   {
     this.channelHeight = aChannelHeight;
+  }
+
+  public void setMeasurementMode( final boolean aEnabled )
+  {
+    this.measurementMode = aEnabled;
   }
 
   /**

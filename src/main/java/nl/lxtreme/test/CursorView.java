@@ -6,7 +6,7 @@ package nl.lxtreme.test;
 
 import java.awt.*;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 
 /**
@@ -21,8 +21,8 @@ public class CursorView extends JComponent
   // VARIABLES
 
   private final ScreenController controller;
-  private boolean snapMode;
-
+  private volatile boolean enabled;
+  private volatile boolean snapMode;
   private Point lastPoint;
 
   // CONSTRUCTORS
@@ -92,6 +92,18 @@ public class CursorView extends JComponent
   }
 
   /**
+   * Enables or disables the cursors.
+   * 
+   * @param aSelected
+   *          <code>true</code> to enable the cursors, <code>false</code> to
+   *          disable the cursors.
+   */
+  public void setCursorMode( final boolean aEnabled )
+  {
+    this.enabled = aEnabled;
+  }
+
+  /**
    * @param aSnapMode
    */
   public synchronized void setSnapMode( final boolean aSnapMode )
@@ -105,6 +117,11 @@ public class CursorView extends JComponent
   @Override
   protected void paintComponent( final Graphics aGraphics )
   {
+    if ( !this.enabled )
+    {
+      return;
+    }
+
     final Graphics2D g2d = ( Graphics2D )aGraphics.create();
 
     final Rectangle clip = aGraphics.getClipBounds();

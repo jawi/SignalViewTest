@@ -192,7 +192,7 @@ public class SampleViewComponent extends JPanel implements Scrollable
 
       if ( !this.showing )
       {
-        if ( aEvent.isControlDown() )
+        if ( this.controller.isMeasurementMode() )
         {
           this.showing = this.controller.showHover( point );
           setCursor( aEvent, CURSOR_HOVER );
@@ -211,7 +211,7 @@ public class SampleViewComponent extends JPanel implements Scrollable
       }
       else
       {
-        if ( !aEvent.isControlDown() )
+        if ( !this.controller.isMeasurementMode() )
         {
           this.showing = this.controller.hideHover();
           setCursor( aEvent, DEFAULT );

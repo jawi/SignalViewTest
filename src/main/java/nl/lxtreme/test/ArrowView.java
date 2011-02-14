@@ -6,7 +6,9 @@ package nl.lxtreme.test;
 
 import java.awt.*;
 
-import javax.swing.JComponent;
+import javax.swing.*;
+
+import nl.lxtreme.test.ScreenController.SignalHoverInfo;
 
 
 /**
@@ -23,7 +25,8 @@ public class ArrowView extends JComponent
 
   // VARIABLES
 
-  private volatile Rectangle rectangle;
+  private volatile Rectangle arrowRectangle;
+  private volatile int timestampIndex;
 
   // CONSTRUCTORS
 
@@ -48,31 +51,33 @@ public class ArrowView extends JComponent
   public void hideHover()
   {
     repaintPartially();
-    this.rectangle = null;
+    this.arrowRectangle = null;
   }
 
   /**
    * Moves the hover on screen.
    * 
-   * @param aRectangle
+   * @param aSignalHover
    *          the rectangle of the sample to draw, cannot be <code>null</code>.
    */
-  public void moveHover( final Rectangle aRectangle )
+  public void moveHover( final SignalHoverInfo aSignalHover )
   {
     repaintPartially();
-    this.rectangle = aRectangle;
+    this.arrowRectangle = aSignalHover.rectangle;
+    this.timestampIndex = aSignalHover.timestampIndex;
     repaintPartially();
   }
 
   /**
    * Shows the hover from screen.
    * 
-   * @param aRectangle
+   * @param aSignalHover
    *          the rectangle of the sample to draw, cannot be <code>null</code>.
    */
-  public void showHover( final Rectangle aRectangle )
+  public void showHover( final SignalHoverInfo aSignalHover )
   {
-    this.rectangle = aRectangle;
+    this.arrowRectangle = aSignalHover.rectangle;
+    this.timestampIndex = aSignalHover.timestampIndex;
     repaintPartially();
   }
 
@@ -82,7 +87,7 @@ public class ArrowView extends JComponent
   @Override
   protected void paintComponent( final Graphics aGraphics )
   {
-    if ( this.rectangle == null )
+    if ( this.arrowRectangle == null )
     {
       return;
     }
@@ -90,9 +95,9 @@ public class ArrowView extends JComponent
     final Graphics2D g2d = ( Graphics2D )aGraphics;
     final Rectangle clip = g2d.getClipBounds();
 
-    final int x1 = this.rectangle.x + 2;
-    final int x2 = this.rectangle.x + this.rectangle.width - 2;
-    final double yOffset = this.rectangle.getCenterY();
+    final int x1 = this.arrowRectangle.x + 2;
+    final int x2 = this.arrowRectangle.x + this.arrowRectangle.width - 2;
+    final double yOffset = this.arrowRectangle.getCenterY();
     final int y = ( int )( yOffset );
 
     if ( clip.contains( x1, y ) || clip.contains( x2, y ) )
@@ -100,6 +105,9 @@ public class ArrowView extends JComponent
       g2d.setColor( Color.YELLOW );
       drawDoubleHeadedArrow( g2d, x1, y, x2 );
     }
+
+    // TODO this should be something nice! ;)
+    g2d.drawString( Integer.toString( this.timestampIndex ), x1 + ( ( x2 - x1 ) / 2.0f ), y );
   }
 
   /**
@@ -224,12 +232,12 @@ public class ArrowView extends JComponent
    */
   private void repaintPartially()
   {
-    if ( this.rectangle != null )
+    if ( this.arrowRectangle != null )
     {
-      final int x = this.rectangle.x - 1;
-      final int y = this.rectangle.y - 1;
-      final int w = this.rectangle.width + 2;
-      final int h = this.rectangle.height + 2;
+      final int x = this.arrowRectangle.x - 1;
+      final int y = this.arrowRectangle.y - 10;
+      final int w = this.arrowRectangle.width + 2;
+      final int h = this.arrowRectangle.height + 10;
 
       repaint( x, y, w, h );
     }
