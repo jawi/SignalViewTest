@@ -25,8 +25,13 @@ public class ArrowView extends JComponent
 
   // VARIABLES
 
+  private final Rectangle textRectangle;
+  private final ScreenController controller;
+
   private volatile Rectangle arrowRectangle;
   private volatile int timestampIndex;
+  private volatile int startSampleIdx;
+  private volatile int endSampleIdx;
 
   // CONSTRUCTORS
 
@@ -38,12 +43,16 @@ public class ArrowView extends JComponent
    */
   public ArrowView( final ScreenController aController )
   {
-    setOpaque( false );
+    this.controller = aController;
+    this.textRectangle = new Rectangle();
 
     aController.setArrowView( this );
+
+    setOpaque( false );
   }
 
   // METHODS
+
 
   /**
    * Hides the hover from screen.
@@ -64,7 +73,9 @@ public class ArrowView extends JComponent
   {
     repaintPartially();
     this.arrowRectangle = aSignalHover.rectangle;
-    this.timestampIndex = aSignalHover.timestampIndex;
+    this.timestampIndex = aSignalHover.referenceSample;
+    this.startSampleIdx = aSignalHover.firstSample;
+    this.endSampleIdx = aSignalHover.lastSample;
     repaintPartially();
   }
 
@@ -77,7 +88,9 @@ public class ArrowView extends JComponent
   public void showHover( final SignalHoverInfo aSignalHover )
   {
     this.arrowRectangle = aSignalHover.rectangle;
-    this.timestampIndex = aSignalHover.timestampIndex;
+    this.timestampIndex = aSignalHover.referenceSample;
+    this.startSampleIdx = aSignalHover.firstSample;
+    this.endSampleIdx = aSignalHover.lastSample;
     repaintPartially();
   }
 
@@ -106,8 +119,25 @@ public class ArrowView extends JComponent
       drawDoubleHeadedArrow( g2d, x1, y, x2 );
     }
 
+    final FontMetrics fm = g2d.getFontMetrics();
+
+    final String text = Main.displayTime( this.controller.getTimeValue( this.endSampleIdx )
+        - this.controller.getTimeValue( this.startSampleIdx ) );
+
     // TODO this should be something nice! ;)
-    g2d.drawString( Integer.toString( this.timestampIndex ), x1 + ( ( x2 - x1 ) / 2.0f ), y );
+    this.textRectangle.x = ( int )( x1 + ( ( x2 - x1 ) / 2.0f ) ) + 8;
+    this.textRectangle.y = ( int )( yOffset + 8 );
+    this.textRectangle.width = fm.stringWidth( text ) + 4;
+    this.textRectangle.height = fm.getHeight() + 2;
+
+    g2d.setColor( Color.DARK_GRAY );
+    g2d.fillRect( this.textRectangle.x, this.textRectangle.y, this.textRectangle.width, this.textRectangle.height );
+    g2d.setColor( Color.LIGHT_GRAY );
+    g2d.drawRect( this.textRectangle.x, this.textRectangle.y, this.textRectangle.width, this.textRectangle.height );
+    g2d.setColor( Color.YELLOW );
+
+    g2d.drawString( text, this.textRectangle.x + 2,
+        ( int )( this.textRectangle.getCenterY() + ( fm.getHeight() / 2.0 ) - 4 ) );
   }
 
   /**
@@ -235,9 +265,18 @@ public class ArrowView extends JComponent
     if ( this.arrowRectangle != null )
     {
       final int x = this.arrowRectangle.x - 1;
-      final int y = this.arrowRectangle.y - 10;
+      final int y = this.arrowRectangle.y - 1;
       final int w = this.arrowRectangle.width + 2;
-      final int h = this.arrowRectangle.height + 10;
+      final int h = this.arrowRectangle.height + 2;
+
+      repaint( x, y, w, h );
+    }
+    if ( this.textRectangle != null )
+    {
+      final int x = this.textRectangle.x - 1;
+      final int y = this.textRectangle.y - 1;
+      final int w = this.textRectangle.width + 2;
+      final int h = this.textRectangle.height + 2;
 
       repaint( x, y, w, h );
     }

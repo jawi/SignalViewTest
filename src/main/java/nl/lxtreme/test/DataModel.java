@@ -3,6 +3,8 @@
  */
 package nl.lxtreme.test;
 
+import java.util.*;
+
 
 /**
  * @author jajans
@@ -14,6 +16,7 @@ public class DataModel
   private final int[] values;
   private final long[] timestamps;
   private final int[] cursors;
+  private int sampleRate;
 
   // CONSTRUCTORS
 
@@ -35,7 +38,7 @@ public class DataModel
       int value = 0xAA;
       for ( int i = 0; i < aSize; i++ )
       {
-        if ( ( i % 4000000 ) == 0 )
+        if ( ( i % 40 ) == 0 )
         {
           value = ( value == 0xAA ) ? 0x00 : 0xAA;
         }
@@ -43,6 +46,8 @@ public class DataModel
         this.values[i] = value;
         this.timestamps[i] = 2 * i;
       }
+
+      this.sampleRate = 100000000;
     }
     else
     {
@@ -51,6 +56,8 @@ public class DataModel
         this.values[i] = ( i % 1024 );
         this.timestamps[i] = 100L * i;
       }
+
+      this.sampleRate = 50000000;
     }
     this.cursors = new int[] { 100, 200 };
   }
@@ -135,6 +142,11 @@ public class DataModel
   public int[] getCursors()
   {
     return this.cursors;
+  }
+
+  public int getSampleRate()
+  {
+    return this.sampleRate;
   }
 
   public int getSize()

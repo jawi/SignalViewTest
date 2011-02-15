@@ -22,12 +22,17 @@ public final class ScreenController
   static class SignalHoverInfo
   {
     public final Rectangle rectangle;
-    public final int timestampIndex;
+    public final int firstSample;
+    public final int lastSample;
+    public final int referenceSample;
 
-    public SignalHoverInfo( final Rectangle aRectangle, final int aTimestampIndex )
+    public SignalHoverInfo( final Rectangle aRectangle, final int aFirstSample, final int aLastSample,
+        final int aReferenceSample )
     {
       this.rectangle = aRectangle;
-      this.timestampIndex = aTimestampIndex;
+      this.firstSample = aFirstSample;
+      this.lastSample = aLastSample;
+      this.referenceSample = aReferenceSample;
     }
   }
 
@@ -171,6 +176,14 @@ public final class ScreenController
 
     final int realRow = this.screenModel.toRealRow( row );
     return realRow;
+  }
+
+  public double getTimeValue( final int aSampleIdx )
+  {
+    final long[] timestamps = this.dataModel.getTimestamps();
+    final long relTime = timestamps[aSampleIdx];
+    final double absTime = relTime / (double)this.dataModel.getSampleRate();
+    return absTime;
   }
 
   /**
@@ -452,6 +465,9 @@ public final class ScreenController
     // cursor...
     final int refIdx = toTimestampIndex( aPoint );
 
+    int firstSample = -1;
+    int lastSample = -1;
+
     final int[] values = this.dataModel.getValues();
     if ( ( refIdx >= 0 ) && ( refIdx < values.length ) )
     {
@@ -467,7 +483,8 @@ public final class ScreenController
       }
       while ( ( idx >= 0 ) && ( ( values[idx] & mask ) == refValue ) );
       // convert the found index back to "screen" values...
-      rect.x = toScaledScreenCoordinate( timestamps[Math.max( 0, idx )] ).x;
+      firstSample = Math.max( 0, idx );
+      rect.x = toScaledScreenCoordinate( timestamps[firstSample] ).x;
 
       idx = refIdx;
       do
@@ -476,10 +493,11 @@ public final class ScreenController
       }
       while ( ( idx < values.length ) && ( ( values[idx] & mask ) == refValue ) );
       // convert the found index back to "screen" values...
-      rect.width = toScaledScreenCoordinate( timestamps[Math.min( idx, timestamps.length - 1 )] ).x - rect.x;
+      lastSample = Math.min( idx, timestamps.length - 1 );
+      rect.width = toScaledScreenCoordinate( timestamps[lastSample] ).x - rect.x;
     }
 
-    return new SignalHoverInfo( rect, refIdx );
+    return new SignalHoverInfo( rect, firstSample, lastSample, refIdx );
   }
 
   /**
