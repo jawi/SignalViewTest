@@ -19,20 +19,38 @@ public final class ScreenController
   /**
    * @author Quintor
    */
-  static class SignalHoverInfo
+  static class SignalHoverInfo implements Cloneable
   {
     public final Rectangle rectangle;
     public final int firstSample;
     public final int lastSample;
     public final int referenceSample;
+    public final int channelIdx;
 
     public SignalHoverInfo( final Rectangle aRectangle, final int aFirstSample, final int aLastSample,
-        final int aReferenceSample )
+        final int aReferenceSample, final int aChannelIdx )
     {
       this.rectangle = aRectangle;
       this.firstSample = aFirstSample;
       this.lastSample = aLastSample;
       this.referenceSample = aReferenceSample;
+      this.channelIdx = aChannelIdx;
+    }
+
+    /**
+     * @see java.lang.Object#clone()
+     */
+    @Override
+    public SignalHoverInfo clone()
+    {
+      try
+      {
+        return ( SignalHoverInfo )super.clone();
+      }
+      catch ( CloneNotSupportedException exception )
+      {
+        throw new RuntimeException( exception );
+      }
     }
   }
 
@@ -178,6 +196,24 @@ public final class ScreenController
     return realRow;
   }
 
+  /**
+   * 
+   * @param aStartIdx
+   * @param aEndIdx
+   * @return
+   */
+  public double getTimeInterval( final int aStartIdx, final int aEndIdx )
+  {
+    final long[] timestamps = this.dataModel.getTimestamps();
+    final long relTime = timestamps[aEndIdx] - timestamps[aStartIdx];
+    final double absTime = relTime / (double)this.dataModel.getSampleRate();
+    return absTime;
+  }
+
+  /**
+   * @param aSampleIdx
+   * @return
+   */
   public double getTimeValue( final int aSampleIdx )
   {
     final long[] timestamps = this.dataModel.getTimestamps();
@@ -482,8 +518,15 @@ public final class ScreenController
         idx--;
       }
       while ( ( idx >= 0 ) && ( ( values[idx] & mask ) == refValue ) );
+      // Search for the original value again, to complete the pulse...
+      do
+      {
+        idx--;
+      }
+      while ( ( idx >= 0 ) && ( ( values[idx] & mask ) != refValue ) );
+
       // convert the found index back to "screen" values...
-      firstSample = Math.max( 0, idx );
+      firstSample = Math.max( 0, idx + 1 );
       rect.x = toScaledScreenCoordinate( timestamps[firstSample] ).x;
 
       idx = refIdx;
@@ -492,12 +535,13 @@ public final class ScreenController
         idx++;
       }
       while ( ( idx < values.length ) && ( ( values[idx] & mask ) == refValue ) );
+
       // convert the found index back to "screen" values...
       lastSample = Math.min( idx, timestamps.length - 1 );
       rect.width = toScaledScreenCoordinate( timestamps[lastSample] ).x - rect.x;
     }
 
-    return new SignalHoverInfo( rect, firstSample, lastSample, refIdx );
+    return new SignalHoverInfo( rect, firstSample, lastSample, refIdx, virtualRow );
   }
 
   /**

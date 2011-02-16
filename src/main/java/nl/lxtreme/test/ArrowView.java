@@ -4,6 +4,8 @@
 package nl.lxtreme.test;
 
 
+import static nl.lxtreme.test.Main.*;
+
 import java.awt.*;
 
 import javax.swing.*;
@@ -26,12 +28,10 @@ public class ArrowView extends JComponent
   // VARIABLES
 
   private final Rectangle textRectangle;
+  private final Rectangle arrowRectangle;
   private final ScreenController controller;
 
-  private volatile Rectangle arrowRectangle;
-  private volatile int timestampIndex;
-  private volatile int startSampleIdx;
-  private volatile int endSampleIdx;
+  private volatile SignalHoverInfo signalHover;
 
   // CONSTRUCTORS
 
@@ -44,6 +44,8 @@ public class ArrowView extends JComponent
   public ArrowView( final ScreenController aController )
   {
     this.controller = aController;
+
+    this.arrowRectangle = new Rectangle();
     this.textRectangle = new Rectangle();
 
     aController.setArrowView( this );
@@ -53,14 +55,13 @@ public class ArrowView extends JComponent
 
   // METHODS
 
-
   /**
    * Hides the hover from screen.
    */
   public void hideHover()
   {
     repaintPartially();
-    this.arrowRectangle = null;
+    this.signalHover = null;
   }
 
   /**
@@ -72,10 +73,7 @@ public class ArrowView extends JComponent
   public void moveHover( final SignalHoverInfo aSignalHover )
   {
     repaintPartially();
-    this.arrowRectangle = aSignalHover.rectangle;
-    this.timestampIndex = aSignalHover.referenceSample;
-    this.startSampleIdx = aSignalHover.firstSample;
-    this.endSampleIdx = aSignalHover.lastSample;
+    this.signalHover = aSignalHover.clone();
     repaintPartially();
   }
 
@@ -87,10 +85,7 @@ public class ArrowView extends JComponent
    */
   public void showHover( final SignalHoverInfo aSignalHover )
   {
-    this.arrowRectangle = aSignalHover.rectangle;
-    this.timestampIndex = aSignalHover.referenceSample;
-    this.startSampleIdx = aSignalHover.firstSample;
-    this.endSampleIdx = aSignalHover.lastSample;
+    this.signalHover = aSignalHover.clone();
     repaintPartially();
   }
 
@@ -100,13 +95,16 @@ public class ArrowView extends JComponent
   @Override
   protected void paintComponent( final Graphics aGraphics )
   {
-    if ( this.arrowRectangle == null )
+    if ( this.signalHover == null )
     {
       return;
     }
 
     final Graphics2D g2d = ( Graphics2D )aGraphics;
     final Rectangle clip = g2d.getClipBounds();
+
+    //
+    this.arrowRectangle.setBounds( this.signalHover.rectangle );
 
     final int x1 = this.arrowRectangle.x + 2;
     final int x2 = this.arrowRectangle.x + this.arrowRectangle.width - 2;
@@ -121,23 +119,43 @@ public class ArrowView extends JComponent
 
     final FontMetrics fm = g2d.getFontMetrics();
 
-    final String text = Main.displayTime( this.controller.getTimeValue( this.endSampleIdx )
-        - this.controller.getTimeValue( this.startSampleIdx ) );
+    final int startIdx = this.signalHover.firstSample;
+    final int endIdx = this.signalHover.lastSample;
+    final int timestampIdx = this.signalHover.referenceSample;
+
+    final String pulseTime = displayTime( this.controller.getTimeInterval( startIdx, endIdx ) );
+    final String sampleTime = displayTime( this.controller.getTimeValue( timestampIdx ) );
+    final String channel = String.format( "Channel: %d", this.signalHover.channelIdx );
 
     // TODO this should be something nice! ;)
     this.textRectangle.x = ( int )( x1 + ( ( x2 - x1 ) / 2.0f ) ) + 8;
     this.textRectangle.y = ( int )( yOffset + 8 );
-    this.textRectangle.width = fm.stringWidth( text ) + 4;
-    this.textRectangle.height = fm.getHeight() + 2;
+    this.textRectangle.width = Math.max( fm.stringWidth( pulseTime ), fm.stringWidth( sampleTime ) ) + 4;
+    this.textRectangle.height = ( 3 * fm.getHeight() ) + 2;
+
+    // TODO this does not work correctly, the frame "runs away"...
+    // if ( !clip.contains( new Point( this.textRectangle.x +
+    // this.textRectangle.width, this.textRectangle.y ) ) )
+    // {
+    // System.out.println( "BEFORE CORRECTION = " + this.textRectangle.x +
+    // ", clip = " + clip );
+    // this.textRectangle.x = clip.width - this.textRectangle.width - 2;
+    // System.out.println( " AFTER CORRECTION = " + this.textRectangle.x +
+    // ", clip = " + clip );
+    // }
 
     g2d.setColor( Color.DARK_GRAY );
     g2d.fillRect( this.textRectangle.x, this.textRectangle.y, this.textRectangle.width, this.textRectangle.height );
     g2d.setColor( Color.LIGHT_GRAY );
     g2d.drawRect( this.textRectangle.x, this.textRectangle.y, this.textRectangle.width, this.textRectangle.height );
-    g2d.setColor( Color.YELLOW );
 
-    g2d.drawString( text, this.textRectangle.x + 2,
-        ( int )( this.textRectangle.getCenterY() + ( fm.getHeight() / 2.0 ) - 4 ) );
+    g2d.setColor( Color.YELLOW );
+    g2d.drawString( pulseTime, this.textRectangle.x + 2, ( int )( this.textRectangle.getCenterY()
+        + ( fm.getHeight() / 2.0 ) - 20 ) );
+    g2d.drawString( sampleTime, this.textRectangle.x + 2,
+        ( int )( this.textRectangle.getCenterY() + fm.getHeight() - 10 ) );
+    g2d.drawString( channel, this.textRectangle.x + 2,
+        ( int )( this.textRectangle.getCenterY() + 2 * fm.getHeight() - 8 ) );
   }
 
   /**
