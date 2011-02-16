@@ -15,131 +15,13 @@ import javax.swing.*;
  */
 public class Main
 {
-  // CONSTANTS
-
-  private static final double ZERO_TIME_THRESHOLD = 1.0e-16;
-
   // VARIABLES
 
   private ScreenController controller;
   private JFrame mainFrame;
   private JMenuBar menuBar;
 
-  /**
-   * Converts a given frequency (in Hertz, Hz) to something more readable for
-   * the user, like "10.0 kHz".
-   * 
-   * @param aFrequency
-   *          the frequency (in Hz) to convert to a display value.
-   * @return the display representation of the given frequency, never
-   *         <code>null</code>.
-   */
-  public static String displayFrequency( final double aFrequency )
-  {
-    final String[] unitStrs = { "Hz", "kHz", "MHz", "GHz", "THz" };
-    final double[] unitVals = { 1.0, 1.0e3, 1.0e6, 1.0e9, 1.0e12 };
-
-    int i = unitVals.length - 1;
-    for ( ; i >= 0; i-- )
-    {
-      if ( aFrequency >= unitVals[i] )
-      {
-        break;
-      }
-    }
-    i = Math.max( i, 0 );
-
-    return String.format( "%.3f %s", Double.valueOf( aFrequency / unitVals[i] ), unitStrs[i] );
-  }
-
-  /**
-   * Converts a given size (in bytes) to something more readable for the user,
-   * like "10K". The unit conversion is <em>always</em> done in binary (units of
-   * 1024).
-   * 
-   * @param aSize
-   *          the size (in bytes) to convert to a display value.
-   * @return the display representation of the given size, never
-   *         <code>null</code>.
-   */
-  public static String displaySize( final double aSize )
-  {
-    final String[] unitStrs = { "", "k", "M", "G", "T" };
-    final double[] unitVals = { 1.0, 1024.0, 1048576.0, 1073741824.0, 1099511627776.0 };
-
-    int i = unitVals.length - 1;
-    for ( ; i >= 0; i-- )
-    {
-      if ( aSize >= unitVals[i] )
-      {
-        break;
-      }
-    }
-    i = Math.max( i, 0 );
-
-    return String.format( "%d%s", Integer.valueOf( ( int )( aSize / unitVals[i] ) ), unitStrs[i] );
-  }
-
   // METHODS
-  /**
-   * Converts a given time (in seconds) to something more readable for the user,
-   * like "1.000 ms" (always a precision of three).
-   * 
-   * @param aTime
-   *          the time (in seconds) to convert to a given display value.
-   * @return the display representation of the given time, never
-   *         <code>null</code>.
-   */
-  public static String displayTime( final double aTime )
-  {
-    return displayTime( aTime, 3, " " );
-  }
-
-  /**
-   * Converts a given time (in seconds) to something more readable for the user,
-   * like "1.000 ms".
-   * 
-   * @param aTime
-   *          the time (in seconds) to convert to a given display value;
-   * @param aPrecision
-   *          the precision of the returned string (decimals after the
-   *          decimal-separator), should be >= 0 && <= 6.
-   * @return the display representation of the given time, never
-   *         <code>null</code>.
-   */
-  public static String displayTime( final double aTime, final int aPrecision, final String aSeparator )
-  {
-    if ( ( aPrecision < 0 ) || ( aPrecision > 6 ) )
-    {
-      throw new IllegalArgumentException( "Precision cannot be less than zero or greater than six." );
-    }
-    if ( aSeparator == null )
-    {
-      throw new IllegalArgumentException( "Separator cannot be null!" );
-    }
-
-    // \u03BC == Greek mu character
-    final String[] unitStrs = { "s", "ms", "\u03BCs", "ns", "ps" };
-    final double[] unitVals = { 1.0, 1.0e-3, 1.0e-6, 1.0e-9, 1.0e-12 };
-
-    double absTime = Math.abs( aTime );
-
-    int i = 0;
-    if ( absTime > ZERO_TIME_THRESHOLD )
-    {
-      for ( ; i < unitVals.length; i++ )
-      {
-        if ( absTime >= unitVals[i] )
-        {
-          break;
-        }
-      }
-      i = Math.min( i, unitVals.length - 1 );
-    }
-
-    final String format = "%." + aPrecision + "f" + aSeparator + "%s";
-    return String.format( format, Double.valueOf( aTime / unitVals[i] ), unitStrs[i] );
-  }
 
   /**
    * @param args

@@ -4,6 +4,9 @@
 package nl.lxtreme.test;
 
 
+import java.awt.*;
+
+
 /**
  * @author jajans
  */
@@ -16,6 +19,7 @@ public class ScreenModel
   private int channelHeight;
   private boolean measurementMode;
   private final int[] virtualRowMapping;
+  private final Color[] colors;
 
   // CONSTRUCTORS
 
@@ -34,6 +38,9 @@ public class ScreenModel
       // this.virtualRowMapping[i] = i;
       this.virtualRowMapping[i] = ( aDataWidth - 1 ) - i;
     }
+
+    this.colors = new Color[aDataWidth];
+    Utils.makeColorPalette( this.colors, aDataWidth );
   }
 
   // METHODS
@@ -72,6 +79,14 @@ public class ScreenModel
   public int getChannelHeight()
   {
     return this.channelHeight;
+  }
+
+  /**
+   * @return the colors
+   */
+  public Color getColor( final int aChannelIdx )
+  {
+    return this.colors[aChannelIdx];
   }
 
   /**
@@ -141,6 +156,15 @@ public class ScreenModel
    * @param aRowIdx
    * @return
    */
+  public int toRealRow( final int aRowIdx )
+  {
+    return this.virtualRowMapping[aRowIdx];
+  }
+
+  /**
+   * @param aRowIdx
+   * @return
+   */
   public int toVirtualRow( final int aRowIdx )
   {
     for ( int i = 0; i < this.virtualRowMapping.length; i++ )
@@ -151,14 +175,5 @@ public class ScreenModel
       }
     }
     return -1;
-  }
-
-  /**
-   * @param aRowIdx
-   * @return
-   */
-  public int toRealRow( final int aRowIdx )
-  {
-    return this.virtualRowMapping[aRowIdx];
   }
 }

@@ -190,8 +190,6 @@ public class ModelView extends JPanel
     final int[] x = new int[aSize];
     final int[] y = new int[aSize];
 
-    aCanvas.setColor( Color.GREEN.darker().darker() );
-
     final int signalHeight = screenModel.getSignalHeight();
     final int channelHeight = screenModel.getChannelHeight();
 
@@ -213,6 +211,7 @@ public class ModelView extends JPanel
         y[i] = dy + value;
       }
 
+      aCanvas.setColor( screenModel.getColor( b ) );
       aCanvas.drawPolyline( x, y, aSize );
     }
   }

@@ -4,7 +4,7 @@
 package nl.lxtreme.test;
 
 
-import static nl.lxtreme.test.Main.*;
+import static nl.lxtreme.test.Utils.*;
 
 import java.awt.*;
 
