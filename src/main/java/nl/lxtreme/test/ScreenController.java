@@ -192,12 +192,10 @@ public final class ScreenController
       return -1;
     }
 
-    final int realRow = this.screenModel.toRealRow( row );
-    return realRow;
+    return this.screenModel.toVirtualRow( row );
   }
 
   /**
-   * 
    * @param aStartIdx
    * @param aEndIdx
    * @return
@@ -206,7 +204,7 @@ public final class ScreenController
   {
     final long[] timestamps = this.dataModel.getTimestamps();
     final long relTime = timestamps[aEndIdx] - timestamps[aStartIdx];
-    final double absTime = relTime / (double)this.dataModel.getSampleRate();
+    final double absTime = relTime / ( double )this.dataModel.getSampleRate();
     return absTime;
   }
 
@@ -218,7 +216,7 @@ public final class ScreenController
   {
     final long[] timestamps = this.dataModel.getTimestamps();
     final long relTime = timestamps[aSampleIdx];
-    final double absTime = relTime / (double)this.dataModel.getSampleRate();
+    final double absTime = relTime / ( double )this.dataModel.getSampleRate();
     return absTime;
   }
 
@@ -273,10 +271,10 @@ public final class ScreenController
       return;
     }
 
-    final int row = this.screenModel.toVirtualRow( aMovedRow );
-    final int newRow = this.screenModel.toVirtualRow( aInsertRow );
+    final int row = this.screenModel.toRealRow( aMovedRow );
+    final int newRow = this.screenModel.toRealRow( aInsertRow );
 
-    this.screenModel.moveVirtualRows( row, newRow );
+    this.screenModel.moveRows( row, newRow );
 
     final JScrollPane scrollPane = ( JScrollPane )SwingUtilities.getAncestorOfClass( JScrollPane.class, this.arrowView );
     if ( scrollPane != null )
@@ -306,7 +304,7 @@ public final class ScreenController
       final int width = ( int )Math.min( Integer.MAX_VALUE, getAbsoluteLength() );
 
       final int height = this.screenModel.getChannelHeight() * this.dataModel.getWidth()
-      + this.screenModel.getSignalHeight();
+          + this.screenModel.getSignalHeight();
 
       final Dimension newSize = new Dimension( width, height );
 
@@ -481,16 +479,17 @@ public final class ScreenController
    */
   private SignalHoverInfo getSignalHover( final Point aPoint )
   {
+    final int signalWidth = this.dataModel.getWidth();
     final int signalHeight = this.screenModel.getSignalHeight();
     final int channelHeight = this.screenModel.getChannelHeight();
 
-    final int row = getSignalRow( aPoint );
-    if ( row < 0 )
+    final int virtualRow = ( aPoint.y - signalHeight ) / channelHeight;
+    if ( ( virtualRow < 0 ) || ( virtualRow > ( signalWidth - 1 ) ) )
     {
       return null;
     }
 
-    final int virtualRow = this.screenModel.toVirtualRow( row );
+    final int realRow = this.screenModel.toRealRow( virtualRow );
 
     final Rectangle rect = new Rectangle();
     rect.x = rect.width = 0;
@@ -509,7 +508,7 @@ public final class ScreenController
     {
       final long[] timestamps = this.dataModel.getTimestamps();
 
-      final int mask = ( 1 << row );
+      final int mask = ( 1 << realRow );
       final int refValue = ( values[refIdx] & mask );
 
       int idx = refIdx;
@@ -541,7 +540,7 @@ public final class ScreenController
       rect.width = toScaledScreenCoordinate( timestamps[lastSample] ).x - rect.x;
     }
 
-    return new SignalHoverInfo( rect, firstSample, lastSample, refIdx, virtualRow );
+    return new SignalHoverInfo( rect, firstSample, lastSample, refIdx, realRow );
   }
 
   /**

@@ -103,7 +103,7 @@ public class ScreenModel
    * @param aNewRowIdx
    *          the new (virtual) row to insert the "old" row to.
    */
-  public void moveVirtualRows( final int aOldRowIdx, final int aNewRowIdx )
+  public void moveRows( final int aOldRowIdx, final int aNewRowIdx )
   {
     shiftElements( this.virtualRowMapping, aOldRowIdx, aNewRowIdx );
   }
@@ -138,14 +138,14 @@ public class ScreenModel
   }
 
   /**
-   * @param aVirtualRowIdx
+   * @param aRowIdx
    * @return
    */
-  public int toRealRow( final int aVirtualRowIdx )
+  public int toVirtualRow( final int aRowIdx )
   {
     for ( int i = 0; i < this.virtualRowMapping.length; i++ )
     {
-      if ( this.virtualRowMapping[i] == aVirtualRowIdx )
+      if ( this.virtualRowMapping[i] == aRowIdx )
       {
         return i;
       }
@@ -154,11 +154,11 @@ public class ScreenModel
   }
 
   /**
-   * @param aRealRowIdx
+   * @param aRowIdx
    * @return
    */
-  public int toVirtualRow( final int aRealRowIdx )
+  public int toRealRow( final int aRowIdx )
   {
-    return this.virtualRowMapping[aRealRowIdx];
+    return this.virtualRowMapping[aRowIdx];
   }
 }

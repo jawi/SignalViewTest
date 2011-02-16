@@ -125,12 +125,12 @@ public class ArrowView extends JComponent
 
     final String pulseTime = displayTime( this.controller.getTimeInterval( startIdx, endIdx ) );
     final String sampleTime = displayTime( this.controller.getTimeValue( timestampIdx ) );
-    final String channel = String.format( "Channel: %d", this.signalHover.channelIdx );
+    final String channel = String.format( "Channel: %d", Integer.valueOf( this.signalHover.channelIdx ) );
 
-    // TODO this should be something nice! ;)
     this.textRectangle.x = ( int )( x1 + ( ( x2 - x1 ) / 2.0f ) ) + 8;
     this.textRectangle.y = ( int )( yOffset + 8 );
-    this.textRectangle.width = Math.max( fm.stringWidth( pulseTime ), fm.stringWidth( sampleTime ) ) + 4;
+    this.textRectangle.width = Math.max( fm.stringWidth( channel ),
+        Math.max( fm.stringWidth( pulseTime ), fm.stringWidth( sampleTime ) ) ) + 4;
     this.textRectangle.height = ( 3 * fm.getHeight() ) + 2;
 
     // TODO this does not work correctly, the frame "runs away"...

@@ -62,7 +62,7 @@ public class ModelView extends JPanel
             // NO-op
           }
 
-          if ( ( realRow == null ) || ( realRow < 0 ) )
+          if ( ( realRow == null ) || ( realRow.intValue() < 0 ) )
           {
             return;
           }
@@ -70,7 +70,7 @@ public class ModelView extends JPanel
           final Point coordinate = ( Point )aEvent.getLocation().clone();
           final int newRealRow = this._controller.getSignalRow( coordinate );
 
-          this._controller.moveSampleRows( realRow, newRealRow );
+          this._controller.moveSampleRows( realRow.intValue(), newRealRow );
 
           aEvent.dropComplete( true );
           loop = false;
@@ -200,7 +200,7 @@ public class ModelView extends JPanel
     {
       final int mask = ( 1 << b );
       // determine where we really should draw the signal...
-      final int dy = signalHeight + ( channelHeight * screenModel.toRealRow( b ) );
+      final int dy = signalHeight + ( channelHeight * screenModel.toVirtualRow( b ) );
 
       for ( int i = 0; i < aSize; i++ )
       {
