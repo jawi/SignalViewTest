@@ -1,7 +1,7 @@
 /**
  * 
  */
-package nl.lxtreme.test;
+package nl.lxtreme.test.view;
 
 
 import java.awt.*;
@@ -12,7 +12,7 @@ import javax.swing.*;
 /**
  * @author jajans
  */
-public class CursorView extends JComponent
+class CursorView extends JComponent
 {
   // CONSTANTS
 

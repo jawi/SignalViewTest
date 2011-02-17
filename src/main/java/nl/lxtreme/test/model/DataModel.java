@@ -1,7 +1,7 @@
 /**
  * 
  */
-package nl.lxtreme.test;
+package nl.lxtreme.test.model;
 
 import java.util.*;
 

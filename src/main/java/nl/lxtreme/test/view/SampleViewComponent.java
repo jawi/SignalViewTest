@@ -1,7 +1,7 @@
 /**
  * 
  */
-package nl.lxtreme.test;
+package nl.lxtreme.test.view;
 
 
 import java.awt.*;
@@ -10,6 +10,7 @@ import java.awt.event.*;
 
 import javax.swing.*;
 
+import nl.lxtreme.test.*;
 import nl.lxtreme.test.dnd.*;
 
 

@@ -1,18 +1,20 @@
 /**
  * 
  */
-package nl.lxtreme.test;
+package nl.lxtreme.test.view;
 
 
 import java.awt.*;
 
 import javax.swing.*;
 
+import nl.lxtreme.test.model.*;
+
 
 /**
  * @author jawi
  */
-public class RowLabelsView extends JComponent
+class RowLabelsView extends JComponent
 {
   // CONSTANTS
 
@@ -95,13 +97,12 @@ public class RowLabelsView extends JComponent
         canvas.setColor( screenModel.getColor( b ) );
         canvas.drawString( label, labelXpos, labelYpos );
 
-        int indexXPos = ( clip.width - indexFm.stringWidth( indexStr ) - 2 );
-        int indexYPos = dy + textYpos;
+        int indexXpos = ( clip.width - indexFm.stringWidth( indexStr ) - 2 );
+        int indexYpos = dy + textYpos;
 
         // paint the channel number below the label
         canvas.setFont( this.indexFont );
-        canvas.drawString( indexStr, indexXPos, indexYPos );
-        canvas.setFont( this.labelFont );
+        canvas.drawString( indexStr, indexXpos, indexYpos );
       }
     }
     finally

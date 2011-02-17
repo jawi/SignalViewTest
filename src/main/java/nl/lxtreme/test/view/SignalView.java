@@ -1,7 +1,7 @@
 /**
  * 
  */
-package nl.lxtreme.test;
+package nl.lxtreme.test.view;
 
 
 import java.awt.*;
@@ -10,13 +10,14 @@ import java.awt.dnd.*;
 
 import javax.swing.*;
 
-import nl.lxtreme.test.dnd.SampleRowTransferable;
+import nl.lxtreme.test.dnd.*;
+import nl.lxtreme.test.model.*;
 
 
 /**
  * @author jajans
  */
-public class SignalView extends JPanel
+class SignalView extends JPanel
 {
   // INNER TYPES
 

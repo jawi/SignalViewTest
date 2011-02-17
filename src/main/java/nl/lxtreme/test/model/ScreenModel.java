@@ -1,10 +1,13 @@
 /**
  * 
  */
-package nl.lxtreme.test;
+package nl.lxtreme.test.model;
 
 
 import java.awt.*;
+
+import nl.lxtreme.test.*;
+import nl.lxtreme.test.model.*;
 
 
 /**

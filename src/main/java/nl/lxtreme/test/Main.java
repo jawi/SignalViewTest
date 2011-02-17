@@ -9,6 +9,9 @@ import java.awt.event.*;
 
 import javax.swing.*;
 
+import nl.lxtreme.test.model.*;
+import nl.lxtreme.test.view.*;
+
 
 /**
  * @author jajans

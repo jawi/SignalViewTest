@@ -1,7 +1,7 @@
 /**
  * 
  */
-package nl.lxtreme.test;
+package nl.lxtreme.test.view;
 
 
 import static nl.lxtreme.test.Utils.*;
@@ -10,13 +10,13 @@ import java.awt.*;
 
 import javax.swing.*;
 
-import nl.lxtreme.test.ScreenController.SignalHoverInfo;
+import nl.lxtreme.test.view.ScreenController.SignalHoverInfo;
 
 
 /**
  * @author jajans
  */
-public class ArrowView extends JComponent
+class ArrowView extends JComponent
 {
   // CONSTANTS
 
