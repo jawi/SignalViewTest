@@ -56,6 +56,36 @@ public class ArrowView extends JComponent
   // METHODS
 
   /**
+   * Ensures that the given rectangle is within the given view boundaries,
+   * moving the location of the rectangle if needed. Note that the width and
+   * height of the given rectangle are <em>not</em> modified.
+   * 
+   * @param aRectangle
+   *          the rectangle to move within the given view boundaries;
+   * @param aViewBounds
+   *          the view boundaries to move the rectangle in.
+   */
+  private static void ensureRectangleWithinBounds( final Rectangle aRectangle, final Rectangle aViewBounds )
+  {
+    if ( aRectangle.x < aViewBounds.x )
+    {
+      aRectangle.x = aViewBounds.x;
+    }
+    else if ( aRectangle.x - aViewBounds.x + aRectangle.width > aViewBounds.width )
+    {
+      aRectangle.x = aViewBounds.x + Math.max( 0, aViewBounds.width - aRectangle.width - 4 );
+    }
+    if ( aRectangle.y < aViewBounds.y )
+    {
+      aRectangle.y = aViewBounds.y;
+    }
+    else if ( aRectangle.y - aViewBounds.y + aRectangle.height > aViewBounds.height )
+    {
+      aRectangle.y = aViewBounds.y + Math.max( 0, aViewBounds.height - aRectangle.height - 4 );
+    }
+  }
+
+  /**
    * Hides the hover from screen.
    */
   public void hideHover()
@@ -133,16 +163,8 @@ public class ArrowView extends JComponent
         Math.max( fm.stringWidth( pulseTime ), fm.stringWidth( sampleTime ) ) ) + 4;
     this.textRectangle.height = ( 3 * fm.getHeight() ) + 2;
 
-    // TODO this does not work correctly, the frame "runs away"...
-    // if ( !clip.contains( new Point( this.textRectangle.x +
-    // this.textRectangle.width, this.textRectangle.y ) ) )
-    // {
-    // System.out.println( "BEFORE CORRECTION = " + this.textRectangle.x +
-    // ", clip = " + clip );
-    // this.textRectangle.x = clip.width - this.textRectangle.width - 2;
-    // System.out.println( " AFTER CORRECTION = " + this.textRectangle.x +
-    // ", clip = " + clip );
-    // }
+    // Fit as much of the tooltip on screen as possible...
+    ensureRectangleWithinBounds( this.textRectangle, getViewBounds() );
 
     g2d.setColor( Color.DARK_GRAY );
     g2d.fillRect( this.textRectangle.x, this.textRectangle.y, this.textRectangle.width, this.textRectangle.height );
@@ -273,6 +295,31 @@ public class ArrowView extends JComponent
     {
       g2d.dispose();
     }
+  }
+
+  /**
+   * Returns the view boundaries.
+   * 
+   * @return a view boundaries, never <code>null</code>.
+   */
+  private Rectangle getViewBounds()
+  {
+    Component comp = SwingUtilities.getAncestorOfClass( JViewport.class, this );
+    if ( comp == null )
+    {
+      comp = this;
+    }
+
+    final Rectangle result = comp.getBounds();
+    final Insets screenInsets = Toolkit.getDefaultToolkit().getScreenInsets( comp.getGraphicsConfiguration() );
+
+    // Take into account screen insets, decrease viewport
+    result.x += screenInsets.left;
+    result.y += screenInsets.top;
+    result.width -= ( screenInsets.left + screenInsets.right );
+    result.height -= ( screenInsets.top + screenInsets.bottom );
+
+    return result;
   }
 
   /**
