@@ -67,7 +67,7 @@ public final class ScreenController
   private final DataModel dataModel;
   private final ScreenModel screenModel;
 
-  private ModelView modelView;
+  private SignalView modelView;
   private CursorView cursorView;
   private ArrowView arrowView;
 
@@ -443,7 +443,7 @@ public final class ScreenController
   /**
    * @param aModelView
    */
-  final void setModelView( final ModelView aModelView )
+  final void setSignalView( final SignalView aModelView )
   {
     this.modelView = aModelView;
   }

@@ -16,7 +16,7 @@ import nl.lxtreme.test.dnd.SampleRowTransferable;
 /**
  * @author jajans
  */
-public class ModelView extends JPanel
+public class SignalView extends JPanel
 {
   // INNER TYPES
 
@@ -27,7 +27,7 @@ public class ModelView extends JPanel
   {
     // VARIABLES
 
-    private final ScreenController _controller = ModelView.this.controller;
+    private final ScreenController _controller = SignalView.this.controller;
 
     // METHODS
 
@@ -95,7 +95,7 @@ public class ModelView extends JPanel
    * @param aController
    *          the controller to use, cannot be <code>null</code>.
    */
-  public ModelView( final ScreenController aController )
+  public SignalView( final ScreenController aController )
   {
     this.controller = aController;
 
@@ -105,7 +105,7 @@ public class ModelView extends JPanel
     // setDebugGraphicsOptions( DebugGraphics.LOG_OPTION );
     // DebugGraphics.setLogStream( System.err );
 
-    this.controller.setModelView( this );
+    this.controller.setSignalView( this );
 
     final DnDTargetController targetController = new DnDTargetController();
     setDropTarget( new DropTarget( this, targetController ) );

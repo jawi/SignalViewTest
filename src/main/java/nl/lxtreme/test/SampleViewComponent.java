@@ -272,7 +272,7 @@ public class SampleViewComponent extends JPanel implements Scrollable
 
   private final ScreenController controller;
 
-  private final ModelView modelView;
+  private final SignalView modelView;
   private final CursorView cursorView;
   private final ArrowView arrowView;
 
@@ -290,7 +290,7 @@ public class SampleViewComponent extends JPanel implements Scrollable
 
     this.controller = aController;
 
-    this.modelView = new ModelView( this.controller );
+    this.modelView = new SignalView( this.controller );
     this.cursorView = new CursorView( this.controller );
     this.arrowView = new ArrowView( this.controller );
 
@@ -321,6 +321,8 @@ public class SampleViewComponent extends JPanel implements Scrollable
 
     final DragSource dragSource = DragSource.getDefaultDragSource();
     dragSource.createDefaultDragGestureRecognizer( this, DnDConstants.ACTION_COPY, listener );
+
+    configureEnclosingScrollPane();
 
     super.addNotify();
   }
@@ -415,23 +417,83 @@ public class SampleViewComponent extends JPanel implements Scrollable
     {
       final long endTime = System.nanoTime();
       final long renderTime = endTime - startTime;
-      System.out.print( "Rendering time = " );
-      if ( renderTime >= 1000000.0 )
+      System.out.println( "Rendering time = " + Utils.displayTime( renderTime / 1.0e9 ) );
+    }
+  }
+
+  /**
+   * @see javax.swing.JComponent#removeNotify()
+   */
+  @Override
+  public void removeNotify()
+  {
+    unconfigureEnclosingScrollPane();
+
+    super.removeNotify();
+  }
+
+  /**
+   * If this component is the <code>viewportView</code> of an enclosing
+   * <code>JScrollPane</code> (the usual situation), configure this
+   * <code>ScrollPane</code> by, amongst other things, installing the diagram's
+   * <code>timeline</code> as the <code>columnHeaderView</code> of the scroll
+   * pane.
+   * 
+   * @see #addNotify
+   */
+  private void configureEnclosingScrollPane()
+  {
+    final Container p = getParent();
+    if ( p instanceof JViewport )
+    {
+      final Container gp = p.getParent();
+      if ( gp instanceof JScrollPane )
       {
-        System.out.print( renderTime / 1000000.0 );
-        System.out.print( "m" );
+        final JScrollPane scrollPane = ( JScrollPane )gp;
+        // Make certain we are the viewPort's view and not, for
+        // example, the rowHeaderView of the scrollPane -
+        // an implementor of fixed columns might do this.
+        final JViewport viewport = scrollPane.getViewport();
+        if ( ( viewport == null ) || ( viewport.getView() != this ) )
+        {
+          return;
+        }
+
+        // scrollPane.setColumnHeaderView( this.timeLine );
+        scrollPane.setRowHeaderView( new RowLabelsView( this.controller ) );
       }
-      else if ( renderTime >= 1000.0 )
+    }
+  }
+
+  /**
+   * Reverses the effect of <code>configureEnclosingScrollPane</code> by
+   * replacing the <code>columnHeaderView</code> of the enclosing scroll pane
+   * with <code>null</code>.
+   * 
+   * @see #removeNotify
+   * @see #configureEnclosingScrollPane
+   */
+  private void unconfigureEnclosingScrollPane()
+  {
+    final Container p = getParent();
+    if ( p instanceof JViewport )
+    {
+      final Container gp = p.getParent();
+      if ( gp instanceof JScrollPane )
       {
-        System.out.print( renderTime / 1000.0 );
-        System.out.print( "\u00B5" );
+        final JScrollPane scrollPane = ( JScrollPane )gp;
+        // Make certain we are the viewPort's view and not, for
+        // example, the rowHeaderView of the scrollPane -
+        // an implementor of fixed columns might do this.
+        final JViewport viewport = scrollPane.getViewport();
+        if ( ( viewport == null ) || ( viewport.getView() != this ) )
+        {
+          return;
+        }
+        scrollPane.setColumnHeaderView( null );
+        scrollPane.setRowHeaderView( null );
+        scrollPane.setCorner( ScrollPaneConstants.UPPER_LEADING_CORNER, null );
       }
-      else
-      {
-        System.out.print( renderTime / 1000.0 );
-        System.out.print( "n" );
-      }
-      System.out.println( "s." );
     }
   }
 }

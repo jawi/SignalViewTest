@@ -153,9 +153,9 @@ public class ArrowView extends JComponent
     final int endIdx = this.signalHover.lastSample;
     final int timestampIdx = this.signalHover.referenceSample;
 
-    final String pulseTime = displayTime( this.controller.getTimeInterval( startIdx, endIdx ) );
-    final String sampleTime = displayTime( this.controller.getTimeValue( timestampIdx ) );
-    final String channel = String.format( "Channel: %d", Integer.valueOf( this.signalHover.channelIdx ) );
+    final String pulseTime = "Width: " + displayTime( this.controller.getTimeInterval( startIdx, endIdx ) );
+    final String sampleTime = "Time: " + displayTime( this.controller.getTimeValue( timestampIdx ) );
+    final String channel = "Channel: " + String.format( "Channel: %d", Integer.valueOf( this.signalHover.channelIdx ) );
 
     this.textRectangle.x = ( int )( x1 + ( ( x2 - x1 ) / 2.0f ) ) + 8;
     this.textRectangle.y = ( int )( yOffset + 8 );
@@ -318,6 +318,10 @@ public class ArrowView extends JComponent
     result.y += screenInsets.top;
     result.width -= ( screenInsets.left + screenInsets.right );
     result.height -= ( screenInsets.top + screenInsets.bottom );
+    // Make sure the width of this component is taken into account...
+    result.width = Math.min( getWidth(), result.width );
+    // Make sure the height of this component is taken into account...
+    result.height = Math.min( getHeight(), result.height );
 
     return result;
   }

@@ -20,6 +20,7 @@ public class ScreenModel
   private boolean measurementMode;
   private final int[] virtualRowMapping;
   private final Color[] colors;
+  private final String[] channelLabels;
 
   // CONSTRUCTORS
 
@@ -41,6 +42,12 @@ public class ScreenModel
 
     this.colors = new Color[aDataWidth];
     Utils.makeColorPalette( this.colors, aDataWidth );
+
+    this.channelLabels = new String[aDataWidth];
+    for ( int i = 0; i < this.channelLabels.length; i++ )
+    {
+      this.channelLabels[i] = String.format("Channel %d", i);
+    }
   }
 
   // METHODS
@@ -79,6 +86,15 @@ public class ScreenModel
   public int getChannelHeight()
   {
     return this.channelHeight;
+  }
+
+  /**
+   * @param aChannelIdx
+   * @return
+   */
+  public String getChannelLabel( final int aChannelIdx )
+  {
+    return this.channelLabels[aChannelIdx];
   }
 
   /**
