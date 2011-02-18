@@ -265,6 +265,8 @@ public class SampleViewComponent extends JPanel implements Scrollable
 
   private static final long serialVersionUID = 1L;
 
+  private static final boolean DEBUG = false;
+
   private static final Cursor DEFAULT = Cursor.getDefaultCursor();
   private static final Cursor CURSOR_HOVER = Cursor.getPredefinedCursor( Cursor.CROSSHAIR_CURSOR );
   private static final Cursor CURSOR_MOVE_CURSOR = Cursor.getPredefinedCursor( Cursor.MOVE_CURSOR );
@@ -409,16 +411,23 @@ public class SampleViewComponent extends JPanel implements Scrollable
   @Override
   public void paint( final Graphics aGraphics )
   {
-    final long startTime = System.nanoTime();
-    try
+    if ( DEBUG )
+    {
+      final long startTime = System.nanoTime();
+      try
+      {
+        super.paint( aGraphics );
+      }
+      finally
+      {
+        final long endTime = System.nanoTime();
+        final long renderTime = endTime - startTime;
+        System.out.println( "Rendering time = " + Utils.displayTime( renderTime / 1.0e9 ) );
+      }
+    }
+    else
     {
       super.paint( aGraphics );
-    }
-    finally
-    {
-      final long endTime = System.nanoTime();
-      final long renderTime = endTime - startTime;
-      System.out.println( "Rendering time = " + Utils.displayTime( renderTime / 1.0e9 ) );
     }
   }
 

@@ -7,7 +7,6 @@ package nl.lxtreme.test.model;
 import java.awt.*;
 
 import nl.lxtreme.test.*;
-import nl.lxtreme.test.model.*;
 
 
 /**
@@ -15,6 +14,31 @@ import nl.lxtreme.test.model.*;
  */
 public class ScreenModel
 {
+  // CONSTANTS
+
+  private static final Color[] SALEAE_COLORS = { //
+    Utils.parseColor( "000000" ), //
+    Utils.parseColor( "8B4513" ), //
+    Utils.parseColor( "FF0000" ), //
+    Utils.parseColor( "FFA500" ), //
+    Utils.parseColor( "FFFF00" ), //
+    Utils.parseColor( "00FF00" ), //
+    Utils.parseColor( "0000FF" ), //
+    Utils.parseColor( "A020F0" ), //
+    Utils.parseColor( "CDC9C9" ) //
+  };
+  private static final Color[] OLS_COLORS = { //
+    Utils.parseColor( "000000" ), //
+    Utils.parseColor( "FFFFFF" ), //
+    Utils.parseColor( "00FF00" ), //
+    Utils.parseColor( "FF0000" ), //
+    Utils.parseColor( "0000FF" ), //
+    Utils.parseColor( "00FF00" ), //
+    Utils.parseColor( "FFFF00" ), //
+    Utils.parseColor( "0000FF" ), //
+    Utils.parseColor( "FF0000" ) //
+  };
+
   // VARIABLES
 
   private double zoomFactor;
@@ -39,12 +63,11 @@ public class ScreenModel
     this.virtualRowMapping = new int[aDataWidth];
     for ( int i = 0; i < aDataWidth; i++ )
     {
-      // this.virtualRowMapping[i] = i;
-      this.virtualRowMapping[i] = ( aDataWidth - 1 ) - i;
+      this.virtualRowMapping[i] = i;
     }
 
     this.colors = new Color[aDataWidth];
-    Utils.makeColorPalette( this.colors, aDataWidth );
+    System.arraycopy( SALEAE_COLORS, 0, this.colors, 0, this.colors.length );
 
     this.channelLabels = new String[aDataWidth];
     for ( int i = 0; i < this.channelLabels.length; i++ )
