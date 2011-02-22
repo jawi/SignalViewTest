@@ -193,19 +193,22 @@ class SignalView extends JPanel
 
     final int signalHeight = screenModel.getSignalHeight();
     final int channelHeight = screenModel.getChannelHeight();
+    // Where is the signal to be drawn?
+    final int signalOffset = screenModel.getSignalOffset();
 
     final int width = dataModel.getWidth();
     for ( int b = 0; b < width; b++ )
     {
       final int mask = ( 1 << b );
       // determine where we really should draw the signal...
-      final int dy = signalHeight + ( channelHeight * screenModel.toVirtualRow( b ) );
+      final int dy = signalOffset + ( channelHeight * screenModel.toVirtualRow( b ) );
 
       for ( int i = 0; i < aSize; i++ )
       {
         final int sampleIdx = i + aStartSampleIdx;
 
-        final int value = ( values[sampleIdx] & mask ) == 0 ? 0 : signalHeight;
+        final int sampleValue = ( ( values[sampleIdx] & mask ) >>> b ) & 0x01;
+        final int value = ( signalHeight * ( 1 - sampleValue ) );
         final long timestamp = timestamps[sampleIdx];
 
         x[i] = this.controller.toScaledScreenCoordinate( timestamp ).x;

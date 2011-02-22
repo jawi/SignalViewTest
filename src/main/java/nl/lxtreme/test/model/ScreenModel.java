@@ -14,6 +14,16 @@ import nl.lxtreme.test.*;
  */
 public class ScreenModel
 {
+  // INNER TYPES
+
+  /**
+   * @author jawi
+   */
+  public static enum SignalAlignment
+  {
+    TOP, BOTTOM, CENTER;
+  }
+
   // CONSTANTS
 
   private static final Color[] SALEAE_COLORS = { //
@@ -48,6 +58,7 @@ public class ScreenModel
   private final int[] virtualRowMapping;
   private final Color[] colors;
   private final String[] channelLabels;
+  private SignalAlignment signalAlignment;
 
   // CONSTRUCTORS
 
@@ -60,6 +71,8 @@ public class ScreenModel
     this.channelHeight = 40;
     this.zoomFactor = 0.01;
 
+    this.signalAlignment = SignalAlignment.CENTER;
+
     this.virtualRowMapping = new int[aDataWidth];
     for ( int i = 0; i < aDataWidth; i++ )
     {
@@ -67,12 +80,28 @@ public class ScreenModel
     }
 
     this.colors = new Color[aDataWidth];
-    System.arraycopy( SALEAE_COLORS, 0, this.colors, 0, this.colors.length );
+    final boolean value = true;
+    if ( value )
+    {
+      for ( int i = 0; i < aDataWidth; i++ )
+      {
+        int idx = ( i % ( OLS_COLORS.length - 1 ) ) + 1;
+        this.colors[i] = OLS_COLORS[idx];
+      }
+    }
+    else
+    {
+      for ( int i = 0; i < aDataWidth; i++ )
+      {
+        int idx = ( i % ( SALEAE_COLORS.length - 1 ) ) + 1;
+        this.colors[i] = SALEAE_COLORS[idx];
+      }
+    }
 
     this.channelLabels = new String[aDataWidth];
     for ( int i = 0; i < this.channelLabels.length; i++ )
     {
-      this.channelLabels[i] = String.format("Channel %d", i);
+      this.channelLabels[i] = String.format( "Channel %c", ( i + 'A' ) );
     }
   }
 
@@ -134,9 +163,41 @@ public class ScreenModel
   /**
    * @return
    */
+  public SignalAlignment getSignalAlignment()
+  {
+    return this.signalAlignment;
+  }
+
+  /**
+   * @return
+   */
   public int getSignalHeight()
   {
     return this.signalHeight;
+  }
+
+  /**
+   * Returns the signal offset.
+   * 
+   * @return a signal offset, >= 0.
+   * @see #getSignalAlignment()
+   */
+  public int getSignalOffset()
+  {
+    final int signalOffset;
+    if ( SignalAlignment.BOTTOM.equals( getSignalAlignment() ) )
+    {
+      signalOffset = ( this.channelHeight - this.signalHeight ) - 2;
+    }
+    else if ( SignalAlignment.CENTER.equals( getSignalAlignment() ) )
+    {
+      signalOffset = ( int )( ( this.channelHeight - this.signalHeight ) / 2.0 );
+    }
+    else
+    {
+      signalOffset = 1;
+    }
+    return signalOffset;
   }
 
   /**
@@ -176,6 +237,14 @@ public class ScreenModel
   public void setMeasurementMode( final boolean aEnabled )
   {
     this.measurementMode = aEnabled;
+  }
+
+  /**
+   * @param aSignalAlignment
+   */
+  public void setSignalAlignment( final SignalAlignment aSignalAlignment )
+  {
+    this.signalAlignment = aSignalAlignment;
   }
 
   /**

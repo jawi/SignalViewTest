@@ -286,11 +286,11 @@ public final class ScreenController
 
       final Rectangle rect = scrollPane.getVisibleRect();
       rect.y = ( row * channelHeight ) + signalHeight - 3;
-      rect.height = signalHeight + 6;
+      rect.height = channelHeight + 6;
       scrollPane.repaint( rect );
 
       rect.y = ( newRow * channelHeight ) + signalHeight - 3;
-      rect.height = signalHeight + 6;
+      rect.height = channelHeight + 6;
       scrollPane.repaint( rect );
     }
   }
@@ -306,7 +306,7 @@ public final class ScreenController
       final int width = ( int )Math.min( Integer.MAX_VALUE, getAbsoluteLength() );
 
       final int height = this.screenModel.getChannelHeight() * this.dataModel.getWidth()
-          + this.screenModel.getSignalHeight();
+      + this.screenModel.getSignalHeight();
 
       final Dimension newSize = new Dimension( width, height );
 

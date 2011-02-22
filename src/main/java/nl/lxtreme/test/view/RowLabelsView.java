@@ -72,16 +72,19 @@ class RowLabelsView extends JComponent
       final DataModel dataModel = this.controller.getDataModel();
       final ScreenModel screenModel = this.controller.getScreenModel();
 
-      final int signalHeight = screenModel.getSignalHeight();
       final int channelHeight = screenModel.getChannelHeight();
-
-      final int textYpos = ( int )( ( channelHeight + fm.getHeight() ) / 2.5 ) - 2;
+      // Where is the signal to be drawn?
+      final int signalOffset = screenModel.getSignalOffset();
 
       final int width = dataModel.getWidth();
       for ( int b = 0; b < width; b++ )
       {
-        // determine where we really should draw the signal...
-        final int dy = signalHeight + ( channelHeight * screenModel.toVirtualRow( b ) );
+        final int yOffset = channelHeight * screenModel.toVirtualRow( b );
+
+        canvas.setColor( Color.GRAY );
+        canvas.fillRoundRect( clip.x - 10, yOffset + 2, clip.width + 8, channelHeight - 2, 12, 12 );
+
+        final int textYoffset = signalOffset + yOffset;
 
         String indexStr = Integer.toString( b );
         String label = screenModel.getChannelLabel( b );
@@ -90,18 +93,18 @@ class RowLabelsView extends JComponent
           label = indexStr;
         }
 
-        final int labelYpos = dy;
-        final int labelXpos = ( clip.width - fm.stringWidth( label ) - 2 );
-
         canvas.setFont( this.labelFont );
+        final int labelYpos = textYoffset + ( int )( fm.getHeight() - ( 1.0 * fm.getHeight() / 3.0 ) );
+        final int labelXpos = ( clip.width - fm.stringWidth( label ) - 6 );
+
         canvas.setColor( screenModel.getColor( b ) );
         canvas.drawString( label, labelXpos, labelYpos );
 
-        int indexXpos = ( clip.width - indexFm.stringWidth( indexStr ) - 2 );
-        int indexYpos = dy + textYpos;
-
         // paint the channel number below the label
         canvas.setFont( this.indexFont );
+        final int indexYpos = textYoffset + ( int )( indexFm.getHeight() + ( 2.0 * fm.getHeight() / 3.0 ) );
+        final int indexXpos = ( clip.width - indexFm.stringWidth( indexStr ) - 6 );
+
         canvas.drawString( indexStr, indexXpos, indexYpos );
       }
     }
@@ -135,7 +138,7 @@ class RowLabelsView extends JComponent
     }
 
     // Ensure there's room for some padding...
-    minWidth += 4;
+    minWidth += 12;
 
     // And always ensure we've got at least a minimal width...
     if ( minWidth < 40 )
