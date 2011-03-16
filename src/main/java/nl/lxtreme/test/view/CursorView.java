@@ -20,7 +20,7 @@ class CursorView extends JComponent
 
   // VARIABLES
 
-  private final ScreenController controller;
+  private final SignalDiagramController controller;
   private volatile boolean enabled;
   private volatile boolean snapMode;
   private Point lastPoint;
@@ -33,7 +33,7 @@ class CursorView extends JComponent
    * @param aController
    *          the controller to use, cannot be <code>null</code>.
    */
-  public CursorView( final ScreenController aController )
+  public CursorView( final SignalDiagramController aController )
   {
     this.controller = aController;
 

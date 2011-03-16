@@ -28,7 +28,7 @@ class SignalView extends JPanel
   {
     // VARIABLES
 
-    private final ScreenController _controller = SignalView.this.controller;
+    private final SignalDiagramController _controller = SignalView.this.controller;
 
     // METHODS
 
@@ -86,7 +86,7 @@ class SignalView extends JPanel
 
   // VARIABLES
 
-  private final ScreenController controller;
+  private final SignalDiagramController controller;
 
   // CONSTRUCTORS
 
@@ -96,7 +96,7 @@ class SignalView extends JPanel
    * @param aController
    *          the controller to use, cannot be <code>null</code>.
    */
-  public SignalView( final ScreenController aController )
+  public SignalView( final SignalDiagramController aController )
   {
     this.controller = aController;
 

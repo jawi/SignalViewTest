@@ -28,14 +28,14 @@ public class SampleViewComponent extends JPanel implements Scrollable
   {
     // VARIABLES
 
-    private final ScreenController controller;
+    private final SignalDiagramController controller;
 
     // CONSTRUCTORS
 
     /**
      * @param aController
      */
-    public MyComponentListener( final ScreenController aController )
+    public MyComponentListener( final SignalDiagramController aController )
     {
       this.controller = aController;
     }
@@ -58,14 +58,14 @@ public class SampleViewComponent extends JPanel implements Scrollable
   {
     // VARIABLES
 
-    private final ScreenController controller;
+    private final SignalDiagramController controller;
 
     // CONSTRUCTORS
 
     /**
      * @param aController
      */
-    public MyKeyListener( final ScreenController aController )
+    public MyKeyListener( final SignalDiagramController aController )
     {
       this.controller = aController;
     }
@@ -136,14 +136,14 @@ public class SampleViewComponent extends JPanel implements Scrollable
 
     private int lastCursor = -1;
     private boolean showing = false;
-    private final ScreenController controller;
+    private final SignalDiagramController controller;
 
     // CONSTRUCTORS
 
     /**
      * @param aController
      */
-    public MyMouseListener( final ScreenController aController )
+    public MyMouseListener( final SignalDiagramController aController )
     {
       this.controller = aController;
     }
@@ -273,7 +273,7 @@ public class SampleViewComponent extends JPanel implements Scrollable
 
   // VARIABLES
 
-  private final ScreenController controller;
+  private final SignalDiagramController controller;
 
   private final SignalView modelView;
   private final CursorView cursorView;
@@ -287,7 +287,7 @@ public class SampleViewComponent extends JPanel implements Scrollable
    * @param aController
    *          the controller to use, cannot be <code>null</code>.
    */
-  public SampleViewComponent( final ScreenController aController )
+  public SampleViewComponent( final SignalDiagramController aController )
   {
     super( new StackLayout() );
 

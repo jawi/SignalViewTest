@@ -14,7 +14,7 @@ import nl.lxtreme.test.model.*;
 /**
  * @author jajans
  */
-public final class ScreenController
+public final class SignalDiagramController
 {
   // INNER TYPES
 
@@ -69,7 +69,7 @@ public final class ScreenController
   private final DataModel dataModel;
   private final ScreenModel screenModel;
 
-  private SignalView modelView;
+  private SignalView signalView;
   private CursorView cursorView;
   private ArrowView arrowView;
 
@@ -78,7 +78,7 @@ public final class ScreenController
   /**
    * @param aModel
    */
-  public ScreenController( final DataModel aModel )
+  public SignalDiagramController( final DataModel aModel )
   {
     this.dataModel = aModel;
     this.screenModel = new ScreenModel( aModel.getWidth() );
@@ -87,7 +87,9 @@ public final class ScreenController
   // METHODS
 
   /**
+   * Disables the cursor "snap" mode.
    * 
+   * @see #enableSnapMode()
    */
   public void disableSnapMode()
   {
@@ -95,8 +97,18 @@ public final class ScreenController
   }
 
   /**
+   * Drags a cursor with a given index to a given point, possibly snapping to a
+   * signal edge.
+   * 
    * @param aCursorIdx
+   *          the cursor index to move, should be &gt;= 0 && &lt; 10;
    * @param aPoint
+   *          the new point of the cursor, in case of snapping, it will use this
+   *          point to find the nearest signal edge, cannot be <code>null</code>
+   *          ;
+   * @param aSnap
+   *          <code>true</code> if the cursor should be snapped to the nearest
+   *          signal edge, <code>false</code> otherwise.
    */
   public void dragCursor( final int aCursorIdx, final Point aPoint, final boolean aSnap )
   {
@@ -116,7 +128,9 @@ public final class ScreenController
   }
 
   /**
+   * Enables the cursor "snap" mode.
    * 
+   * @see #disableSnapMode()
    */
   public void enableSnapMode()
   {
@@ -156,15 +170,6 @@ public final class ScreenController
   /**
    * @return
    */
-  public long getAbsoluteLength()
-  {
-    final long[] timestamps = this.dataModel.getTimestamps();
-    return ( long )( ( timestamps[timestamps.length - 1] + 1 ) * this.screenModel.getZoomFactor() );
-  }
-
-  /**
-   * @return
-   */
   public DataModel getDataModel()
   {
     return this.dataModel;
@@ -179,8 +184,16 @@ public final class ScreenController
   }
 
   /**
+   * Determines the signal row beneath the given coordinate.
+   * <p>
+   * This method returns the <em>virtual</em> signal row, not the actual signal
+   * row.
+   * </p>
+   * 
    * @param aCoordinate
-   * @return
+   *          the coordinate to return the signal row for, cannot be
+   *          <code>null</code>.
+   * @return a signal row, or -1 if the point is nowhere near a signal row.
    */
   public int getSignalRow( final Point aCoordinate )
   {
@@ -198,9 +211,14 @@ public final class ScreenController
   }
 
   /**
+   * Returns the actual time interval of the samples denoted by the given start
+   * and end index, or <tt>T[end index] - T[start index]</tt>.
+   * 
    * @param aStartIdx
+   *          the start sample index of the time interval, >= 0;
    * @param aEndIdx
-   * @return
+   *          the end sample index of the time interval, >= 0.
+   * @return a time interval value, in seconds.
    */
   public double getTimeInterval( final int aStartIdx, final int aEndIdx )
   {
@@ -211,8 +229,11 @@ public final class ScreenController
   }
 
   /**
+   * Returns the time value of the sample denoted by the given index.
+   * 
    * @param aSampleIdx
-   * @return
+   *          the sample index to return the time value for, >= 0.
+   * @return a time value, in seconds.
    */
   public double getTimeValue( final int aSampleIdx )
   {
@@ -253,7 +274,7 @@ public final class ScreenController
    */
   public void moveHover( final Point aPoint )
   {
-    final SignalHoverInfo signalHover = getSignalHover( convertToPointOf( this.modelView, aPoint ) );
+    final SignalHoverInfo signalHover = getSignalHover( convertToPointOf( this.signalView, aPoint ) );
 
     this.arrowView.moveHover( signalHover );
   }
@@ -296,7 +317,7 @@ public final class ScreenController
   }
 
   /**
-   * Recalculates the dimensions of the view.
+   * Recalculates the dimensions of the main view.
    */
   public void recalculateDimensions()
   {
@@ -319,16 +340,24 @@ public final class ScreenController
   }
 
   /**
-   * @param aSelected
+   * Turns the visibility of all cursors either on or off.
+   * <p>
+   * This method does <em>not</em> modify any cursor, only whether they are
+   * displayed or not!
+   * </p>
+   * 
+   * @param aVisible
+   *          <code>true</code> if the cursors should be made visible,
+   *          <code>false</code> if the cursors should be made invisible.
    */
-  public void setCursorMode( final boolean aSelected )
+  public void setCursorsVisible( final boolean aVisible )
   {
-    this.cursorView.setCursorMode( aSelected );
+    this.cursorView.setCursorMode( aVisible );
     this.cursorView.repaint( 25L );
   }
 
   /**
-   * Sets the measurement mode.
+   * Enables or disables the measurement mode.
    * 
    * @param aEnabled
    *          <code>true</code> to enable the measurement mode,
@@ -340,21 +369,32 @@ public final class ScreenController
   }
 
   /**
+   * Shows the hover information for the given coordinate.
+   * 
    * @param aPoint
-   * @return
+   *          the coordinate to show the hover information for, cannot be
+   *          <code>null</code>.
+   * @return <code>true</code> if the hover is going to be shown,
+   *         <code>false</code> otherwise.
    */
   public boolean showHover( final Point aPoint )
   {
-    final SignalHoverInfo signalHover = getSignalHover( convertToPointOf( this.modelView, aPoint ) );
+    final SignalHoverInfo signalHover = getSignalHover( convertToPointOf( this.signalView, aPoint ) );
+    if ( signalHover != null )
+    {
+      this.arrowView.showHover( signalHover );
+    }
 
-    this.arrowView.showHover( signalHover );
-
-    return true;
+    return ( signalHover != null );
   }
 
   /**
+   * Converts a given time stamp value to a screen coordinate.
+   * 
    * @param aTimestamp
-   * @return
+   *          the time stamp <em>value</em> to convert, >= 0.
+   * @return a coordinate whose X-position denotes the given time stamp, and a
+   *         Y-position of 0, never <code>null</code>.
    */
   public Point toScaledScreenCoordinate( final long aTimestamp )
   {
@@ -364,14 +404,14 @@ public final class ScreenController
   }
 
   /**
-   * Finds the timestamp that corresponds to the X-position of the given
+   * Finds the time stamp that corresponds to the X-position of the given
    * coordinate.
    * 
    * @param aPoint
-   *          the screen coordinate to find a corresponding timestamp for,
+   *          the screen coordinate to find a corresponding time stamp for,
    *          cannot be <code>null</code>.
-   * @return a timestamp corresponding to the given coordinate, or -1 if no such
-   *         timestamp could be found.
+   * @return a time stamp corresponding to the given coordinate, or -1 if no
+   *         such time stamp could be found.
    */
   public int toTimestampIndex( final Point aPoint )
   {
@@ -379,8 +419,12 @@ public final class ScreenController
   }
 
   /**
-   * @param aXpos
-   * @return
+   * Converts a given screen coordinate to an unscaled value (regardless zoom
+   * factor).
+   * 
+   * @param aPoint
+   *          the screen coordinate to convert, cannot be <code>null</code>.
+   * @return an unscaled version of the given coordinate's X-position, >= 0.
    */
   public int toUnscaledScreenCoordinate( final Point aPoint )
   {
@@ -388,7 +432,11 @@ public final class ScreenController
   }
 
   /**
+   * Zooms to make all data visible in one screen.
    * 
+   * @param aViewSize
+   *          the original view size in which all data should fit, cannot be
+   *          <code>null</code>.
    */
   public void zoomAll( final Dimension aViewSize )
   {
@@ -408,7 +456,7 @@ public final class ScreenController
   }
 
   /**
-   * 
+   * Zooms to a factor of 1.0.
    */
   public void zoomOriginal()
   {
@@ -427,7 +475,10 @@ public final class ScreenController
   }
 
   /**
+   * Sets the actual arrow view instance to is to be managed by this controller.
+   * 
    * @param aArrowView
+   *          an arrow view instance, cannot be <code>null</code>.
    */
   final void setArrowView( final ArrowView aArrowView )
   {
@@ -435,7 +486,11 @@ public final class ScreenController
   }
 
   /**
+   * Sets the actual cursor view instance to is to be managed by this
+   * controller.
+   * 
    * @param aCursorView
+   *          a cursor view instance, cannot be <code>null</code>.
    */
   final void setCursorView( final CursorView aCursorView )
   {
@@ -443,17 +498,27 @@ public final class ScreenController
   }
 
   /**
-   * @param aModelView
+   * Sets the actual signal view instance to is to be managed by this
+   * controller.
+   * 
+   * @param aSignalView
+   *          a signal view instance, cannot be <code>null</code>.
    */
-  final void setSignalView( final SignalView aModelView )
+  final void setSignalView( final SignalView aSignalView )
   {
-    this.modelView = aModelView;
+    this.signalView = aSignalView;
   }
 
   /**
+   * Converts a given point to the coordinate space of a given destination
+   * component.
+   * 
    * @param aDestination
+   *          the destination component to convert the point to, cannot be
+   *          <code>null</code>;
    * @param aOriginal
-   * @return
+   *          the original point to convert, cannot be <code>null</code>.
+   * @return the converted point, never <code>null</code>.
    */
   private Point convertToPointOf( final Component aDestination, final Point aOriginal )
   {
@@ -467,6 +532,17 @@ public final class ScreenController
       view = SwingUtilities.getRootPane( aDestination );
     }
     return SwingUtilities.convertPoint( view, aOriginal, aDestination );
+  }
+
+  /**
+   * Returns the "visual length" of the timeline.
+   * 
+   * @return a visual length, >= 0.
+   */
+  private long getAbsoluteLength()
+  {
+    final long[] timestamps = this.dataModel.getTimestamps();
+    return ( long )( ( timestamps[timestamps.length - 1] + 1 ) * this.screenModel.getZoomFactor() );
   }
 
   /**

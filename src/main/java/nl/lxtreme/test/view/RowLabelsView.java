@@ -22,7 +22,7 @@ class RowLabelsView extends JComponent
 
   // VARIABLES
 
-  private final ScreenController controller;
+  private final SignalDiagramController controller;
   private final Font labelFont;
   private final Font indexFont;
 
@@ -31,7 +31,7 @@ class RowLabelsView extends JComponent
   /**
    * Creates a new {@link RowLabelsView} instance.
    */
-  public RowLabelsView( final ScreenController aController )
+  public RowLabelsView( final SignalDiagramController aController )
   {
     this.controller = aController;
 

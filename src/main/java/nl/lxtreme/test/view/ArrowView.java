@@ -10,7 +10,7 @@ import java.awt.*;
 
 import javax.swing.*;
 
-import nl.lxtreme.test.view.ScreenController.SignalHoverInfo;
+import nl.lxtreme.test.view.SignalDiagramController.SignalHoverInfo;
 
 
 /**
@@ -29,7 +29,7 @@ class ArrowView extends JComponent
 
   private final Rectangle textRectangle;
   private final Rectangle arrowRectangle;
-  private final ScreenController controller;
+  private final SignalDiagramController controller;
 
   private volatile SignalHoverInfo signalHover;
 
@@ -41,7 +41,7 @@ class ArrowView extends JComponent
    * @param aController
    *          the controller to use, cannot be <code>null</code>.
    */
-  public ArrowView( final ScreenController aController )
+  public ArrowView( final SignalDiagramController aController )
   {
     this.controller = aController;
 

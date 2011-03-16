@@ -20,7 +20,7 @@ public class Main
 {
   // VARIABLES
 
-  private ScreenController controller;
+  private SignalDiagramController controller;
   private JFrame mainFrame;
   private JMenuBar menuBar;
 
@@ -31,16 +31,6 @@ public class Main
    */
   public static void main( final String[] aArgs ) throws Exception
   {
-    try
-    {
-      UIManager.setLookAndFeel( "com.jgoodies.looks.plastic.Plastic3DLookAndFeel" );
-    }
-    catch ( Exception exception )
-    {
-      System.err.println( "L&F setting failed!" );
-      exception.printStackTrace();
-    }
-
     final Runnable runner = new Runnable()
     {
       public void run()
@@ -77,6 +67,16 @@ public class Main
    */
   private void init()
   {
+    try
+    {
+      UIManager.setLookAndFeel( "com.jgoodies.looks.plastic.Plastic3DLookAndFeel" );
+    }
+    catch ( Exception exception )
+    {
+      System.err.println( "L&F setting failed!" );
+      exception.printStackTrace();
+    }
+
     final Dimension dims = new Dimension( 800, 600 );
 
     this.mainFrame = new JFrame( "JLayeredPane test" );
@@ -113,7 +113,7 @@ public class Main
       public void actionPerformed( final ActionEvent aEvent )
       {
         AbstractButton button = ( AbstractButton )aEvent.getSource();
-        Main.this.controller.setCursorMode( button.getModel().isSelected() );
+        Main.this.controller.setCursorsVisible( button.getModel().isSelected() );
       }
     } );
     diagramMenu.add( diagramEnableCursorsItem );
@@ -132,7 +132,7 @@ public class Main
     diagramMenu.add( diagramEnableMeasureModeItem );
 
     final DataModel model = new DataModel( 1024 * 64 /* * 1024 */);
-    this.controller = new ScreenController( model );
+    this.controller = new SignalDiagramController( model );
   }
 
   /**
