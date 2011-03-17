@@ -17,7 +17,7 @@ import nl.lxtreme.test.dnd.*;
 /**
  * @author jawi
  */
-public class SampleViewComponent extends JPanel implements Scrollable
+public class SignalDiagramComponent extends JPanel implements Scrollable
 {
   // INNER TYPES
 
@@ -287,7 +287,7 @@ public class SampleViewComponent extends JPanel implements Scrollable
    * @param aController
    *          the controller to use, cannot be <code>null</code>.
    */
-  public SampleViewComponent( final SignalDiagramController aController )
+  public SignalDiagramComponent( final SignalDiagramController aController )
   {
     super( new StackLayout() );
 
@@ -469,8 +469,8 @@ public class SampleViewComponent extends JPanel implements Scrollable
           return;
         }
 
-        // scrollPane.setColumnHeaderView( this.timeLine );
-        scrollPane.setRowHeaderView( new RowLabelsView( this.controller ) );
+        scrollPane.setColumnHeaderView( new TimeLineView( this.controller ) );
+        scrollPane.setRowHeaderView( new ChannelLabelsView( this.controller ) );
       }
     }
   }

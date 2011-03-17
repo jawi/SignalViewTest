@@ -14,7 +14,7 @@ import nl.lxtreme.test.model.*;
 /**
  * @author jawi
  */
-class RowLabelsView extends JComponent
+class ChannelLabelsView extends JComponent
 {
   // CONSTANTS
 
@@ -29,9 +29,9 @@ class RowLabelsView extends JComponent
   // CONSTRUCTORS
 
   /**
-   * Creates a new {@link RowLabelsView} instance.
+   * Creates a new {@link ChannelLabelsView} instance.
    */
-  public RowLabelsView( final SignalDiagramController aController )
+  public ChannelLabelsView( final SignalDiagramController aController )
   {
     this.controller = aController;
 
@@ -69,7 +69,7 @@ class RowLabelsView extends JComponent
       final FontMetrics fm = canvas.getFontMetrics( this.labelFont );
       final FontMetrics indexFm = canvas.getFontMetrics( this.indexFont );
 
-      final DataModel dataModel = this.controller.getDataModel();
+      final SampleDataModel dataModel = this.controller.getDataModel();
       final ScreenModel screenModel = this.controller.getScreenModel();
 
       final int channelHeight = screenModel.getChannelHeight();
@@ -121,7 +121,7 @@ class RowLabelsView extends JComponent
    */
   private int getMinimalWidth()
   {
-    final DataModel dataModel = this.controller.getDataModel();
+    final SampleDataModel dataModel = this.controller.getDataModel();
     final ScreenModel screenModel = this.controller.getScreenModel();
 
     int minWidth = -1;

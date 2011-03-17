@@ -9,7 +9,7 @@ import java.util.*;
 /**
  * @author jajans
  */
-public class DataModel
+public class SampleDataModel
 {
   // VARIABLES
 
@@ -23,7 +23,7 @@ public class DataModel
   /**
    * @param aSize
    */
-  public DataModel( final int aSize )
+  public SampleDataModel( final int aSize )
   {
     if ( aSize <= 0 )
     {
@@ -47,7 +47,7 @@ public class DataModel
         this.timestamps[i] = 2 * i;
       }
 
-      this.sampleRate = 100000000;
+      this.sampleRate = 100000000; // 100MHz
     }
     else
     {

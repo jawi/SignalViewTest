@@ -128,7 +128,7 @@ class SignalView extends JPanel
     {
       final Rectangle clip = aGraphics.getClipBounds();
 
-      final DataModel dataModel = this.controller.getDataModel();
+      final SampleDataModel dataModel = this.controller.getDataModel();
 
       final int[] values = dataModel.getValues();
 
@@ -182,7 +182,7 @@ class SignalView extends JPanel
    */
   private void paintNormalDataSet( final Graphics aCanvas, final int aSize, final int aStartSampleIdx )
   {
-    final DataModel dataModel = this.controller.getDataModel();
+    final SampleDataModel dataModel = this.controller.getDataModel();
     final ScreenModel screenModel = this.controller.getScreenModel();
 
     final int[] values = dataModel.getValues();

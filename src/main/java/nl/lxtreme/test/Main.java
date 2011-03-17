@@ -50,7 +50,7 @@ public class Main
    */
   private void build()
   {
-    final SampleViewComponent layeredPane = new SampleViewComponent( this.controller );
+    final SignalDiagramComponent layeredPane = new SignalDiagramComponent( this.controller );
 
     final JScrollPane contentPane = new JScrollPane( layeredPane );
     contentPane.setHorizontalScrollBarPolicy( ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS );
@@ -131,7 +131,7 @@ public class Main
     } );
     diagramMenu.add( diagramEnableMeasureModeItem );
 
-    final DataModel model = new DataModel( 1024 * 64 /* * 1024 */);
+    final SampleDataModel model = new SampleDataModel( 1024 * 64 /* * 1024 */);
     this.controller = new SignalDiagramController( model );
   }
 

@@ -66,8 +66,8 @@ public final class SignalDiagramController
 
   // VARIABLES
 
-  private final DataModel dataModel;
-  private final ScreenModel screenModel;
+  private SampleDataModel dataModel;
+  private ScreenModel screenModel;
 
   private SignalView signalView;
   private CursorView cursorView;
@@ -78,7 +78,7 @@ public final class SignalDiagramController
   /**
    * @param aModel
    */
-  public SignalDiagramController( final DataModel aModel )
+  public SignalDiagramController( final SampleDataModel aModel )
   {
     this.dataModel = aModel;
     this.screenModel = new ScreenModel( aModel.getWidth() );
@@ -170,7 +170,7 @@ public final class SignalDiagramController
   /**
    * @return
    */
-  public DataModel getDataModel()
+  public SampleDataModel getDataModel()
   {
     return this.dataModel;
   }
@@ -366,6 +366,32 @@ public final class SignalDiagramController
   public void setMeasurementMode( final boolean aEnabled )
   {
     this.screenModel.setMeasurementMode( aEnabled );
+  }
+
+  /**
+   * Sets the data model for this controller.
+   * @param aDataModel the dataModel to set, cannot be <code>null</code>.
+   */
+  public void setSampleDataModel( final SampleDataModel aDataModel )
+  {
+    if (aDataModel == null)
+    {
+      throw new IllegalArgumentException();
+    }
+    this.dataModel = aDataModel;
+  }
+
+  /**
+   * Sets the screen model for this controller.
+   * @param aScreenModel the screenModel to set, cannot be <code>null</code>.
+   */
+  public void setScreenModel( final ScreenModel aScreenModel )
+  {
+    if (aScreenModel == null)
+    {
+      throw new IllegalArgumentException();
+    }
+    this.screenModel = aScreenModel;
   }
 
   /**
