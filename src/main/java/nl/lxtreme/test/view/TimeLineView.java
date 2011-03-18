@@ -8,6 +8,7 @@ import java.awt.*;
 
 import javax.swing.*;
 
+import nl.lxtreme.test.*;
 import nl.lxtreme.test.model.*;
 
 
@@ -107,10 +108,10 @@ class TimeLineView extends JComponent
     final double zoomFactor = screenModel.getZoomFactor();
     final long absLength = dataModel.getAbsoluteLength();
 
-    final int tickIncr = ( int )( 20.0 / zoomFactor );
+    final int tickIncr = ( int )( TIMELINE_INCREMENT / zoomFactor );
 
-    final double test = ( zoomFactor / dataModel.getSampleRate() );
-    System.out.println( "Sr / Z = " + test );
+    final double tickInterval = ( 1.0 * tickIncr / dataModel.getSampleRate() );
+    System.out.println( "tickInterval = " + Utils.displayTime( tickInterval ) );
 
     final long startTimeStamp = Math.max( 0L, ( timestamps[aStartIdx] / tickIncr ) * tickIncr );
     final long endTimeStamp = Math.min( absLength, timestamps[aEndIdx] );
@@ -120,6 +121,9 @@ class TimeLineView extends JComponent
     for ( long i = startTimeStamp; i < endTimeStamp; i += tickIncr )
     {
       int relXpos = ( int )( zoomFactor * i );
+
+      // System.out.println( "relXpos[" + i + "] = " + Utils.displayTime( i / (
+      // double )dataModel.getSampleRate() ) );
 
       aCanvas.drawLine( relXpos, 1, relXpos, 20 );
     }
