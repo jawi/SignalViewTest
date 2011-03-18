@@ -60,7 +60,7 @@ class TimeLineView extends JComponent
   @Override
   public Dimension getPreferredSize()
   {
-    return new Dimension( 6400, 40 );
+    return new Dimension( 6400, TIMELINE_HEIGHT );
   }
 
   /**
@@ -110,7 +110,7 @@ class TimeLineView extends JComponent
 
     final int tickIncr = ( int )( TIMELINE_INCREMENT / zoomFactor );
 
-    final double tickInterval = ( 1.0 * tickIncr / dataModel.getSampleRate() );
+    final double tickInterval = ( zoomFactor / dataModel.getSampleRate() );
     System.out.println( "tickInterval = " + Utils.displayTime( tickInterval ) );
 
     final long startTimeStamp = Math.max( 0L, ( timestamps[aStartIdx] / tickIncr ) * tickIncr );
@@ -125,7 +125,7 @@ class TimeLineView extends JComponent
       // System.out.println( "relXpos[" + i + "] = " + Utils.displayTime( i / (
       // double )dataModel.getSampleRate() ) );
 
-      aCanvas.drawLine( relXpos, 1, relXpos, 20 );
+      aCanvas.drawLine( relXpos, TIMELINE_HEIGHT, relXpos, TIMELINE_HEIGHT - 20 );
     }
   }
 

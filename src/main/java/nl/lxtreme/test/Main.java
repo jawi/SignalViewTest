@@ -73,8 +73,7 @@ public class Main
     }
     catch ( Exception exception )
     {
-      System.err.println( "L&F setting failed!" );
-      exception.printStackTrace();
+      System.err.println( "L&F setting failed! Message = " + exception.getMessage() );
     }
 
     final Dimension dims = new Dimension( 800, 600 );

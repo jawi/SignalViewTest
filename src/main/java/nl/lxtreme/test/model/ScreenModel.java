@@ -27,26 +27,26 @@ public class ScreenModel
   // CONSTANTS
 
   private static final Color[] SALEAE_COLORS = { //
-    Utils.parseColor( "000000" ), //
-    Utils.parseColor( "8B4513" ), //
-    Utils.parseColor( "FF0000" ), //
-    Utils.parseColor( "FFA500" ), //
-    Utils.parseColor( "FFFF00" ), //
-    Utils.parseColor( "00FF00" ), //
-    Utils.parseColor( "0000FF" ), //
-    Utils.parseColor( "A020F0" ), //
-    Utils.parseColor( "CDC9C9" ) //
+  Utils.parseColor( "000000" ), //
+      Utils.parseColor( "8B4513" ), //
+      Utils.parseColor( "FF0000" ), //
+      Utils.parseColor( "FFA500" ), //
+      Utils.parseColor( "FFFF00" ), //
+      Utils.parseColor( "00FF00" ), //
+      Utils.parseColor( "0000FF" ), //
+      Utils.parseColor( "A020F0" ), //
+      Utils.parseColor( "CDC9C9" ) //
   };
   private static final Color[] OLS_COLORS = { //
-    Utils.parseColor( "000000" ), //
-    Utils.parseColor( "FFFFFF" ), //
-    Utils.parseColor( "00FF00" ), //
-    Utils.parseColor( "FF0000" ), //
-    Utils.parseColor( "0000FF" ), //
-    Utils.parseColor( "00FF00" ), //
-    Utils.parseColor( "FFFF00" ), //
-    Utils.parseColor( "0000FF" ), //
-    Utils.parseColor( "FF0000" ) //
+  Utils.parseColor( "000000" ), //
+      Utils.parseColor( "FFFFFF" ), //
+      Utils.parseColor( "00FF00" ), //
+      Utils.parseColor( "FF0000" ), //
+      Utils.parseColor( "0000FF" ), //
+      Utils.parseColor( "00FF00" ), //
+      Utils.parseColor( "FFFF00" ), //
+      Utils.parseColor( "0000FF" ), //
+      Utils.parseColor( "FF0000" ) //
   };
 
   // VARIABLES
@@ -103,7 +103,7 @@ public class ScreenModel
     this.channelLabels = new String[aDataWidth];
     for ( int i = 0; i < this.channelLabels.length; i++ )
     {
-      this.channelLabels[i] = String.format( "Channel %c", ( i + 'A' ) );
+      this.channelLabels[i] = String.format( "Channel %c", Integer.valueOf( i + 'A' ) );
     }
   }
 
@@ -297,7 +297,8 @@ public class ScreenModel
   }
 
   /**
-   * @param aZoomAll the zoomAll to set
+   * @param aZoomAll
+   *          the zoomAll to set
    */
   public void setZoomAll( final boolean aZoomAll )
   {

@@ -83,7 +83,7 @@ class ChannelLabelsView extends JComponent
       {
         final int yOffset = channelHeight * screenModel.toVirtualRow( b );
 
-        canvas.setColor( Color.GRAY );
+        canvas.setColor( Color.DARK_GRAY.darker() );
         canvas.fillRoundRect( clip.x - 10, yOffset + 2, clip.width + 8, channelHeight - 2, 12, 12 );
 
         final int textYoffset = signalOffset + yOffset;

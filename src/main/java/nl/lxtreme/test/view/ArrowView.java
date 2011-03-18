@@ -162,8 +162,7 @@ class ArrowView extends JComponent
 
       final String pulseTime = "Width: " + displayTime( this.controller.getTimeInterval( startIdx, endIdx ) );
       final String sampleTime = "Time: " + displayTime( this.controller.getTimeValue( timestampIdx ) );
-      final String channel = "Channel: "
-        + String.format( "Channel: %d", Integer.valueOf( this.signalHover.channelIdx ) );
+      final String channel = String.format( "Channel: %d", Integer.valueOf( this.signalHover.channelIdx ) );
 
       this.textRectangle.x = ( int )( x1 + ( ( x2 - x1 ) / 2.0f ) ) + 8;
       this.textRectangle.y = ( int )( yOffset + 8 );
@@ -181,12 +180,9 @@ class ArrowView extends JComponent
       final int leftMargin = this.textRectangle.x + 4;
 
       g2d.setColor( Color.WHITE.darker() );
-      g2d.drawString( pulseTime, leftMargin, ( int )( this.textRectangle.getCenterY()
-          + ( fm.getHeight() / 2.0 ) - 20 ) );
-      g2d.drawString( sampleTime, leftMargin,
-          ( int )( this.textRectangle.getCenterY() + fm.getHeight() - 10 ) );
-      g2d.drawString( channel, leftMargin,
-          ( int )( this.textRectangle.getCenterY() + 2 * fm.getHeight() - 8 ) );
+      g2d.drawString( pulseTime, leftMargin, ( int )( this.textRectangle.getCenterY() + ( fm.getHeight() / 2.0 ) - 20 ) );
+      g2d.drawString( sampleTime, leftMargin, ( int )( this.textRectangle.getCenterY() + fm.getHeight() - 10 ) );
+      g2d.drawString( channel, leftMargin, ( int )( this.textRectangle.getCenterY() + 2 * fm.getHeight() - 8 ) );
 
       g2d.setColor( Color.DARK_GRAY.brighter() );
       g2d.setStroke( THICK );
