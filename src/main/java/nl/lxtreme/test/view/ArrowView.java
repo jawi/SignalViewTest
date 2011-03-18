@@ -25,6 +25,8 @@ class ArrowView extends JComponent
   private static final int LEFT_FACING = 1;
   private static final int RIGHT_FACING = -1;
 
+  private static Stroke THICK = new BasicStroke( 2.0f );
+
   // VARIABLES
 
   private final Rectangle textRectangle;
@@ -130,54 +132,85 @@ class ArrowView extends JComponent
       return;
     }
 
-    final Graphics2D g2d = ( Graphics2D )aGraphics;
-    final Rectangle clip = g2d.getClipBounds();
-
-    //
-    this.arrowRectangle.setBounds( this.signalHover.rectangle );
-
-    final int x1 = this.arrowRectangle.x + 2;
-    final int x2 = this.arrowRectangle.x + this.arrowRectangle.width - 2;
-    final double yOffset = this.arrowRectangle.getCenterY();
-    final int y = ( int )( yOffset );
-
-    if ( clip.contains( x1, y ) || clip.contains( x2, y ) )
-    {
-      g2d.setColor( Color.YELLOW );
-      drawDoubleHeadedArrow( g2d, x1, y, x2 );
-    }
-
-    final FontMetrics fm = g2d.getFontMetrics();
-
     final int startIdx = this.signalHover.firstSample;
     final int endIdx = this.signalHover.lastSample;
     final int timestampIdx = this.signalHover.referenceSample;
 
-    final String pulseTime = "Width: " + displayTime( this.controller.getTimeInterval( startIdx, endIdx ) );
-    final String sampleTime = "Time: " + displayTime( this.controller.getTimeValue( timestampIdx ) );
-    final String channel = "Channel: " + String.format( "Channel: %d", Integer.valueOf( this.signalHover.channelIdx ) );
+    //
+    this.arrowRectangle.setBounds( this.signalHover.rectangle );
 
-    this.textRectangle.x = ( int )( x1 + ( ( x2 - x1 ) / 2.0f ) ) + 8;
-    this.textRectangle.y = ( int )( yOffset + 8 );
-    this.textRectangle.width = Math.max( fm.stringWidth( channel ),
-        Math.max( fm.stringWidth( pulseTime ), fm.stringWidth( sampleTime ) ) ) + 4;
-    this.textRectangle.height = ( 3 * fm.getHeight() ) + 2;
+    final Graphics2D g2d = ( Graphics2D )aGraphics.create();
+    try
+    {
+      final Rectangle clip = g2d.getClipBounds();
+      // Tell Swing how we would like to render ourselves...
+      g2d.setRenderingHints( createRenderingHints() );
 
-    // Fit as much of the tooltip on screen as possible...
-    ensureRectangleWithinBounds( this.textRectangle, getViewBounds() );
+      final int x1 = this.arrowRectangle.x + 1;
+      final int x2 = this.arrowRectangle.x + this.arrowRectangle.width - 1;
 
-    g2d.setColor( Color.DARK_GRAY );
-    g2d.fillRect( this.textRectangle.x, this.textRectangle.y, this.textRectangle.width, this.textRectangle.height );
-    g2d.setColor( Color.LIGHT_GRAY );
-    g2d.drawRect( this.textRectangle.x, this.textRectangle.y, this.textRectangle.width, this.textRectangle.height );
+      final double yOffset = this.arrowRectangle.getCenterY();
+      final int y = ( int )( yOffset );
 
-    g2d.setColor( Color.YELLOW );
-    g2d.drawString( pulseTime, this.textRectangle.x + 2, ( int )( this.textRectangle.getCenterY()
-        + ( fm.getHeight() / 2.0 ) - 20 ) );
-    g2d.drawString( sampleTime, this.textRectangle.x + 2,
-        ( int )( this.textRectangle.getCenterY() + fm.getHeight() - 10 ) );
-    g2d.drawString( channel, this.textRectangle.x + 2,
-        ( int )( this.textRectangle.getCenterY() + 2 * fm.getHeight() - 8 ) );
+      if ( clip.contains( x1, y ) || clip.contains( x2, y ) )
+      {
+        g2d.setColor( Color.YELLOW );
+        drawDoubleHeadedArrow( g2d, x1, y, x2 );
+      }
+
+      final FontMetrics fm = g2d.getFontMetrics();
+
+      final String pulseTime = "Width: " + displayTime( this.controller.getTimeInterval( startIdx, endIdx ) );
+      final String sampleTime = "Time: " + displayTime( this.controller.getTimeValue( timestampIdx ) );
+      final String channel = "Channel: "
+        + String.format( "Channel: %d", Integer.valueOf( this.signalHover.channelIdx ) );
+
+      this.textRectangle.x = ( int )( x1 + ( ( x2 - x1 ) / 2.0f ) ) + 8;
+      this.textRectangle.y = ( int )( yOffset + 8 );
+      this.textRectangle.width = Math.max( fm.stringWidth( channel ),
+          Math.max( fm.stringWidth( pulseTime ), fm.stringWidth( sampleTime ) ) ) + 10;
+      this.textRectangle.height = ( 3 * fm.getHeight() ) + 10;
+
+      // Fit as much of the tooltip on screen as possible...
+      ensureRectangleWithinBounds( this.textRectangle, getViewBounds() );
+
+      g2d.setColor( Color.DARK_GRAY );
+      g2d.fillRoundRect( this.textRectangle.x, this.textRectangle.y, this.textRectangle.width,
+          this.textRectangle.height, 8, 8 );
+
+      final int leftMargin = this.textRectangle.x + 4;
+
+      g2d.setColor( Color.WHITE.darker() );
+      g2d.drawString( pulseTime, leftMargin, ( int )( this.textRectangle.getCenterY()
+          + ( fm.getHeight() / 2.0 ) - 20 ) );
+      g2d.drawString( sampleTime, leftMargin,
+          ( int )( this.textRectangle.getCenterY() + fm.getHeight() - 10 ) );
+      g2d.drawString( channel, leftMargin,
+          ( int )( this.textRectangle.getCenterY() + 2 * fm.getHeight() - 8 ) );
+
+      g2d.setColor( Color.DARK_GRAY.brighter() );
+      g2d.setStroke( THICK );
+      g2d.drawRoundRect( this.textRectangle.x, this.textRectangle.y, this.textRectangle.width - 1,
+          this.textRectangle.height - 1, 8, 8 );
+    }
+    finally
+    {
+      g2d.dispose();
+    }
+  }
+
+  /**
+   * Creates the rendering hints for this view.
+   */
+  private RenderingHints createRenderingHints()
+  {
+    RenderingHints hints = new RenderingHints( RenderingHints.KEY_INTERPOLATION,
+        RenderingHints.VALUE_INTERPOLATION_BICUBIC );
+    hints.put( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
+    hints.put( RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY );
+    hints.put( RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED );
+    hints.put( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED );
+    return hints;
   }
 
   /**

@@ -122,14 +122,15 @@ class SignalView extends JPanel
   {
     super.paintComponent( aGraphics );
 
-    Graphics canvas = aGraphics.create();
+    Graphics2D canvas = ( Graphics2D )aGraphics.create();
 
     try
     {
-      final Rectangle clip = aGraphics.getClipBounds();
+      final Rectangle clip = canvas.getClipBounds();
+      // Tell Swing how we would like to render ourselves...
+      canvas.setRenderingHints( createRenderingHints() );
 
       final SampleDataModel dataModel = this.controller.getDataModel();
-
       final int[] values = dataModel.getValues();
 
       final int startIdx = getStartIndex( clip );
@@ -153,6 +154,14 @@ class SignalView extends JPanel
       canvas.dispose();
       canvas = null;
     }
+  }
+
+  /**
+   * Creates the rendering hints for this view.
+   */
+  private RenderingHints createRenderingHints()
+  {
+    return new RenderingHints( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF );
   }
 
   /**

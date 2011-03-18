@@ -8,6 +8,8 @@ import java.awt.*;
 
 import javax.swing.*;
 
+import nl.lxtreme.test.model.*;
+
 
 /**
  * @author jajans
@@ -21,7 +23,6 @@ class CursorView extends JComponent
   // VARIABLES
 
   private final SignalDiagramController controller;
-  private volatile boolean enabled;
   private volatile boolean snapMode;
   private Point lastPoint;
 
@@ -74,9 +75,10 @@ class CursorView extends JComponent
    */
   public void moveCursor( final int aCursorIdx, final Point aPoint )
   {
-    repaintPartially( aCursorIdx );
+    final int[] cursors = getCursors();
 
-    final int[] cursors = this.controller.getDataModel().getCursors();
+    repaintPartially( cursors, aCursorIdx );
+
     cursors[aCursorIdx] = this.controller.toUnscaledScreenCoordinate( aPoint );
 
     if ( this.snapMode )
@@ -88,25 +90,13 @@ class CursorView extends JComponent
       this.lastPoint = null;
     }
 
-    repaintPartially( aCursorIdx );
-  }
-
-  /**
-   * Enables or disables the cursors.
-   * 
-   * @param aSelected
-   *          <code>true</code> to enable the cursors, <code>false</code> to
-   *          disable the cursors.
-   */
-  public void setCursorMode( final boolean aEnabled )
-  {
-    this.enabled = aEnabled;
+    repaintPartially( cursors, aCursorIdx );
   }
 
   /**
    * @param aSnapMode
    */
-  public synchronized void setSnapMode( final boolean aSnapMode )
+  public void setSnapMode( final boolean aSnapMode )
   {
     this.snapMode = aSnapMode;
   }
@@ -117,39 +107,65 @@ class CursorView extends JComponent
   @Override
   protected void paintComponent( final Graphics aGraphics )
   {
-    if ( !this.enabled )
+    if ( !this.controller.isCursorMode() )
     {
       return;
     }
 
     final Graphics2D g2d = ( Graphics2D )aGraphics.create();
 
-    final Rectangle clip = aGraphics.getClipBounds();
-
-    final int y1 = clip.y;
-    final int y2 = clip.y + clip.height;
-
-    final int[] cursors = this.controller.getDataModel().getCursors();
-    final Color[] colors = new Color[] { Color.RED, Color.GREEN };
-
-    for ( int i = 0; i < cursors.length; i++ )
+    try
     {
-      final int x = this.controller.toScaledScreenCoordinate( cursors[i] ).x;
+      final Rectangle clip = aGraphics.getClipBounds();
+      // Tell Swing how we would like to render ourselves...
+      g2d.setRenderingHints( createRenderingHints() );
 
-      if ( clip.contains( x, y1 ) || clip.contains( x, y2 ) )
+      final int y1 = clip.y;
+      final int y2 = clip.y + clip.height;
+
+      final ScreenModel screenModel = this.controller.getScreenModel();
+      final int[] cursors = getCursors();
+
+      for ( int i = 0; i < cursors.length; i++ )
       {
-        g2d.setColor( colors[i] );
-        g2d.drawLine( x, y1, x, y2 );
+        final int x = this.controller.toScaledScreenCoordinate( cursors[i] ).x;
 
-        if ( this.snapMode && inArea( this.lastPoint, x ) )
+        if ( clip.contains( x, y1 ) || clip.contains( x, y2 ) )
         {
-          g2d.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
-          g2d.setRenderingHint( RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR );
+          g2d.setColor( screenModel.getCursorColor( i ) );
+          g2d.drawLine( x, y1, x, y2 );
 
-          g2d.drawOval( x - 4, this.lastPoint.y - 4, 8, 8 );
+          if ( this.snapMode && inArea( this.lastPoint, x ) )
+          {
+            g2d.drawOval( x - 4, this.lastPoint.y - 4, 8, 8 );
+          }
         }
       }
     }
+    finally
+    {
+      g2d.dispose();
+    }
+  }
+
+  /**
+   * Creates the rendering hints for this view.
+   */
+  private RenderingHints createRenderingHints()
+  {
+    RenderingHints hints = new RenderingHints( RenderingHints.KEY_INTERPOLATION,
+        RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR );
+    hints.put( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
+    hints.put( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED );
+    return hints;
+  }
+
+  /**
+   * @return
+   */
+  private int[] getCursors()
+  {
+    return this.controller.getDataModel().getCursors();
   }
 
   /**
@@ -158,12 +174,11 @@ class CursorView extends JComponent
    * @param aCursorIdx
    *          the cursor index of the cursor to repaint.
    */
-  private void repaintPartially( final int aCursorIdx )
+  private void repaintPartially( final int[] aCursors, final int aCursorIdx )
   {
     int x, y, w, h;
 
-    final int[] cursors = this.controller.getDataModel().getCursors();
-    x = this.controller.toScaledScreenCoordinate( cursors[aCursorIdx] ).x - 1;
+    x = this.controller.toScaledScreenCoordinate( aCursors[aCursorIdx] ).x - 1;
     y = 0;
     w = 2;
     h = getHeight();

@@ -52,9 +52,11 @@ public class ScreenModel
   // VARIABLES
 
   private double zoomFactor;
+  private boolean zoomAll;
   private int signalHeight;
   private int channelHeight;
   private boolean measurementMode;
+  private boolean cursorMode;
   private final int[] virtualRowMapping;
   private final Color[] colors;
   private final String[] channelLabels;
@@ -161,6 +163,14 @@ public class ScreenModel
   }
 
   /**
+   * @return the colors
+   */
+  public Color getCursorColor( final int aCursorIdx )
+  {
+    return this.colors[aCursorIdx];
+  }
+
+  /**
    * @return
    */
   public SignalAlignment getSignalAlignment()
@@ -208,9 +218,25 @@ public class ScreenModel
     return this.zoomFactor;
   }
 
+  /**
+   * @return the cursorMode
+   */
+  public boolean isCursorMode()
+  {
+    return this.cursorMode;
+  }
+
   public boolean isMeasurementMode()
   {
     return this.measurementMode;
+  }
+
+  /**
+   * @return the zoomAll
+   */
+  public boolean isZoomAll()
+  {
+    return this.zoomAll;
   }
 
   /**
@@ -234,6 +260,21 @@ public class ScreenModel
     this.channelHeight = aChannelHeight;
   }
 
+  /**
+   * Enables or disables the cursors.
+   * 
+   * @param aSelected
+   *          <code>true</code> to enable the cursors, <code>false</code> to
+   *          disable the cursors.
+   */
+  public void setCursorMode( final boolean aCursorMode )
+  {
+    this.cursorMode = aCursorMode;
+  }
+
+  /**
+   * @param aEnabled
+   */
   public void setMeasurementMode( final boolean aEnabled )
   {
     this.measurementMode = aEnabled;
@@ -253,6 +294,14 @@ public class ScreenModel
   public void setSignalHeight( final int aSignalHeight )
   {
     this.signalHeight = aSignalHeight;
+  }
+
+  /**
+   * @param aZoomAll the zoomAll to set
+   */
+  public void setZoomAll( final boolean aZoomAll )
+  {
+    this.zoomAll = aZoomAll;
   }
 
   /**

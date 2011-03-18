@@ -256,6 +256,14 @@ public final class SignalDiagramController
   /**
    * @return
    */
+  public boolean isCursorMode()
+  {
+    return this.screenModel.isCursorMode();
+  }
+
+  /**
+   * @return
+   */
   public boolean isMeasurementMode()
   {
     return this.screenModel.isMeasurementMode();
@@ -267,6 +275,14 @@ public final class SignalDiagramController
   public boolean isSnapModeEnabled()
   {
     return this.cursorView.isSnapModeEnabled();
+  }
+
+  /**
+   * @return true if the current zoom factor is 'zoom all', false otherwise.
+   */
+  public boolean isZoomAll()
+  {
+    return this.screenModel.isZoomAll();
   }
 
   /**
@@ -283,9 +299,9 @@ public final class SignalDiagramController
    * Moves a given sample row to another position.
    * 
    * @param aMovedRow
-   *          the real row that is to be moved;
+   *          the virtual (screen) row index that is to be moved;
    * @param aInsertRow
-   *          the real row that the moved row is moved to.
+   *          the virtual (screen) row index that the moved row is moved to.
    */
   public void moveSampleRows( final int aMovedRow, final int aInsertRow )
   {
@@ -297,22 +313,41 @@ public final class SignalDiagramController
     final int row = this.screenModel.toRealRow( aMovedRow );
     final int newRow = this.screenModel.toRealRow( aInsertRow );
 
+    // Update the screen model...
     this.screenModel.moveRows( row, newRow );
 
     final JScrollPane scrollPane = ( JScrollPane )SwingUtilities.getAncestorOfClass( JScrollPane.class, this.arrowView );
     if ( scrollPane != null )
     {
-      final int signalHeight = this.screenModel.getSignalHeight();
+      final int signalOffset = this.screenModel.getSignalOffset();
       final int channelHeight = this.screenModel.getChannelHeight();
 
-      final Rectangle rect = scrollPane.getVisibleRect();
-      rect.y = ( row * channelHeight ) + signalHeight - 3;
-      rect.height = channelHeight + 6;
-      scrollPane.repaint( rect );
+      final int oldRowY = ( row * channelHeight ) + signalOffset - 3;
+      final int newRowY = ( newRow * channelHeight ) + signalOffset - 3;
+      final int rowHeight = channelHeight + 6;
 
-      rect.y = ( newRow * channelHeight ) + signalHeight - 3;
-      rect.height = channelHeight + 6;
-      scrollPane.repaint( rect );
+      // Update the signal display's view port; only the affected regions...
+      final JViewport viewport = scrollPane.getViewport();
+
+      Rectangle rect = viewport.getVisibleRect();
+      // ...old region...
+      rect.y = oldRowY;
+      rect.height = rowHeight;
+      viewport.repaint( rect );
+      // ...new region...
+      rect.y = newRowY;
+      viewport.repaint( rect );
+
+      final JViewport channelLabelsView = scrollPane.getRowHeader();
+
+      rect = channelLabelsView.getVisibleRect();
+      // ...old region...
+      rect.y = oldRowY;
+      rect.height = rowHeight;
+      channelLabelsView.repaint( rect );
+      // ...new region...
+      rect.y = newRowY;
+      channelLabelsView.repaint( rect );
     }
   }
 
@@ -324,14 +359,15 @@ public final class SignalDiagramController
     final JScrollPane scrollPane = ( JScrollPane )SwingUtilities.getAncestorOfClass( JScrollPane.class, this.arrowView );
     if ( scrollPane != null )
     {
-      final int width = ( int )Math.min( Integer.MAX_VALUE, getAbsoluteLength() );
+      final JViewport viewport = scrollPane.getViewport();
 
-      final int height = this.screenModel.getChannelHeight() * this.dataModel.getWidth()
+      final int width = ( int )Math.min( Integer.MAX_VALUE, getAbsoluteLength() );
+      final int height = ( this.screenModel.getChannelHeight() * this.dataModel.getWidth() )
       + this.screenModel.getSignalHeight();
 
       final Dimension newSize = new Dimension( width, height );
 
-      final JComponent view = ( JComponent )scrollPane.getViewport().getView();
+      final JComponent view = ( JComponent )viewport.getView();
       view.setPreferredSize( newSize );
       view.revalidate();
 
@@ -352,8 +388,8 @@ public final class SignalDiagramController
    */
   public void setCursorsVisible( final boolean aVisible )
   {
-    this.cursorView.setCursorMode( aVisible );
-    this.cursorView.repaint( 25L );
+    this.screenModel.setCursorMode( aVisible );
+    repaintLater( this.cursorView );
   }
 
   /**
@@ -366,15 +402,18 @@ public final class SignalDiagramController
   public void setMeasurementMode( final boolean aEnabled )
   {
     this.screenModel.setMeasurementMode( aEnabled );
+    repaintLater( this.arrowView );
   }
 
   /**
    * Sets the data model for this controller.
-   * @param aDataModel the dataModel to set, cannot be <code>null</code>.
+   * 
+   * @param aDataModel
+   *          the dataModel to set, cannot be <code>null</code>.
    */
   public void setSampleDataModel( final SampleDataModel aDataModel )
   {
-    if (aDataModel == null)
+    if ( aDataModel == null )
     {
       throw new IllegalArgumentException();
     }
@@ -383,11 +422,13 @@ public final class SignalDiagramController
 
   /**
    * Sets the screen model for this controller.
-   * @param aScreenModel the screenModel to set, cannot be <code>null</code>.
+   * 
+   * @param aScreenModel
+   *          the screenModel to set, cannot be <code>null</code>.
    */
   public void setScreenModel( final ScreenModel aScreenModel )
   {
-    if (aScreenModel == null)
+    if ( aScreenModel == null )
     {
       throw new IllegalArgumentException();
     }
@@ -459,14 +500,18 @@ public final class SignalDiagramController
 
   /**
    * Zooms to make all data visible in one screen.
-   * 
-   * @param aViewSize
-   *          the original view size in which all data should fit, cannot be
-   *          <code>null</code>.
    */
-  public void zoomAll( final Dimension aViewSize )
+  public void zoomAll()
   {
-    this.screenModel.setZoomFactor( aViewSize.getWidth() / this.dataModel.getAbsoluteLength() );
+    try
+    {
+      Dimension viewSize = getVisibleViewSize();
+      this.screenModel.setZoomFactor( viewSize.getWidth() / this.dataModel.getAbsoluteLength() );
+    }
+    finally
+    {
+      this.screenModel.setZoomAll( true );
+    }
 
     recalculateDimensions();
   }
@@ -487,6 +532,7 @@ public final class SignalDiagramController
   public void zoomOriginal()
   {
     zoomAbsolute( 1.0 );
+
     recalculateDimensions();
   }
 
@@ -597,7 +643,7 @@ public final class SignalDiagramController
 
     final Rectangle rect = new Rectangle();
     rect.x = rect.width = 0;
-    rect.y = ( virtualRow * channelHeight ) + signalHeight;
+    rect.y = ( virtualRow * channelHeight ) + this.screenModel.getSignalOffset();
     rect.height = signalHeight;
 
     // find the reference time value; which is the "timestamp" under the
@@ -648,11 +694,59 @@ public final class SignalDiagramController
   }
 
   /**
+   * Returns the dimensions of the visible view, taking care of viewports (such
+   * as used in {@link JScrollPane}).
+   * 
+   * @return a visible view size, as {@link Dimension}, never <code>null</code>.
+   */
+  private Dimension getVisibleViewSize()
+  {
+    Rectangle rect;
+
+    JScrollPane scrollPane = ( JScrollPane )SwingUtilities.getAncestorOfClass( JScrollPane.class, this.arrowView );
+    if ( scrollPane != null )
+    {
+      rect = scrollPane.getViewport().getVisibleRect();
+    }
+    else
+    {
+      SignalDiagramComponent parent = ( SignalDiagramComponent )SwingUtilities.getAncestorOfClass(
+          SignalDiagramComponent.class, this.arrowView );
+      rect = parent.getVisibleRect();
+    }
+
+    return rect.getSize();
+  }
+
+  /**
+   * @param aComponent
+   */
+  private void repaintLater( final JComponent aComponent )
+  {
+    final Runnable runner = new Runnable()
+    {
+      @Override
+      public void run()
+      {
+        aComponent.repaint();
+      }
+    };
+    SwingUtilities.invokeLater( runner );
+  }
+
+  /**
    * @param aFactor
    */
   private void zoomAbsolute( final double aFactor )
   {
-    this.screenModel.setZoomFactor( aFactor );
+    try
+    {
+      this.screenModel.setZoomFactor( aFactor );
+    }
+    finally
+    {
+      this.screenModel.setZoomAll( false );
+    }
     System.out.println( "Zoom factor = " + this.screenModel.getZoomFactor() );
   }
 

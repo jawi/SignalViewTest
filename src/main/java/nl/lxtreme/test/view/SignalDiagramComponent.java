@@ -15,16 +15,18 @@ import nl.lxtreme.test.dnd.*;
 
 
 /**
- * @author jawi
+ * Provides a signal diagram, where signals in the form of sample data is
+ * represented by channels.
  */
 public class SignalDiagramComponent extends JPanel implements Scrollable
 {
   // INNER TYPES
 
   /**
-   * @author jajans
+   * Listens for window events in order to set the proper dimensions for the
+   * displayed views.
    */
-  static final class MyComponentListener extends ComponentAdapter
+  static final class ComponentSizeListener extends ComponentAdapter
   {
     // VARIABLES
 
@@ -35,7 +37,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     /**
      * @param aController
      */
-    public MyComponentListener( final SignalDiagramController aController )
+    public ComponentSizeListener( final SignalDiagramController aController )
     {
       this.controller = aController;
     }
@@ -46,15 +48,63 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     @Override
     public void componentResized( final ComponentEvent aEvent )
     {
-      this.controller.recalculateDimensions();
-      System.out.println( "resize!" );
+      final Component component = aEvent.getComponent();
+      SwingUtilities.invokeLater( new Runnable()
+      {
+        @Override
+        public void run()
+        {
+          try
+          {
+            component.setCursor( Cursor.getPredefinedCursor( Cursor.WAIT_CURSOR ) );
+
+            final SignalDiagramController ctrl = ComponentSizeListener.this.controller;
+            if ( ctrl.isZoomAll() )
+            {
+              ctrl.zoomAll();
+            }
+          }
+          finally
+          {
+            component.setCursor( Cursor.getDefaultCursor() );
+          }
+        }
+      } );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void componentShown( final ComponentEvent aEvent )
+    {
+      final Component component = aEvent.getComponent();
+      SwingUtilities.invokeLater( new Runnable()
+      {
+        @Override
+        public void run()
+        {
+          try
+          {
+            component.setCursor( Cursor.getPredefinedCursor( Cursor.WAIT_CURSOR ) );
+
+            // Ask the controller to redimension all contained components...
+            ComponentSizeListener.this.controller.zoomAll();
+          }
+          finally
+          {
+            component.setCursor( Cursor.getDefaultCursor() );
+          }
+        }
+      } );
     }
   }
 
   /**
-   * @author jajans
+   * Provides an keyboard event listener to allow some of the functionality
+   * (such as: zooming) of this component to be controlled from the keyboard.
    */
-  static final class MyKeyListener extends KeyAdapter
+  static final class KeyboardControlListener extends KeyAdapter
   {
     // VARIABLES
 
@@ -65,7 +115,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     /**
      * @param aController
      */
-    public MyKeyListener( final SignalDiagramController aController )
+    public KeyboardControlListener( final SignalDiagramController aController )
     {
       this.controller = aController;
     }
@@ -78,7 +128,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     @Override
     public void keyPressed( final KeyEvent aEvent )
     {
-      if ( aEvent.isAltDown() && !this.controller.isSnapModeEnabled() )
+      if ( isSnapModeKeyEvent( aEvent ) )
       {
         this.controller.enableSnapMode();
       }
@@ -117,20 +167,34 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       }
       else if ( '0' == aEvent.getKeyChar() )
       {
-        final Component comp = SwingUtilities.getRootPane( aEvent.getComponent() );
-        this.controller.zoomAll( comp.getSize() );
+        this.controller.zoomAll();
       }
       else if ( '1' == aEvent.getKeyChar() )
       {
         this.controller.zoomOriginal();
       }
     }
+
+    /**
+     * @param aEvent
+     * @return
+     */
+    private boolean isSnapModeKeyEvent(final KeyEvent aEvent) {
+      if ( this.controller.isSnapModeEnabled() )
+      {
+        return false;
+      }
+
+      return ( aEvent.isAltDown() || aEvent.isAltGraphDown() ) && aEvent.isControlDown();
+    }
   }
 
   /**
-   * @author jajans
+   * Provides an mouse event listener to allow some of the functionality (such
+   * as DnD and cursor dragging) of this component to be controlled with the
+   * mouse.
    */
-  static final class MyMouseListener extends MouseAdapter implements DragGestureListener
+  static final class MouseControlListener extends MouseAdapter implements DragGestureListener
   {
     // VARIABLES
 
@@ -143,7 +207,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     /**
      * @param aController
      */
-    public MyMouseListener( final SignalDiagramController aController )
+    public MouseControlListener( final SignalDiagramController aController )
     {
       this.controller = aController;
     }
@@ -174,13 +238,16 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     @Override
     public void mouseDragged( final MouseEvent aEvent )
     {
-      if ( this.lastCursor < 0 )
+      if ( this.controller.isCursorMode() )
       {
-        return;
-      }
+        if ( this.lastCursor < 0 )
+        {
+          return;
+        }
 
-      setCursor( aEvent, CURSOR_MOVE_CURSOR );
-      this.controller.dragCursor( this.lastCursor, aEvent.getPoint(), aEvent.isAltDown() );
+        setCursor( aEvent, CURSOR_MOVE_CURSOR );
+        this.controller.dragCursor( this.lastCursor, aEvent.getPoint(), aEvent.isAltDown() );
+      }
     }
 
     /**
@@ -198,7 +265,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
           this.showing = this.controller.showHover( point );
           setCursor( aEvent, CURSOR_HOVER );
         }
-        else
+        else if ( this.controller.isCursorMode() )
         {
           if ( this.controller.findCursor( aEvent.getPoint() ) >= 0 )
           {
@@ -312,13 +379,15 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   @Override
   public void addNotify()
   {
+    super.addNotify();
+
     final Container parent = getParent();
 
     final Container window = SwingUtilities.getWindowAncestor( parent );
-    window.addComponentListener( new MyComponentListener( this.controller ) );
-    window.addKeyListener( new MyKeyListener( this.controller ) );
+    window.addComponentListener( new ComponentSizeListener( this.controller ) );
+    window.addKeyListener( new KeyboardControlListener( this.controller ) );
 
-    final MyMouseListener listener = new MyMouseListener( this.controller );
+    final MouseControlListener listener = new MouseControlListener( this.controller );
     addMouseListener( listener );
     addMouseMotionListener( listener );
 
@@ -326,8 +395,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     dragSource.createDefaultDragGestureRecognizer( this, DnDConstants.ACTION_COPY, listener );
 
     configureEnclosingScrollPane();
-
-    super.addNotify();
   }
 
   /**

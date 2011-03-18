@@ -32,22 +32,23 @@ public class SampleDataModel
     this.values = new int[aSize];
     this.timestamps = new long[aSize];
 
-    final boolean run1 = false;
+    final boolean run1 = true;
     if ( run1 )
     {
-      int value = 0xAA;
+      int value = 0xAAA;
       for ( int i = 0; i < aSize; i++ )
       {
-        if ( ( i % 40 ) == 0 )
+        // A transition each 5ns...
+        if ( ( i % 5 ) == 0 )
         {
-          value = ( value == 0xAA ) ? 0x00 : 0xAA;
+          value = ( value == 0xAAA ) ? 0x555 : 0xAAA;
         }
 
         this.values[i] = value;
-        this.timestamps[i] = 2 * i;
+        this.timestamps[i] = i;
       }
 
-      this.sampleRate = 100000000; // 100MHz
+      this.sampleRate = 1000000000; // 1000MHz
     }
     else
     {
