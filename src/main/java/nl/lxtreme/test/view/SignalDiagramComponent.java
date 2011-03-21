@@ -14,6 +14,7 @@ import javax.swing.*;
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.dnd.*;
 import nl.lxtreme.test.model.*;
+import nl.lxtreme.test.view.SignalDiagramController.*;
 
 
 /**
@@ -248,7 +249,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       GhostGlassPane glassPane = ( GhostGlassPane )SwingUtilities.getRootPane( this.signalView ).getGlassPane();
 
       glassPane.clearDropPoint();
-      glassPane.repaint();
+      glassPane.repaintPartially();
     }
 
     /**
@@ -334,9 +335,9 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       final Point coordinate = ( Point )aEvent.getLocation().clone();
       SwingUtilities.convertPointFromScreen( coordinate, this.signalView );
 
-      final GhostGlassPane glassPane = ( GhostGlassPane )SwingUtilities.getRootPane( this.signalView ).getGlassPane();
-
       Point dropPoint;
+
+      final GhostGlassPane glassPane = ( GhostGlassPane )SwingUtilities.getRootPane( this.signalView ).getGlassPane();
 
       DragAndDropContext context = getContext( aEvent );
       if ( DragAndDropContext.CHANNEL_ROW == context )
@@ -400,6 +401,14 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     private Point createCursorDropPoint( final Point aPoint, final JComponent aTargetComponent )
     {
       final Point dropPoint = new Point( aPoint.x, 0 );
+
+      // XXX test snap mode...
+      final SignalHoverInfo signalHover = this.controller.getSignalHover( aPoint );
+      if ( signalHover != null )
+      {
+        dropPoint.x = signalHover.rectangle.x;
+        dropPoint.y = ( int )signalHover.rectangle.getCenterY();
+      }
 
       SwingUtilities.convertPointToScreen( dropPoint, this.signalView );
       SwingUtilities.convertPointFromScreen( dropPoint, aTargetComponent );

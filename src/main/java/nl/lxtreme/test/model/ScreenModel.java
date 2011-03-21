@@ -49,15 +49,15 @@ public class ScreenModel
       Utils.parseColor( "FF0000" ) //
   };
   private static final Color[] DARK_COLORS = { //
-    Utils.parseColor( "CCCCCC" ), //
-    Utils.parseColor( "CCCCCC" ), //
-    Utils.parseColor( "CCCCCC" ), //
-    Utils.parseColor( "CCCCCC" ), //
-    Utils.parseColor( "CCCCCC" ), //
-    Utils.parseColor( "CCCCCC" ), //
-    Utils.parseColor( "CCCCCC" ), //
-    Utils.parseColor( "CCCCCC" ), //
-    Utils.parseColor( "CCCCCC" ) //
+  Utils.parseColor( "7bf9dd" ), //
+      Utils.parseColor( "7bf9dd" ), //
+      Utils.parseColor( "7bf9dd" ), //
+      Utils.parseColor( "7bf9dd" ), //
+      Utils.parseColor( "7bf9dd" ), //
+      Utils.parseColor( "7bf9dd" ), //
+      Utils.parseColor( "7bf9dd" ), //
+      Utils.parseColor( "7bf9dd" ), //
+      Utils.parseColor( "7bf9dd" ) //
   };
 
   // VARIABLES
@@ -186,7 +186,7 @@ public class ScreenModel
    */
   public Color getCursorColor( final int aCursorIdx )
   {
-    return this.colors[aCursorIdx];
+    return this.colors[aCursorIdx].brighter();
   }
 
   /**

@@ -44,43 +44,29 @@ class SignalView extends JPanel
         return;
       }
 
-      for ( int i = flavors.length - 1; i >= 0; i-- )
+      boolean result = false;
+      for ( int i = flavors.length - 1; !result && ( i >= 0 ); i-- )
       {
         if ( ChannelRowTransferable.FLAVOR.equals( flavors[i] ) )
         {
-          if ( dropChannelRow( aEvent ) )
-          {
-
-            // Update our administration...
-            final GhostGlassPane glassPane = ( GhostGlassPane )SwingUtilities.getRootPane( SignalView.this )
-                .getGlassPane();
-            glassPane.clearDropPoint();
-            glassPane.setVisible( false );
-
-            DragAndDropLock.setLocked( false );
-            // Acknowledge that we've successfully dropped the item...
-            aEvent.dropComplete( true );
-
-            i = -1; // we're done...
-          }
+          result = dropChannelRow( aEvent );
         }
         else if ( CursorTransferable.FLAVOR.equals( flavors[i] ) )
         {
-          if ( dropCursor( aEvent ) )
-          {
-            // Update our administration...
-            final GhostGlassPane glassPane = ( GhostGlassPane )SwingUtilities.getRootPane( SignalView.this )
-                .getGlassPane();
-            glassPane.clearDropPoint();
-            glassPane.setVisible( false );
-
-            DragAndDropLock.setLocked( false );
-            // Acknowledge that we've successfully dropped the item...
-            aEvent.dropComplete( true );
-
-            i = -1; // we're done...
-          }
+          result = dropCursor( aEvent );
         }
+      }
+
+      if ( result )
+      {
+        // Update our administration...
+        final GhostGlassPane glassPane = ( GhostGlassPane )SwingUtilities.getRootPane( SignalView.this ).getGlassPane();
+        glassPane.clearDropPoint();
+        glassPane.setVisible( false );
+
+        DragAndDropLock.setLocked( false );
+        // Acknowledge that we've successfully dropped the item...
+        aEvent.dropComplete( true );
       }
     }
 
@@ -89,7 +75,7 @@ class SignalView extends JPanel
      */
     private boolean dropChannelRow( final DropTargetDropEvent aEvent )
     {
-      aEvent.acceptDrop( DnDConstants.ACTION_MOVE );
+      aEvent.acceptDrop( DnDConstants.ACTION_COPY_OR_MOVE );
 
       final Transferable transferable = aEvent.getTransferable();
 
@@ -128,7 +114,7 @@ class SignalView extends JPanel
      */
     private boolean dropCursor( final DropTargetDropEvent aEvent )
     {
-      aEvent.acceptDrop( DnDConstants.ACTION_MOVE );
+      aEvent.acceptDrop( DnDConstants.ACTION_COPY_OR_MOVE );
 
       final Transferable transferable = aEvent.getTransferable();
 
@@ -156,7 +142,7 @@ class SignalView extends JPanel
       final Point coordinate = ( Point )aEvent.getLocation().clone();
 
       // Move the cursor position...
-      this.ctlr.dragCursor( cursorIdx, coordinate, false /* aSnap */); // XXX
+      this.ctlr.dragCursor( cursorIdx, coordinate, false /* aSnap */);
 
       return true;
     }

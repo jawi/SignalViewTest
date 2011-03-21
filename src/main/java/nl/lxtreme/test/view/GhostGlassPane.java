@@ -66,29 +66,42 @@ public class GhostGlassPane extends JPanel
    */
   public void repaintPartially()
   {
-    int width, height;
+    int x, y, width, height;
     if ( DragAndDropContext.CHANNEL_ROW == this.context )
     {
       width = CHANNEL_ROW_MARKER_WIDTH + 2;
       height = CHANNEL_ROW_MARKER_HEIGHT + 2;
+
+      if ( this.oldDropPoint != null )
+      {
+        x = this.oldDropPoint.x - 1;
+        y = this.oldDropPoint.y - 1;
+        repaint( x, y, width, height );
+      }
+      if ( this.dropPoint != null )
+      {
+        x = this.dropPoint.x - 1;
+        y = this.dropPoint.y - 1;
+        repaint( x, y, width, height );
+      }
     }
     else
     {
-      width = CURSOR_MARKER_WIDTH + 2;
+      width = CURSOR_MARKER_WIDTH + 4;
       height = Math.max( getHeight(), CURSOR_MARKER_HEIGHT );
-    }
 
-    if ( this.oldDropPoint != null )
-    {
-      int x = this.oldDropPoint.x - 1;
-      int y = this.oldDropPoint.y - 1;
-      repaint( x, y, width, height );
-    }
-    if ( this.dropPoint != null )
-    {
-      int x = this.dropPoint.x - 1;
-      int y = this.dropPoint.y - 1;
-      repaint( x, y, width, height );
+      if ( this.oldDropPoint != null )
+      {
+        x = this.oldDropPoint.x - 2;
+        y = this.oldDropPoint.y;
+        repaint( x, y, width, height );
+      }
+      if ( this.dropPoint != null )
+      {
+        x = this.dropPoint.x - 2;
+        y = this.dropPoint.y;
+        repaint( x, y, width, height );
+      }
     }
   }
 
@@ -104,6 +117,7 @@ public class GhostGlassPane extends JPanel
    */
   public void setDropPoint( final Point aLocation, final DragAndDropContext aContext )
   {
+    System.out.println( "drop point = " + aLocation + "; old = " + this.oldDropPoint + "; context = " + aContext );
     this.oldDropPoint = this.dropPoint;
     this.dropPoint = aLocation;
     this.context = aContext;
@@ -128,9 +142,8 @@ public class GhostGlassPane extends JPanel
 
       final Rectangle clip = g2d.getClipBounds();
 
-      int x = Math.min( clip.x, this.dropPoint.x );
-      int y = Math.min( clip.y, this.dropPoint.y );
-      int height = clip.height;
+      int x = this.dropPoint.x;
+      int y = this.dropPoint.y;
 
       if ( DragAndDropContext.CHANNEL_ROW == this.context )
       {
@@ -141,7 +154,7 @@ public class GhostGlassPane extends JPanel
       else
       {
         g2d.setColor( Color.LIGHT_GRAY );
-        g2d.drawLine( x, y, x, height );
+        g2d.drawLine( x, y, x, clip.height );
       }
     }
     finally

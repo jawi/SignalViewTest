@@ -546,6 +546,82 @@ public final class SignalDiagramController
   }
 
   /**
+   * Returns the hover area of the signal under the given coordinate (= mouse
+   * position).
+   * 
+   * @param aPoint
+   *          the mouse coordinate to determine the signal rectangle for, cannot
+   *          be <code>null</code>.
+   * @return the rectangle of the signal the given coordinate contains,
+   *         <code>null</code> if not found.
+   */
+  SignalHoverInfo getSignalHover( final Point aPoint )
+  {
+    final int signalWidth = this.dataModel.getWidth();
+    final int signalHeight = this.screenModel.getSignalHeight();
+    final int channelHeight = this.screenModel.getChannelHeight();
+
+    final int virtualRow = ( aPoint.y - signalHeight ) / channelHeight;
+    if ( ( virtualRow < 0 ) || ( virtualRow > ( signalWidth - 1 ) ) )
+    {
+      return null;
+    }
+
+    final int realRow = this.screenModel.toRealRow( virtualRow );
+
+    final Rectangle rect = new Rectangle();
+    rect.x = rect.width = 0;
+    rect.y = ( virtualRow * channelHeight ) + this.screenModel.getSignalOffset();
+    rect.height = signalHeight;
+
+    // find the reference time value; which is the "timestamp" under the
+    // cursor...
+    final int refIdx = toTimestampIndex( aPoint );
+
+    int firstSample = -1;
+    int lastSample = -1;
+
+    final int[] values = this.dataModel.getValues();
+    if ( ( refIdx >= 0 ) && ( refIdx < values.length ) )
+    {
+      final long[] timestamps = this.dataModel.getTimestamps();
+
+      final int mask = ( 1 << realRow );
+      final int refValue = ( values[refIdx] & mask );
+
+      int idx = refIdx;
+      do
+      {
+        idx--;
+      }
+      while ( ( idx >= 0 ) && ( ( values[idx] & mask ) == refValue ) );
+      // Search for the original value again, to complete the pulse...
+      do
+      {
+        idx--;
+      }
+      while ( ( idx >= 0 ) && ( ( values[idx] & mask ) != refValue ) );
+
+      // convert the found index back to "screen" values...
+      firstSample = Math.max( 0, idx + 1 );
+      rect.x = toScaledScreenCoordinate( timestamps[firstSample] ).x;
+
+      idx = refIdx;
+      do
+      {
+        idx++;
+      }
+      while ( ( idx < values.length ) && ( ( values[idx] & mask ) == refValue ) );
+
+      // convert the found index back to "screen" values...
+      lastSample = Math.min( idx, timestamps.length - 1 );
+      rect.width = toScaledScreenCoordinate( timestamps[lastSample] ).x - rect.x;
+    }
+
+    return new SignalHoverInfo( rect, firstSample, lastSample, refIdx, realRow );
+  }
+
+  /**
    * Returns the actual signal view component.
    * 
    * @return a signal view component, never <code>null</code>.
@@ -624,82 +700,6 @@ public final class SignalDiagramController
   {
     final long[] timestamps = this.dataModel.getTimestamps();
     return ( long )( ( timestamps[timestamps.length - 1] + 1 ) * this.screenModel.getZoomFactor() );
-  }
-
-  /**
-   * Returns the hover area of the signal under the given coordinate (= mouse
-   * position).
-   * 
-   * @param aPoint
-   *          the mouse coordinate to determine the signal rectangle for, cannot
-   *          be <code>null</code>.
-   * @return the rectangle of the signal the given coordinate contains,
-   *         <code>null</code> if not found.
-   */
-  private SignalHoverInfo getSignalHover( final Point aPoint )
-  {
-    final int signalWidth = this.dataModel.getWidth();
-    final int signalHeight = this.screenModel.getSignalHeight();
-    final int channelHeight = this.screenModel.getChannelHeight();
-
-    final int virtualRow = ( aPoint.y - signalHeight ) / channelHeight;
-    if ( ( virtualRow < 0 ) || ( virtualRow > ( signalWidth - 1 ) ) )
-    {
-      return null;
-    }
-
-    final int realRow = this.screenModel.toRealRow( virtualRow );
-
-    final Rectangle rect = new Rectangle();
-    rect.x = rect.width = 0;
-    rect.y = ( virtualRow * channelHeight ) + this.screenModel.getSignalOffset();
-    rect.height = signalHeight;
-
-    // find the reference time value; which is the "timestamp" under the
-    // cursor...
-    final int refIdx = toTimestampIndex( aPoint );
-
-    int firstSample = -1;
-    int lastSample = -1;
-
-    final int[] values = this.dataModel.getValues();
-    if ( ( refIdx >= 0 ) && ( refIdx < values.length ) )
-    {
-      final long[] timestamps = this.dataModel.getTimestamps();
-
-      final int mask = ( 1 << realRow );
-      final int refValue = ( values[refIdx] & mask );
-
-      int idx = refIdx;
-      do
-      {
-        idx--;
-      }
-      while ( ( idx >= 0 ) && ( ( values[idx] & mask ) == refValue ) );
-      // Search for the original value again, to complete the pulse...
-      do
-      {
-        idx--;
-      }
-      while ( ( idx >= 0 ) && ( ( values[idx] & mask ) != refValue ) );
-
-      // convert the found index back to "screen" values...
-      firstSample = Math.max( 0, idx + 1 );
-      rect.x = toScaledScreenCoordinate( timestamps[firstSample] ).x;
-
-      idx = refIdx;
-      do
-      {
-        idx++;
-      }
-      while ( ( idx < values.length ) && ( ( values[idx] & mask ) == refValue ) );
-
-      // convert the found index back to "screen" values...
-      lastSample = Math.min( idx, timestamps.length - 1 );
-      rect.width = toScaledScreenCoordinate( timestamps[lastSample] ).x - rect.x;
-    }
-
-    return new SignalHoverInfo( rect, firstSample, lastSample, refIdx, realRow );
   }
 
   /**
