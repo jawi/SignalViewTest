@@ -11,7 +11,7 @@ import java.io.*;
 /**
  * @author jajans
  */
-public class SampleRowTransferable implements Transferable
+public class ChannelRowTransferable implements Transferable
 {
   // CONSTANTS
 
@@ -21,7 +21,8 @@ public class SampleRowTransferable implements Transferable
   {
     try
     {
-      FLAVOR = new DataFlavor( "image/x-sample-row;class=" + SampleRowTransferable.class.getCanonicalName() );
+      FLAVOR = new DataFlavor( "application/vnd.ols.x-channel-row;class="
+          + ChannelRowTransferable.class.getCanonicalName() + ";humanPresentableName=OLS%20Channel%20Row" );
     }
     catch ( final ClassNotFoundException exception )
     {
@@ -38,7 +39,7 @@ public class SampleRowTransferable implements Transferable
   /**
    * @param aRow
    */
-  public SampleRowTransferable( final int aRow )
+  public ChannelRowTransferable( final int aRow )
   {
     this.row = Integer.valueOf( aRow );
   }

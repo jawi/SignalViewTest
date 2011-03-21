@@ -83,6 +83,7 @@ public class Main
     this.mainFrame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
     this.mainFrame.setPreferredSize( dims );
     this.mainFrame.setSize( dims );
+    this.mainFrame.setGlassPane( new GhostGlassPane() );
 
     this.menuBar = new JMenuBar();
 

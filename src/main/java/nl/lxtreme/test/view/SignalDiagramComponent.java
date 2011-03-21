@@ -12,6 +12,7 @@ import javax.swing.*;
 
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.dnd.*;
+import nl.lxtreme.test.model.*;
 
 
 /**
@@ -101,100 +102,11 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   }
 
   /**
-   * Provides an keyboard event listener to allow some of the functionality
-   * (such as: zooming) of this component to be controlled from the keyboard.
-   */
-  static final class KeyboardControlListener extends KeyAdapter
-  {
-    // VARIABLES
-
-    private final SignalDiagramController controller;
-
-    // CONSTRUCTORS
-
-    /**
-     * @param aController
-     */
-    public KeyboardControlListener( final SignalDiagramController aController )
-    {
-      this.controller = aController;
-    }
-
-    // METHODS
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void keyPressed( final KeyEvent aEvent )
-    {
-      if ( isSnapModeKeyEvent( aEvent ) )
-      {
-        this.controller.enableSnapMode();
-      }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void keyReleased( final KeyEvent aEvent )
-    {
-      if ( this.controller.isSnapModeEnabled() )
-      {
-        this.controller.disableSnapMode();
-      }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void keyTyped( final KeyEvent aEvent )
-    {
-      if ( aEvent.getID() != KeyEvent.KEY_TYPED )
-      {
-        return;
-      }
-
-      if ( ( '+' == aEvent.getKeyChar() ) || ( '=' == aEvent.getKeyChar() ) )
-      {
-        this.controller.zoomIn();
-      }
-      else if ( ( '-' == aEvent.getKeyChar() ) || ( '_' == aEvent.getKeyChar() ) )
-      {
-        this.controller.zoomOut();
-      }
-      else if ( '0' == aEvent.getKeyChar() )
-      {
-        this.controller.zoomAll();
-      }
-      else if ( '1' == aEvent.getKeyChar() )
-      {
-        this.controller.zoomOriginal();
-      }
-    }
-
-    /**
-     * @param aEvent
-     * @return
-     */
-    private boolean isSnapModeKeyEvent(final KeyEvent aEvent) {
-      if ( this.controller.isSnapModeEnabled() )
-      {
-        return false;
-      }
-
-      return ( aEvent.isAltDown() || aEvent.isAltGraphDown() ) && aEvent.isControlDown();
-    }
-  }
-
-  /**
    * Provides an mouse event listener to allow some of the functionality (such
    * as DnD and cursor dragging) of this component to be controlled with the
    * mouse.
    */
-  static final class MouseControlListener extends MouseAdapter implements DragGestureListener
+  static final class CursorMouseListener extends MouseAdapter
   {
     // VARIABLES
 
@@ -207,30 +119,12 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     /**
      * @param aController
      */
-    public MouseControlListener( final SignalDiagramController aController )
+    public CursorMouseListener( final SignalDiagramController aController )
     {
       this.controller = aController;
     }
 
     // METHODS
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void dragGestureRecognized( final DragGestureEvent aEvent )
-    {
-      if ( this.showing || ( this.lastCursor >= 0 ) || aEvent.getTriggerEvent().isAltDown()
-          || aEvent.getTriggerEvent().isControlDown() )
-      {
-        return;
-      }
-
-      final Point coordinate = ( Point )aEvent.getDragOrigin().clone();
-      final int row = this.controller.getSignalRow( coordinate );
-
-      aEvent.startDrag( Cursor.getDefaultCursor(), new SampleRowTransferable( row ) );
-    }
 
     /**
      * {@inheritDoc}
@@ -328,6 +222,247 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     }
   }
 
+  /**
+   * Provides an mouse event listener to allow some of the functionality (such
+   * as DnD and cursor dragging) of this component to be controlled with the
+   * mouse.
+   */
+  static final class DragAndDropListener implements DragGestureListener, DragSourceMotionListener, DragSourceListener
+  {
+    // VARIABLES
+
+    private final SignalDiagramController controller;
+    private final SignalView signalView;
+
+    // CONSTRUCTORS
+
+    /**
+     * @param aController
+     */
+    public DragAndDropListener( final SignalDiagramController aController )
+    {
+      this.controller = aController;
+      this.signalView = aController.getSignalView();
+    }
+
+    // METHODS
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void dragDropEnd( final DragSourceDropEvent aEvent )
+    {
+      if ( !DragAndDropLock.isDragAndDropStarted() )
+      {
+        return;
+      }
+      DragAndDropLock.setDragAndDropStarted( false );
+
+      GhostGlassPane glassPane = ( GhostGlassPane )SwingUtilities.getRootPane( this.signalView ).getGlassPane();
+
+      final Point startPt = ( Point )aEvent.getLocation().clone();
+      SwingUtilities.convertPointFromScreen( startPt, this.signalView );
+
+      glassPane.setDropChannelPoint( startPt );
+      glassPane.repaintPartially();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void dragEnter( final DragSourceDragEvent aEvent )
+    {
+      // NO-op
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void dragExit( final DragSourceEvent aEvent )
+    {
+      // NO-op
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void dragGestureRecognized( final DragGestureEvent aEvent )
+    {
+      if ( DragAndDropLock.isLocked() )
+      {
+        DragAndDropLock.setDragAndDropStarted( false );
+        return;
+      }
+
+      // We're having the exclusive right to start moving a channel around...
+      DragAndDropLock.setLocked( true );
+      DragAndDropLock.setDragAndDropStarted( true );
+
+      final Point coordinate = ( Point )aEvent.getDragOrigin().clone();
+      final int row = this.controller.getSignalRow( coordinate );
+
+      aEvent.startDrag( Cursor.getPredefinedCursor( Cursor.MOVE_CURSOR ), new ChannelRowTransferable( row ) );
+
+      final GhostGlassPane glassPane = ( GhostGlassPane )SwingUtilities.getRootPane( this.signalView ).getGlassPane();
+      glassPane.setDropChannelPoint( createChannelDropPoint( coordinate, glassPane ) );
+      glassPane.setVisible( true );
+      glassPane.repaintPartially();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void dragMouseMoved( final DragSourceDragEvent aEvent )
+    {
+      if ( !DragAndDropLock.isDragAndDropStarted() )
+      {
+        return;
+      }
+
+      final Point cursor = ( Point )aEvent.getLocation().clone();
+      SwingUtilities.convertPointFromScreen( cursor, this.signalView );
+
+      final GhostGlassPane glassPane = ( GhostGlassPane )SwingUtilities.getRootPane( this.signalView ).getGlassPane();
+      glassPane.setDropChannelPoint( createChannelDropPoint( cursor, glassPane ) );
+      glassPane.repaintPartially();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void dragOver( final DragSourceDragEvent aEvent )
+    {
+      // NO-op
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void dropActionChanged( final DragSourceDragEvent aEvent )
+    {
+      // NO-op
+    }
+
+    /**
+     * @param aDropRow
+     * @return
+     */
+    private Point createChannelDropPoint( final Point aPoint, final JComponent aTargetComponent )
+    {
+      final ScreenModel screenModel = this.controller.getScreenModel();
+      final SampleDataModel dataModel = this.controller.getDataModel();
+
+      final int signalWidth = dataModel.getWidth();
+      final int channelHeight = screenModel.getChannelHeight();
+
+      final int dropRow = Math.max( 0, Math.min( signalWidth, ( int )( aPoint.y / ( double )channelHeight ) ) );
+
+      final Point dropPoint = new Point( 0, ( dropRow + 1 ) * channelHeight );
+
+      SwingUtilities.convertPointToScreen( dropPoint, this.signalView );
+      SwingUtilities.convertPointFromScreen( dropPoint, aTargetComponent );
+
+      return dropPoint;
+    }
+  }
+
+  /**
+   * Provides an keyboard event listener to allow some of the functionality
+   * (such as: zooming) of this component to be controlled from the keyboard.
+   */
+  static final class KeyboardControlListener extends KeyAdapter
+  {
+    // VARIABLES
+
+    private final SignalDiagramController controller;
+
+    // CONSTRUCTORS
+
+    /**
+     * @param aController
+     */
+    public KeyboardControlListener( final SignalDiagramController aController )
+    {
+      this.controller = aController;
+    }
+
+    // METHODS
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void keyPressed( final KeyEvent aEvent )
+    {
+      if ( isSnapModeKeyEvent( aEvent ) )
+      {
+        this.controller.enableSnapMode();
+      }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void keyReleased( final KeyEvent aEvent )
+    {
+      if ( this.controller.isSnapModeEnabled() )
+      {
+        this.controller.disableSnapMode();
+      }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void keyTyped( final KeyEvent aEvent )
+    {
+      if ( aEvent.getID() != KeyEvent.KEY_TYPED )
+      {
+        return;
+      }
+
+      if ( ( '+' == aEvent.getKeyChar() ) || ( '=' == aEvent.getKeyChar() ) )
+      {
+        this.controller.zoomIn();
+      }
+      else if ( ( '-' == aEvent.getKeyChar() ) || ( '_' == aEvent.getKeyChar() ) )
+      {
+        this.controller.zoomOut();
+      }
+      else if ( '0' == aEvent.getKeyChar() )
+      {
+        this.controller.zoomAll();
+      }
+      else if ( '1' == aEvent.getKeyChar() )
+      {
+        this.controller.zoomOriginal();
+      }
+    }
+
+    /**
+     * @param aEvent
+     * @return
+     */
+    private boolean isSnapModeKeyEvent( final KeyEvent aEvent )
+    {
+      if ( this.controller.isSnapModeEnabled() )
+      {
+        return false;
+      }
+
+      return ( aEvent.isAltDown() || aEvent.isAltGraphDown() ) && aEvent.isControlDown();
+    }
+  }
+
   // CONSTANTS
 
   private static final long serialVersionUID = 1L;
@@ -342,9 +477,14 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
   private final SignalDiagramController controller;
 
-  private final SignalView modelView;
+  private final SignalView signalView;
   private final CursorView cursorView;
   private final ArrowView arrowView;
+
+  private ComponentSizeListener componentSizeListener;
+  private CursorMouseListener cursorMouseListener;
+  private DragAndDropListener dndListener;
+  private KeyboardControlListener keyboardListener;
 
   // CONSTRUCTORS
 
@@ -360,11 +500,11 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
     this.controller = aController;
 
-    this.modelView = new SignalView( this.controller );
+    this.signalView = new SignalView( this.controller );
     this.cursorView = new CursorView( this.controller );
     this.arrowView = new ArrowView( this.controller );
 
-    add( this.modelView, StackLayout.TOP );
+    add( this.signalView, StackLayout.TOP );
     add( this.cursorView, StackLayout.TOP );
     add( this.arrowView, StackLayout.TOP );
   }
@@ -379,22 +519,35 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   @Override
   public void addNotify()
   {
-    super.addNotify();
+    try
+    {
+      final Container parent = getParent();
+      final Container window = SwingUtilities.getWindowAncestor( parent );
 
-    final Container parent = getParent();
+      this.componentSizeListener = new ComponentSizeListener( this.controller );
+      this.keyboardListener = new KeyboardControlListener( this.controller );
 
-    final Container window = SwingUtilities.getWindowAncestor( parent );
-    window.addComponentListener( new ComponentSizeListener( this.controller ) );
-    window.addKeyListener( new KeyboardControlListener( this.controller ) );
+      window.addComponentListener( this.componentSizeListener );
+      window.addKeyListener( this.keyboardListener );
 
-    final MouseControlListener listener = new MouseControlListener( this.controller );
-    addMouseListener( listener );
-    addMouseMotionListener( listener );
+      this.cursorMouseListener = new CursorMouseListener( this.controller );
 
-    final DragSource dragSource = DragSource.getDefaultDragSource();
-    dragSource.createDefaultDragGestureRecognizer( this, DnDConstants.ACTION_COPY, listener );
+      addMouseListener( this.cursorMouseListener );
+      addMouseMotionListener( this.cursorMouseListener );
 
-    configureEnclosingScrollPane();
+      this.dndListener = new DragAndDropListener( this.controller );
+
+      final DragSource dragSource = DragSource.getDefaultDragSource();
+      dragSource.createDefaultDragGestureRecognizer( this, DnDConstants.ACTION_MOVE, this.dndListener );
+      dragSource.addDragSourceMotionListener( this.dndListener );
+      dragSource.addDragSourceListener( this.dndListener );
+
+      configureEnclosingScrollPane();
+    }
+    finally
+    {
+      super.addNotify();
+    }
   }
 
   /**
@@ -504,9 +657,43 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   @Override
   public void removeNotify()
   {
-    unconfigureEnclosingScrollPane();
+    try
+    {
+      unconfigureEnclosingScrollPane();
 
-    super.removeNotify();
+      final Container parent = getParent();
+      final Container window = SwingUtilities.getWindowAncestor( parent );
+
+      if ( this.componentSizeListener != null )
+      {
+        window.removeComponentListener( this.componentSizeListener );
+        this.componentSizeListener = null;
+      }
+      if ( this.keyboardListener != null )
+      {
+        window.removeKeyListener( this.keyboardListener );
+        this.keyboardListener = null;
+      }
+
+      if ( this.cursorMouseListener != null )
+      {
+        removeMouseListener( this.cursorMouseListener );
+        removeMouseMotionListener( this.cursorMouseListener );
+        this.cursorMouseListener = null;
+      }
+
+      final DragSource dragSource = DragSource.getDefaultDragSource();
+      if ( this.dndListener != null )
+      {
+        dragSource.removeDragSourceListener( this.dndListener );
+        dragSource.removeDragSourceMotionListener( this.dndListener );
+        this.dndListener = null;
+      }
+    }
+    finally
+    {
+      super.removeNotify();
+    }
   }
 
   /**

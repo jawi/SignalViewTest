@@ -24,11 +24,11 @@ class SignalView extends JPanel
   /**
    * @author jajans
    */
-  protected final class DnDTargetController extends DropTargetAdapter
+  final class DnDTargetController extends DropTargetAdapter
   {
     // VARIABLES
 
-    private final SignalDiagramController _controller = SignalView.this.controller;
+    private final SignalDiagramController ctlr = SignalView.this.controller;
 
     // METHODS
 
@@ -47,33 +47,50 @@ class SignalView extends JPanel
       boolean loop = true;
       for ( int i = flavors.length - 1; loop && ( i >= 0 ); i-- )
       {
-        if ( SampleRowTransferable.FLAVOR.equals( flavors[i] ) )
+        if ( ChannelRowTransferable.FLAVOR.equals( flavors[i] ) )
         {
-          aEvent.acceptDrop( DnDConstants.ACTION_COPY );
+          aEvent.acceptDrop( DnDConstants.ACTION_MOVE );
 
           final Transferable transferable = aEvent.getTransferable();
 
-          Integer realRow = null;
+          Integer realRowValue = null;
           try
           {
-            realRow = ( Integer )transferable.getTransferData( SampleRowTransferable.FLAVOR );
+            realRowValue = ( Integer )transferable.getTransferData( ChannelRowTransferable.FLAVOR );
           }
           catch ( final Exception exception )
           {
             // NO-op
           }
 
-          if ( ( realRow == null ) || ( realRow.intValue() < 0 ) )
+          if ( realRowValue == null )
+          {
+            return;
+          }
+
+          final SampleDataModel dataModel = this.ctlr.getDataModel();
+          final int oldRealRow = realRowValue.intValue();
+          if ( ( oldRealRow < 0 ) || ( oldRealRow >= dataModel.getWidth() ) )
           {
             return;
           }
 
           final Point coordinate = ( Point )aEvent.getLocation().clone();
-          final int newRealRow = this._controller.getSignalRow( coordinate );
+          final int newRealRow = this.ctlr.getSignalRow( coordinate );
 
-          this._controller.moveSampleRows( realRow.intValue(), newRealRow );
+          // Move the channel rows...
+          this.ctlr.moveChannelRows( oldRealRow, newRealRow );
 
+          // Update our administration...
+          final GhostGlassPane glassPane = ( GhostGlassPane )SwingUtilities.getRootPane( SignalView.this )
+              .getGlassPane();
+          glassPane.setDropChannelPoint( null );
+          glassPane.setVisible( false );
+
+          DragAndDropLock.setLocked( false );
+          // Acknowledge that we've successfully dropped the item...
           aEvent.dropComplete( true );
+
           loop = false;
         }
       }
@@ -131,22 +148,23 @@ class SignalView extends JPanel
       canvas.setRenderingHints( createRenderingHints() );
 
       final SampleDataModel dataModel = this.controller.getDataModel();
+      final ScreenModel screenModel = this.controller.getScreenModel();
       final int[] values = dataModel.getValues();
 
       final int startIdx = getStartIndex( clip );
       final int endIdx = getEndIndex( clip, values.length );
-
       final int size = ( endIdx - startIdx );
+
       if ( size > 1000000 )
       {
         // Too many samples on one screen?!?
         System.out.println( "size = " + size + ", start = " + startIdx + ", end = " + endIdx );
-        paintNormalDataSet( canvas, size, startIdx );
+        paintNormalDataSet( canvas, screenModel.getZoomFactor(), startIdx, endIdx );
       }
       else
       {
         // This data set might reasonably well fit on screen...
-        paintNormalDataSet( canvas, size, startIdx );
+        paintNormalDataSet( canvas, screenModel.getZoomFactor(), startIdx, endIdx );
       }
     }
     finally
@@ -186,10 +204,10 @@ class SignalView extends JPanel
 
   /**
    * @param aCanvas
-   * @param aSize
    * @param aStartSampleIdx
    */
-  private void paintNormalDataSet( final Graphics aCanvas, final int aSize, final int aStartSampleIdx )
+  private void paintNormalDataSet( final Graphics aCanvas, final double aZoomFactor, final int aStartSampleIdx,
+      final int aEndSampleIdx )
   {
     final SampleDataModel dataModel = this.controller.getDataModel();
     final ScreenModel screenModel = this.controller.getScreenModel();
@@ -197,22 +215,31 @@ class SignalView extends JPanel
     final int[] values = dataModel.getValues();
     final long[] timestamps = dataModel.getTimestamps();
 
-    final int[] x = new int[aSize];
-    final int[] y = new int[aSize];
+    final int size = Math.min( values.length - 1, ( aEndSampleIdx - aStartSampleIdx ) );
+
+    final int[] x = new int[size];
+    final int[] y = new int[size];
 
     final int signalHeight = screenModel.getSignalHeight();
     final int channelHeight = screenModel.getChannelHeight();
     // Where is the signal to be drawn?
     final int signalOffset = screenModel.getSignalOffset();
 
+    // Determine how many signals we should draw...
+    final Rectangle clip = aCanvas.getClipBounds();
+
     final int width = dataModel.getWidth();
-    for ( int b = 0; b < width; b++ )
+    // Determine which bits of the actual signal should be drawn...
+    final int startBit = ( int )Math.max( 0, Math.floor( clip.y / ( double )channelHeight ) );
+    final int endBit = ( int )Math.min( width, Math.ceil( ( clip.y + clip.height ) / ( double )channelHeight ) );
+
+    for ( int b = startBit; b < endBit; b++ )
     {
       final int mask = ( 1 << b );
       // determine where we really should draw the signal...
       final int dy = signalOffset + ( channelHeight * screenModel.toVirtualRow( b ) );
 
-      for ( int i = 0; i < aSize; i++ )
+      for ( int i = 0; i < size; i++ )
       {
         final int sampleIdx = i + aStartSampleIdx;
 
@@ -220,12 +247,12 @@ class SignalView extends JPanel
         final int value = ( signalHeight * ( 1 - sampleValue ) );
         final long timestamp = timestamps[sampleIdx];
 
-        x[i] = this.controller.toScaledScreenCoordinate( timestamp ).x;
+        x[i] = ( int )( timestamp * aZoomFactor );
         y[i] = dy + value;
       }
 
       aCanvas.setColor( screenModel.getColor( b ) );
-      aCanvas.drawPolyline( x, y, aSize );
+      aCanvas.drawPolyline( x, y, size );
     }
   }
 }
