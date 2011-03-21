@@ -5,6 +5,7 @@ package nl.lxtreme.test.view;
 
 
 import java.awt.*;
+import java.awt.datatransfer.*;
 import java.awt.dnd.*;
 import java.awt.event.*;
 
@@ -12,6 +13,7 @@ import javax.swing.*;
 
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.dnd.*;
+import nl.lxtreme.test.model.*;
 
 
 /**
@@ -101,6 +103,326 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   }
 
   /**
+   * Provides an mouse event listener to allow some of the functionality (such
+   * as DnD and cursor dragging) of this component to be controlled with the
+   * mouse.
+   */
+  static final class CursorMouseListener extends MouseAdapter
+  {
+    // VARIABLES
+
+    private boolean showing = false;
+    private final SignalDiagramController controller;
+
+    // CONSTRUCTORS
+
+    /**
+     * @param aController
+     */
+    public CursorMouseListener( final SignalDiagramController aController )
+    {
+      this.controller = aController;
+    }
+
+    // METHODS
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void mouseDragged( final MouseEvent aEvent )
+    {
+      // NO-op
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void mouseMoved( final MouseEvent aEvent )
+    {
+      final Point point = aEvent.getPoint();
+
+      if ( !this.showing )
+      {
+        if ( this.controller.isMeasurementMode() )
+        {
+          this.showing = this.controller.showHover( point );
+          setCursor( aEvent, CURSOR_HOVER );
+        }
+        else if ( this.controller.isCursorMode() )
+        {
+          if ( this.controller.findCursor( aEvent.getPoint() ) >= 0 )
+          {
+            setCursor( aEvent, CURSOR_MOVE_CURSOR );
+          }
+          else
+          {
+            setCursor( aEvent, DEFAULT );
+          }
+        }
+      }
+      else
+      {
+        if ( !this.controller.isMeasurementMode() )
+        {
+          this.showing = this.controller.hideHover();
+          setCursor( aEvent, DEFAULT );
+        }
+        else
+        {
+          setCursor( aEvent, CURSOR_HOVER );
+          this.controller.moveHover( point );
+        }
+      }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void mousePressed( final MouseEvent aEvent )
+    {
+      // NO-op
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void mouseReleased( final MouseEvent aEvent )
+    {
+      setCursor( aEvent, DEFAULT );
+    }
+
+    /**
+     * @param aEvent
+     * @param aCursor
+     */
+    private void setCursor( final MouseEvent aEvent, final Cursor aCursor )
+    {
+      if ( aEvent.getSource() instanceof JComponent )
+      {
+        ( ( JComponent )aEvent.getSource() ).setCursor( aCursor );
+      }
+    }
+  }
+
+  /**
+   * Provides an mouse event listener to allow some of the functionality (such
+   * as DnD and cursor dragging) of this component to be controlled with the
+   * mouse.
+   */
+  static final class DragAndDropListener implements DragGestureListener, DragSourceMotionListener, DragSourceListener
+  {
+    // VARIABLES
+
+    private final SignalDiagramController controller;
+    private final SignalView signalView;
+
+    // CONSTRUCTORS
+
+    /**
+     * @param aController
+     */
+    public DragAndDropListener( final SignalDiagramController aController )
+    {
+      this.controller = aController;
+      this.signalView = aController.getSignalView();
+    }
+
+    // METHODS
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void dragDropEnd( final DragSourceDropEvent aEvent )
+    {
+      if ( !DragAndDropLock.isDragAndDropStarted() )
+      {
+        return;
+      }
+      DragAndDropLock.setDragAndDropStarted( false );
+
+      GhostGlassPane glassPane = ( GhostGlassPane )SwingUtilities.getRootPane( this.signalView ).getGlassPane();
+
+      glassPane.clearDropPoint();
+      glassPane.repaint();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void dragEnter( final DragSourceDragEvent aEvent )
+    {
+      // NO-op
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void dragExit( final DragSourceEvent aEvent )
+    {
+      // NO-op
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void dragGestureRecognized( final DragGestureEvent aEvent )
+    {
+      if ( DragAndDropLock.isLocked() )
+      {
+        DragAndDropLock.setDragAndDropStarted( false );
+        return;
+      }
+
+      // We're having the exclusive right to start moving a channel around...
+      DragAndDropLock.setLocked( true );
+      DragAndDropLock.setDragAndDropStarted( true );
+
+      final Point coordinate = ( Point )aEvent.getDragOrigin().clone();
+
+      int row = -1;
+      int cursorIdx = this.controller.findCursor( coordinate );
+      if ( cursorIdx < 0 )
+      {
+        row = this.controller.getSignalRow( coordinate );
+      }
+
+      // Check whether we've got either a row or a cursor in our dragging
+      // context...
+      if ( ( row < 0 ) && ( cursorIdx < 0 ) )
+      {
+        return;
+      }
+
+      final GhostGlassPane glassPane = ( GhostGlassPane )SwingUtilities.getRootPane( this.signalView ).getGlassPane();
+
+      if ( row >= 0 )
+      {
+        // We're starting to drag a channel row...
+        glassPane.setDropPoint( createChannelDropPoint( coordinate, glassPane ), DragAndDropContext.CHANNEL_ROW );
+        aEvent.startDrag( Cursor.getPredefinedCursor( Cursor.MOVE_CURSOR ), new ChannelRowTransferable( row ) );
+      }
+      else
+      {
+        // We're starting to drag a cursor...
+        glassPane.setDropPoint( createCursorDropPoint( coordinate, glassPane ), DragAndDropContext.CURSOR );
+        aEvent.startDrag( Cursor.getPredefinedCursor( Cursor.MOVE_CURSOR ), new CursorTransferable( cursorIdx ) );
+      }
+
+      glassPane.setVisible( true );
+      glassPane.repaintPartially();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void dragMouseMoved( final DragSourceDragEvent aEvent )
+    {
+      if ( !DragAndDropLock.isDragAndDropStarted() )
+      {
+        return;
+      }
+
+      final Point coordinate = ( Point )aEvent.getLocation().clone();
+      SwingUtilities.convertPointFromScreen( coordinate, this.signalView );
+
+      final GhostGlassPane glassPane = ( GhostGlassPane )SwingUtilities.getRootPane( this.signalView ).getGlassPane();
+
+      Point dropPoint;
+
+      DragAndDropContext context = getContext( aEvent );
+      if ( DragAndDropContext.CHANNEL_ROW == context )
+      {
+        dropPoint = createChannelDropPoint( coordinate, glassPane );
+      }
+      else
+      {
+        dropPoint = createCursorDropPoint( coordinate, glassPane );
+      }
+
+      glassPane.setDropPoint( dropPoint, context );
+      glassPane.repaintPartially();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void dragOver( final DragSourceDragEvent aEvent )
+    {
+      // NO-op
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void dropActionChanged( final DragSourceDragEvent aEvent )
+    {
+      // NO-op
+    }
+
+    /**
+     * @param aDropRow
+     * @return
+     */
+    private Point createChannelDropPoint( final Point aPoint, final JComponent aTargetComponent )
+    {
+      final ScreenModel screenModel = this.controller.getScreenModel();
+      final SampleDataModel dataModel = this.controller.getDataModel();
+
+      final int signalWidth = dataModel.getWidth();
+      final int channelHeight = screenModel.getChannelHeight();
+
+      final int dropRow = Math.max( 0, Math.min( signalWidth, ( int )( aPoint.y / ( double )channelHeight ) ) );
+
+      final Point dropPoint = new Point( 0, ( dropRow + 1 ) * channelHeight );
+
+      SwingUtilities.convertPointToScreen( dropPoint, this.signalView );
+      SwingUtilities.convertPointFromScreen( dropPoint, aTargetComponent );
+
+      return dropPoint;
+    }
+
+    /**
+     * @param aPoint
+     * @param aTargetComponent
+     * @return
+     */
+    private Point createCursorDropPoint( final Point aPoint, final JComponent aTargetComponent )
+    {
+      final Point dropPoint = new Point( aPoint.x, 0 );
+
+      SwingUtilities.convertPointToScreen( dropPoint, this.signalView );
+      SwingUtilities.convertPointFromScreen( dropPoint, aTargetComponent );
+
+      return dropPoint;
+    }
+
+    /**
+     * @param aEvent
+     * @return
+     */
+    private DragAndDropContext getContext( final DragSourceEvent aEvent )
+    {
+      final Transferable transferable = aEvent.getDragSourceContext().getTransferable();
+      if ( transferable instanceof CursorTransferable )
+      {
+        return DragAndDropContext.CURSOR;
+      }
+      return DragAndDropContext.CHANNEL_ROW;
+    }
+  }
+
+  /**
    * Provides an keyboard event listener to allow some of the functionality
    * (such as: zooming) of this component to be controlled from the keyboard.
    */
@@ -179,152 +501,14 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
      * @param aEvent
      * @return
      */
-    private boolean isSnapModeKeyEvent(final KeyEvent aEvent) {
+    private boolean isSnapModeKeyEvent( final KeyEvent aEvent )
+    {
       if ( this.controller.isSnapModeEnabled() )
       {
         return false;
       }
 
       return ( aEvent.isAltDown() || aEvent.isAltGraphDown() ) && aEvent.isControlDown();
-    }
-  }
-
-  /**
-   * Provides an mouse event listener to allow some of the functionality (such
-   * as DnD and cursor dragging) of this component to be controlled with the
-   * mouse.
-   */
-  static final class MouseControlListener extends MouseAdapter implements DragGestureListener
-  {
-    // VARIABLES
-
-    private int lastCursor = -1;
-    private boolean showing = false;
-    private final SignalDiagramController controller;
-
-    // CONSTRUCTORS
-
-    /**
-     * @param aController
-     */
-    public MouseControlListener( final SignalDiagramController aController )
-    {
-      this.controller = aController;
-    }
-
-    // METHODS
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void dragGestureRecognized( final DragGestureEvent aEvent )
-    {
-      if ( this.showing || ( this.lastCursor >= 0 ) || aEvent.getTriggerEvent().isAltDown()
-          || aEvent.getTriggerEvent().isControlDown() )
-      {
-        return;
-      }
-
-      final Point coordinate = ( Point )aEvent.getDragOrigin().clone();
-      final int row = this.controller.getSignalRow( coordinate );
-
-      aEvent.startDrag( Cursor.getDefaultCursor(), new SampleRowTransferable( row ) );
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void mouseDragged( final MouseEvent aEvent )
-    {
-      if ( this.controller.isCursorMode() )
-      {
-        if ( this.lastCursor < 0 )
-        {
-          return;
-        }
-
-        setCursor( aEvent, CURSOR_MOVE_CURSOR );
-        this.controller.dragCursor( this.lastCursor, aEvent.getPoint(), aEvent.isAltDown() );
-      }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void mouseMoved( final MouseEvent aEvent )
-    {
-      final Point point = aEvent.getPoint();
-
-      if ( !this.showing )
-      {
-        if ( this.controller.isMeasurementMode() )
-        {
-          this.showing = this.controller.showHover( point );
-          setCursor( aEvent, CURSOR_HOVER );
-        }
-        else if ( this.controller.isCursorMode() )
-        {
-          if ( this.controller.findCursor( aEvent.getPoint() ) >= 0 )
-          {
-            setCursor( aEvent, CURSOR_MOVE_CURSOR );
-          }
-          else
-          {
-            setCursor( aEvent, DEFAULT );
-          }
-        }
-      }
-      else
-      {
-        if ( !this.controller.isMeasurementMode() )
-        {
-          this.showing = this.controller.hideHover();
-          setCursor( aEvent, DEFAULT );
-        }
-        else
-        {
-          setCursor( aEvent, CURSOR_HOVER );
-          this.controller.moveHover( point );
-        }
-      }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void mousePressed( final MouseEvent aEvent )
-    {
-      this.lastCursor = this.controller.findCursor( aEvent.getPoint() );
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void mouseReleased( final MouseEvent aEvent )
-    {
-      setCursor( aEvent, DEFAULT );
-      if ( this.lastCursor < 0 )
-      {
-        return;
-      }
-      this.lastCursor = -1;
-    }
-
-    /**
-     * @param aEvent
-     * @param aCursor
-     */
-    private void setCursor( final MouseEvent aEvent, final Cursor aCursor )
-    {
-      if ( aEvent.getSource() instanceof JComponent )
-      {
-        ( ( JComponent )aEvent.getSource() ).setCursor( aCursor );
-      }
     }
   }
 
@@ -342,9 +526,14 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
   private final SignalDiagramController controller;
 
-  private final SignalView modelView;
+  private final SignalView signalView;
   private final CursorView cursorView;
   private final ArrowView arrowView;
+
+  private ComponentSizeListener componentSizeListener;
+  private CursorMouseListener cursorMouseListener;
+  private DragAndDropListener dndListener;
+  private KeyboardControlListener keyboardListener;
 
   // CONSTRUCTORS
 
@@ -360,11 +549,11 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
     this.controller = aController;
 
-    this.modelView = new SignalView( this.controller );
+    this.signalView = new SignalView( this.controller );
     this.cursorView = new CursorView( this.controller );
     this.arrowView = new ArrowView( this.controller );
 
-    add( this.modelView, StackLayout.TOP );
+    add( this.signalView, StackLayout.TOP );
     add( this.cursorView, StackLayout.TOP );
     add( this.arrowView, StackLayout.TOP );
   }
@@ -379,22 +568,35 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   @Override
   public void addNotify()
   {
-    super.addNotify();
+    try
+    {
+      final Container parent = getParent();
+      final Container window = SwingUtilities.getWindowAncestor( parent );
 
-    final Container parent = getParent();
+      this.componentSizeListener = new ComponentSizeListener( this.controller );
+      this.keyboardListener = new KeyboardControlListener( this.controller );
 
-    final Container window = SwingUtilities.getWindowAncestor( parent );
-    window.addComponentListener( new ComponentSizeListener( this.controller ) );
-    window.addKeyListener( new KeyboardControlListener( this.controller ) );
+      window.addComponentListener( this.componentSizeListener );
+      window.addKeyListener( this.keyboardListener );
 
-    final MouseControlListener listener = new MouseControlListener( this.controller );
-    addMouseListener( listener );
-    addMouseMotionListener( listener );
+      this.cursorMouseListener = new CursorMouseListener( this.controller );
 
-    final DragSource dragSource = DragSource.getDefaultDragSource();
-    dragSource.createDefaultDragGestureRecognizer( this, DnDConstants.ACTION_COPY, listener );
+      addMouseListener( this.cursorMouseListener );
+      addMouseMotionListener( this.cursorMouseListener );
 
-    configureEnclosingScrollPane();
+      this.dndListener = new DragAndDropListener( this.controller );
+
+      final DragSource dragSource = DragSource.getDefaultDragSource();
+      dragSource.createDefaultDragGestureRecognizer( this, DnDConstants.ACTION_COPY_OR_MOVE, this.dndListener );
+      dragSource.addDragSourceMotionListener( this.dndListener );
+      dragSource.addDragSourceListener( this.dndListener );
+
+      configureEnclosingScrollPane();
+    }
+    finally
+    {
+      super.addNotify();
+    }
   }
 
   /**
@@ -504,9 +706,43 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   @Override
   public void removeNotify()
   {
-    unconfigureEnclosingScrollPane();
+    try
+    {
+      unconfigureEnclosingScrollPane();
 
-    super.removeNotify();
+      final Container parent = getParent();
+      final Container window = SwingUtilities.getWindowAncestor( parent );
+
+      if ( this.componentSizeListener != null )
+      {
+        window.removeComponentListener( this.componentSizeListener );
+        this.componentSizeListener = null;
+      }
+      if ( this.keyboardListener != null )
+      {
+        window.removeKeyListener( this.keyboardListener );
+        this.keyboardListener = null;
+      }
+
+      if ( this.cursorMouseListener != null )
+      {
+        removeMouseListener( this.cursorMouseListener );
+        removeMouseMotionListener( this.cursorMouseListener );
+        this.cursorMouseListener = null;
+      }
+
+      final DragSource dragSource = DragSource.getDefaultDragSource();
+      if ( this.dndListener != null )
+      {
+        dragSource.removeDragSourceListener( this.dndListener );
+        dragSource.removeDragSourceMotionListener( this.dndListener );
+        this.dndListener = null;
+      }
+    }
+    finally
+    {
+      super.removeNotify();
+    }
   }
 
   /**

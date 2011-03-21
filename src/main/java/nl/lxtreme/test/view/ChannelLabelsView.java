@@ -8,6 +8,7 @@ import java.awt.*;
 
 import javax.swing.*;
 
+import nl.lxtreme.test.*;
 import nl.lxtreme.test.model.*;
 
 
@@ -83,7 +84,9 @@ class ChannelLabelsView extends JComponent
       {
         final int yOffset = channelHeight * screenModel.toVirtualRow( b );
 
-        canvas.setColor( Color.DARK_GRAY.darker() );
+        final Color darker = Color.DARK_GRAY.darker();
+
+        canvas.setColor( darker );
         canvas.fillRoundRect( clip.x - 10, yOffset + 2, clip.width + 8, channelHeight - 2, 12, 12 );
 
         final int textYoffset = signalOffset + yOffset;
@@ -99,7 +102,7 @@ class ChannelLabelsView extends JComponent
         final int labelYpos = textYoffset + ( int )( fm.getHeight() - ( 1.0 * fm.getHeight() / 3.0 ) );
         final int labelXpos = ( clip.width - fm.stringWidth( label ) - 6 );
 
-        canvas.setColor( screenModel.getColor( b ) );
+        canvas.setColor( Utils.getContrastColor( darker ) );
         canvas.drawString( label, labelXpos, labelYpos );
 
         // paint the channel number below the label

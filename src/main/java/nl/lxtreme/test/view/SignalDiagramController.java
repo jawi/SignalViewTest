@@ -198,11 +198,10 @@ public final class SignalDiagramController
   public int getSignalRow( final Point aCoordinate )
   {
     final int signalWidth = this.dataModel.getWidth();
-    final int signalHeight = this.screenModel.getSignalHeight();
     final int channelHeight = this.screenModel.getChannelHeight();
 
-    final int row = ( aCoordinate.y - signalHeight ) / channelHeight;
-    if ( ( row < 0 ) || ( row > ( signalWidth - 1 ) ) )
+    final int row = ( int )( aCoordinate.y / ( double )channelHeight );
+    if ( ( row < 0 ) || ( row >= signalWidth ) )
     {
       return -1;
     }
@@ -286,24 +285,14 @@ public final class SignalDiagramController
   }
 
   /**
-   * @param aPoint
-   */
-  public void moveHover( final Point aPoint )
-  {
-    final SignalHoverInfo signalHover = getSignalHover( convertToPointOf( this.signalView, aPoint ) );
-
-    this.arrowView.moveHover( signalHover );
-  }
-
-  /**
-   * Moves a given sample row to another position.
+   * Moves a given channel row to another position.
    * 
    * @param aMovedRow
    *          the virtual (screen) row index that is to be moved;
    * @param aInsertRow
    *          the virtual (screen) row index that the moved row is moved to.
    */
-  public void moveSampleRows( final int aMovedRow, final int aInsertRow )
+  public void moveChannelRows( final int aMovedRow, final int aInsertRow )
   {
     if ( aMovedRow == aInsertRow )
     {
@@ -352,6 +341,16 @@ public final class SignalDiagramController
   }
 
   /**
+   * @param aPoint
+   */
+  public void moveHover( final Point aPoint )
+  {
+    final SignalHoverInfo signalHover = getSignalHover( convertToPointOf( this.signalView, aPoint ) );
+
+    this.arrowView.moveHover( signalHover );
+  }
+
+  /**
    * Recalculates the dimensions of the main view.
    */
   public void recalculateDimensions()
@@ -363,7 +362,7 @@ public final class SignalDiagramController
 
       final int width = ( int )Math.min( Integer.MAX_VALUE, getAbsoluteLength() );
       final int height = ( this.screenModel.getChannelHeight() * this.dataModel.getWidth() )
-      + this.screenModel.getSignalHeight();
+          + this.screenModel.getSignalHeight();
 
       final Dimension newSize = new Dimension( width, height );
 
@@ -544,6 +543,16 @@ public final class SignalDiagramController
     zoomRelative( 1.0 / 1.5 );
 
     recalculateDimensions();
+  }
+
+  /**
+   * Returns the actual signal view component.
+   * 
+   * @return a signal view component, never <code>null</code>.
+   */
+  final SignalView getSignalView()
+  {
+    return this.signalView;
   }
 
   /**

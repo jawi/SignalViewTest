@@ -9,9 +9,9 @@ import java.io.*;
 
 
 /**
- * @author jajans
+ * Provides a transferable for cursors.
  */
-public class SampleRowTransferable implements Transferable
+public class CursorTransferable implements Transferable
 {
   // CONSTANTS
 
@@ -21,7 +21,8 @@ public class SampleRowTransferable implements Transferable
   {
     try
     {
-      FLAVOR = new DataFlavor( "image/x-sample-row;class=" + SampleRowTransferable.class.getCanonicalName() );
+      FLAVOR = new DataFlavor( "application/vnd.ols.x-cursor-idx;class=" + CursorTransferable.class.getCanonicalName()
+          + ";humanPresentableName=OLS%20Cursor" );
     }
     catch ( final ClassNotFoundException exception )
     {
@@ -31,16 +32,19 @@ public class SampleRowTransferable implements Transferable
 
   // VARIABLES
 
-  private final Integer row;
+  private final Integer cursorIdx;
 
   // CONSTRUCTORS
 
   /**
-   * @param aRow
+   * Creates a new CursorTransferable instance.
+   * 
+   * @param aCursorIdx
+   *          the index of the cursor used in this transferable, >= 0.
    */
-  public SampleRowTransferable( final int aRow )
+  public CursorTransferable( final int aCursorIdx )
   {
-    this.row = Integer.valueOf( aRow );
+    this.cursorIdx = Integer.valueOf( aCursorIdx );
   }
 
   // METHODS
@@ -53,7 +57,7 @@ public class SampleRowTransferable implements Transferable
   {
     if ( aFlavor.equals( FLAVOR ) )
     {
-      return this.row;
+      return this.cursorIdx;
     }
     else
     {

@@ -48,6 +48,17 @@ public class ScreenModel
       Utils.parseColor( "0000FF" ), //
       Utils.parseColor( "FF0000" ) //
   };
+  private static final Color[] DARK_COLORS = { //
+    Utils.parseColor( "CCCCCC" ), //
+    Utils.parseColor( "CCCCCC" ), //
+    Utils.parseColor( "CCCCCC" ), //
+    Utils.parseColor( "CCCCCC" ), //
+    Utils.parseColor( "CCCCCC" ), //
+    Utils.parseColor( "CCCCCC" ), //
+    Utils.parseColor( "CCCCCC" ), //
+    Utils.parseColor( "CCCCCC" ), //
+    Utils.parseColor( "CCCCCC" ) //
+  };
 
   // VARIABLES
 
@@ -82,8 +93,8 @@ public class ScreenModel
     }
 
     this.colors = new Color[aDataWidth];
-    final boolean value = true;
-    if ( value )
+    int value = 2;
+    if ( value == 0 )
     {
       for ( int i = 0; i < aDataWidth; i++ )
       {
@@ -91,12 +102,20 @@ public class ScreenModel
         this.colors[i] = OLS_COLORS[idx];
       }
     }
-    else
+    else if ( value == 1 )
     {
       for ( int i = 0; i < aDataWidth; i++ )
       {
         int idx = ( i % ( SALEAE_COLORS.length - 1 ) ) + 1;
         this.colors[i] = SALEAE_COLORS[idx];
+      }
+    }
+    else if ( value == 2 )
+    {
+      for ( int i = 0; i < aDataWidth; i++ )
+      {
+        int idx = ( i % ( DARK_COLORS.length - 1 ) ) + 1;
+        this.colors[i] = DARK_COLORS[idx];
       }
     }
 
