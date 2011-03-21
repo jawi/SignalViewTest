@@ -3,6 +3,7 @@
  */
 package nl.lxtreme.test.model;
 
+
 import java.util.*;
 
 
@@ -32,7 +33,7 @@ public class SampleDataModel
     this.values = new int[aSize];
     this.timestamps = new long[aSize];
 
-    final boolean run1 = true;
+    final boolean run1 = false;
     if ( run1 )
     {
       int value = 0xAAA;
@@ -54,11 +55,11 @@ public class SampleDataModel
     {
       for ( int i = 0; i < aSize; i++ )
       {
-        this.values[i] = ( i % 1024 );
-        this.timestamps[i] = 100L * i;
+        this.values[i] = ( ( 5 * i ) % 1024 );
+        this.timestamps[i] = i;
       }
 
-      this.sampleRate = 50000000;
+      this.sampleRate = 1000000000;
     }
     this.cursors = new int[] { 100, 200 };
   }

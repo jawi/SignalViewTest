@@ -27,7 +27,7 @@ public class GhostGlassPane extends JPanel
   private static final int CURSOR_MARKER_WIDTH = 2;
   private static final int CURSOR_MARKER_HEIGHT = -1;
 
-  private static final Stroke INDICATOR_STROKE = new BasicStroke( CHANNEL_ROW_MARKER_HEIGHT );
+  private static final Stroke INDICATOR_STROKE = new BasicStroke( 1.5f );
 
   // VARIABLES
 
@@ -71,37 +71,24 @@ public class GhostGlassPane extends JPanel
     {
       width = CHANNEL_ROW_MARKER_WIDTH + 2;
       height = CHANNEL_ROW_MARKER_HEIGHT + 2;
-
-      if ( this.oldDropPoint != null )
-      {
-        x = this.oldDropPoint.x - 1;
-        y = this.oldDropPoint.y - 1;
-        repaint( x, y, width, height );
-      }
-      if ( this.dropPoint != null )
-      {
-        x = this.dropPoint.x - 1;
-        y = this.dropPoint.y - 1;
-        repaint( x, y, width, height );
-      }
     }
     else
     {
-      width = CURSOR_MARKER_WIDTH + 4;
-      height = Math.max( getHeight(), CURSOR_MARKER_HEIGHT );
+      width = CURSOR_MARKER_WIDTH + 2;
+      height = Math.max( getHeight(), CURSOR_MARKER_HEIGHT ) + 2;
+    }
 
-      if ( this.oldDropPoint != null )
-      {
-        x = this.oldDropPoint.x - 2;
-        y = this.oldDropPoint.y;
-        repaint( x, y, width, height );
-      }
-      if ( this.dropPoint != null )
-      {
-        x = this.dropPoint.x - 2;
-        y = this.dropPoint.y;
-        repaint( x, y, width, height );
-      }
+    if ( this.oldDropPoint != null )
+    {
+      x = this.oldDropPoint.x - 1;
+      y = this.oldDropPoint.y - 1;
+      repaint( x, y, width, height );
+    }
+    if ( this.dropPoint != null )
+    {
+      x = this.dropPoint.x - 1;
+      y = this.dropPoint.y - 1;
+      repaint( x, y, width, height );
     }
   }
 
@@ -117,7 +104,6 @@ public class GhostGlassPane extends JPanel
    */
   public void setDropPoint( final Point aLocation, final DragAndDropContext aContext )
   {
-    System.out.println( "drop point = " + aLocation + "; old = " + this.oldDropPoint + "; context = " + aContext );
     this.oldDropPoint = this.dropPoint;
     this.dropPoint = aLocation;
     this.context = aContext;
@@ -153,7 +139,8 @@ public class GhostGlassPane extends JPanel
       }
       else
       {
-        g2d.setColor( Color.LIGHT_GRAY );
+        // g2d.setColor( Color.LIGHT_GRAY );
+        g2d.setColor( Color.YELLOW );
         g2d.drawLine( x, y, x, clip.height );
       }
     }

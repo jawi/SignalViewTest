@@ -407,7 +407,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       if ( signalHover != null )
       {
         dropPoint.x = signalHover.rectangle.x;
-        dropPoint.y = ( int )signalHover.rectangle.getCenterY();
       }
 
       SwingUtilities.convertPointToScreen( dropPoint, this.signalView );

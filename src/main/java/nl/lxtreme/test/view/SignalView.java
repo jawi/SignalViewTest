@@ -65,6 +65,7 @@ class SignalView extends JPanel
         glassPane.setVisible( false );
 
         DragAndDropLock.setLocked( false );
+
         // Acknowledge that we've successfully dropped the item...
         aEvent.dropComplete( true );
       }
@@ -142,7 +143,7 @@ class SignalView extends JPanel
       final Point coordinate = ( Point )aEvent.getLocation().clone();
 
       // Move the cursor position...
-      this.ctlr.dragCursor( cursorIdx, coordinate, false /* aSnap */);
+      this.ctlr.dragCursor( cursorIdx, coordinate, true /* aSnap */);
 
       return true;
     }
@@ -295,6 +296,7 @@ class SignalView extends JPanel
         final int sampleIdx = i + aStartSampleIdx;
 
         final int sampleValue = ( ( values[sampleIdx] & mask ) >>> b ) & 0x01;
+
         final int value = ( signalHeight * ( 1 - sampleValue ) );
         final long timestamp = timestamps[sampleIdx];
 
