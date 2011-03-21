@@ -108,7 +108,7 @@ class TimeLineView extends JComponent
     final double zoomFactor = screenModel.getZoomFactor();
     final long absLength = dataModel.getAbsoluteLength();
 
-    final int tickIncr = ( int )( TIMELINE_INCREMENT / zoomFactor );
+    final int tickIncr = ( int )Math.ceil( TIMELINE_INCREMENT / zoomFactor );
 
     final double pixelTimeInterval = ( zoomFactor / dataModel.getSampleRate() );
     System.out.println( "tickInterval = " + Utils.displayTime( pixelTimeInterval ) );

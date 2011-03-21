@@ -7,7 +7,6 @@ package nl.lxtreme.test.view;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.dnd.*;
-
 import javax.swing.*;
 
 import nl.lxtreme.test.dnd.*;
@@ -258,7 +257,7 @@ class SignalView extends JPanel
    * @param aCanvas
    * @param aStartSampleIdx
    */
-  private void paintNormalDataSet( final Graphics aCanvas, final double aZoomFactor, final int aStartSampleIdx,
+  private void paintNormalDataSet( final Graphics2D aCanvas, final double aZoomFactor, final int aStartSampleIdx,
       final int aEndSampleIdx )
   {
     final SampleDataModel dataModel = this.controller.getDataModel();
@@ -269,8 +268,8 @@ class SignalView extends JPanel
 
     final int size = Math.min( values.length - 1, ( aEndSampleIdx - aStartSampleIdx ) );
 
-    final int[] x = new int[size];
-    final int[] y = new int[size];
+    final int[] x = new int[2 * size];
+    final int[] y = new int[2 * size];
 
     final int signalHeight = screenModel.getSignalHeight();
     final int channelHeight = screenModel.getChannelHeight();
@@ -281,6 +280,7 @@ class SignalView extends JPanel
     final Rectangle clip = aCanvas.getClipBounds();
 
     final int width = dataModel.getWidth();
+
     // Determine which bits of the actual signal should be drawn...
     final int startBit = ( int )Math.max( 0, Math.floor( clip.y / ( double )channelHeight ) );
     final int endBit = ( int )Math.min( width, Math.ceil( ( clip.y + clip.height ) / ( double )channelHeight ) );
@@ -291,17 +291,27 @@ class SignalView extends JPanel
       // determine where we really should draw the signal...
       final int dy = signalOffset + ( channelHeight * screenModel.toVirtualRow( b ) );
 
-      for ( int i = 0; i < size; i++ )
+      long prevTimestamp = aStartSampleIdx;
+      for ( int i = 0, p = 0; i < size; i++ )
       {
-        final int sampleIdx = i + aStartSampleIdx;
+        final int sampleIdx = ( i + aStartSampleIdx );
 
-        final int sampleValue = ( ( values[sampleIdx] & mask ) >>> b ) & 0x01;
+        int sampleValue = ( ( values[sampleIdx] & mask ) >>> b ) & 0x01;
 
-        final int value = ( signalHeight * ( 1 - sampleValue ) );
-        final long timestamp = timestamps[sampleIdx];
+        int value = ( signalHeight * ( 1 - sampleValue ) );
+        long timestamp = timestamps[sampleIdx];
 
-        x[i] = ( int )( timestamp * aZoomFactor );
-        y[i] = dy + value;
+        int x1 = ( int )( ( aZoomFactor * 2.0 ) * prevTimestamp );
+        int x2 = ( int )( ( aZoomFactor * 2.0 ) * timestamp );
+        final int y1 = dy + value;
+
+        x[p] = x1;
+        y[p] = y1;
+        x[p + 1] = x2;
+        y[p + 1] = y1;
+
+        p += 2;
+        prevTimestamp = timestamp;
       }
 
       aCanvas.setColor( screenModel.getColor( b ) );
