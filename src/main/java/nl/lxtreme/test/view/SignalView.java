@@ -44,56 +44,121 @@ class SignalView extends JPanel
         return;
       }
 
-      boolean loop = true;
-      for ( int i = flavors.length - 1; loop && ( i >= 0 ); i-- )
+      for ( int i = flavors.length - 1; i >= 0; i-- )
       {
         if ( ChannelRowTransferable.FLAVOR.equals( flavors[i] ) )
         {
-          aEvent.acceptDrop( DnDConstants.ACTION_MOVE );
-
-          final Transferable transferable = aEvent.getTransferable();
-
-          Integer realRowValue = null;
-          try
+          if ( dropChannelRow( aEvent ) )
           {
-            realRowValue = ( Integer )transferable.getTransferData( ChannelRowTransferable.FLAVOR );
+
+            // Update our administration...
+            final GhostGlassPane glassPane = ( GhostGlassPane )SwingUtilities.getRootPane( SignalView.this )
+                .getGlassPane();
+            glassPane.clearDropPoint();
+            glassPane.setVisible( false );
+
+            DragAndDropLock.setLocked( false );
+            // Acknowledge that we've successfully dropped the item...
+            aEvent.dropComplete( true );
+
+            i = -1; // we're done...
           }
-          catch ( final Exception exception )
+        }
+        else if ( CursorTransferable.FLAVOR.equals( flavors[i] ) )
+        {
+          if ( dropCursor( aEvent ) )
           {
-            // NO-op
+            // Update our administration...
+            final GhostGlassPane glassPane = ( GhostGlassPane )SwingUtilities.getRootPane( SignalView.this )
+                .getGlassPane();
+            glassPane.clearDropPoint();
+            glassPane.setVisible( false );
+
+            DragAndDropLock.setLocked( false );
+            // Acknowledge that we've successfully dropped the item...
+            aEvent.dropComplete( true );
+
+            i = -1; // we're done...
           }
-
-          if ( realRowValue == null )
-          {
-            return;
-          }
-
-          final SampleDataModel dataModel = this.ctlr.getDataModel();
-          final int oldRealRow = realRowValue.intValue();
-          if ( ( oldRealRow < 0 ) || ( oldRealRow >= dataModel.getWidth() ) )
-          {
-            return;
-          }
-
-          final Point coordinate = ( Point )aEvent.getLocation().clone();
-          final int newRealRow = this.ctlr.getSignalRow( coordinate );
-
-          // Move the channel rows...
-          this.ctlr.moveChannelRows( oldRealRow, newRealRow );
-
-          // Update our administration...
-          final GhostGlassPane glassPane = ( GhostGlassPane )SwingUtilities.getRootPane( SignalView.this )
-              .getGlassPane();
-          glassPane.setDropChannelPoint( null );
-          glassPane.setVisible( false );
-
-          DragAndDropLock.setLocked( false );
-          // Acknowledge that we've successfully dropped the item...
-          aEvent.dropComplete( true );
-
-          loop = false;
         }
       }
+    }
+
+    /**
+     * @param aEvent
+     */
+    private boolean dropChannelRow( final DropTargetDropEvent aEvent )
+    {
+      aEvent.acceptDrop( DnDConstants.ACTION_MOVE );
+
+      final Transferable transferable = aEvent.getTransferable();
+
+      Integer realRowValue = null;
+      try
+      {
+        realRowValue = ( Integer )transferable.getTransferData( ChannelRowTransferable.FLAVOR );
+        if ( realRowValue == null )
+        {
+          return false;
+        }
+      }
+      catch ( final Exception exception )
+      {
+        // NO-op
+      }
+
+      final SampleDataModel dataModel = this.ctlr.getDataModel();
+      final int oldRealRow = realRowValue.intValue();
+      if ( ( oldRealRow < 0 ) || ( oldRealRow >= dataModel.getWidth() ) )
+      {
+        return false;
+      }
+
+      final Point coordinate = ( Point )aEvent.getLocation().clone();
+      final int newRealRow = this.ctlr.getSignalRow( coordinate );
+
+      // Move the channel rows...
+      this.ctlr.moveChannelRows( oldRealRow, newRealRow );
+
+      return true;
+    }
+
+    /**
+     * @param aEvent
+     */
+    private boolean dropCursor( final DropTargetDropEvent aEvent )
+    {
+      aEvent.acceptDrop( DnDConstants.ACTION_MOVE );
+
+      final Transferable transferable = aEvent.getTransferable();
+
+      Integer cursorValue = null;
+      try
+      {
+        cursorValue = ( Integer )transferable.getTransferData( CursorTransferable.FLAVOR );
+        if ( cursorValue == null )
+        {
+          return false;
+        }
+      }
+      catch ( final Exception exception )
+      {
+        // NO-op
+      }
+
+      final SampleDataModel dataModel = this.ctlr.getDataModel();
+      final int cursorIdx = cursorValue.intValue();
+      if ( ( cursorIdx < 0 ) || ( cursorIdx >= dataModel.getCursors().length ) )
+      {
+        return false;
+      }
+
+      final Point coordinate = ( Point )aEvent.getLocation().clone();
+
+      // Move the cursor position...
+      this.ctlr.dragCursor( cursorIdx, coordinate, false /* aSnap */); // XXX
+
+      return true;
     }
   }
 
