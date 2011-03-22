@@ -60,7 +60,8 @@ class TimeLineView extends JComponent
   @Override
   public Dimension getPreferredSize()
   {
-    return new Dimension( 6400, TIMELINE_HEIGHT );
+    Dimension result = super.getPreferredSize();
+    return new Dimension( result.width, TIMELINE_HEIGHT );
   }
 
   /**
@@ -79,54 +80,42 @@ class TimeLineView extends JComponent
       canvas.fillRect( clip.x, clip.y, clip.width, clip.height );
 
       final SampleDataModel dataModel = this.controller.getDataModel();
+      final ScreenModel screenModel = this.controller.getScreenModel();
+
+      final FontMetrics fm = canvas.getFontMetrics( this.labelFont );
+
+      final long[] timestamps = dataModel.getTimestamps();
+      final double zoomFactor = screenModel.getZoomFactor();
+      final long absLength = dataModel.getAbsoluteLength();
 
       final int startIdx = getStartIndex( clip );
-      final int endIdx = getEndIndex( clip, dataModel.getSize() );
+      final int endIdx = getEndIndex( clip, timestamps.length );
 
-      drawTimeLine( canvas, startIdx, endIdx );
+      final double tickIncr = ( TIMELINE_INCREMENT / zoomFactor );
+
+      final double pixelTimeInterval = ( zoomFactor / dataModel.getSampleRate() );
+      System.out.println( "tickInterval = " + Utils.displayTime( pixelTimeInterval ) + ", " + tickIncr );
+
+      System.out.println( "start = " + startIdx + " => " + endIdx );
+
+      canvas.setColor( Color.GRAY );
+
+      for ( int i = clip.x; i < clip.width; i += TIMELINE_INCREMENT )
+      {
+        int relXpos = ( i - clip.x );
+
+        // System.out.println( "relXpos[" + i + "] = " + Utils.displayTime( i /
+        // (
+        // double )dataModel.getSampleRate() ) );
+
+        canvas
+            .drawLine( relXpos, TIMELINE_HEIGHT - PADDING_Y - SHORT_TICK_HEIGHT, relXpos, TIMELINE_HEIGHT - PADDING_Y );
+      }
     }
     finally
     {
       canvas.dispose();
       canvas = null;
-    }
-  }
-
-  /**
-   * @param aCanvas
-   * @param aStartIdx
-   * @param aEndIdx
-   */
-  private void drawTimeLine( final Graphics aCanvas, final int aStartIdx, final int aEndIdx )
-  {
-    final FontMetrics fm = aCanvas.getFontMetrics( this.labelFont );
-
-    final SampleDataModel dataModel = this.controller.getDataModel();
-    final ScreenModel screenModel = this.controller.getScreenModel();
-
-    final long[] timestamps = dataModel.getTimestamps();
-    final double zoomFactor = screenModel.getZoomFactor();
-    final long absLength = dataModel.getAbsoluteLength();
-
-    final double tickIncr = ( TIMELINE_INCREMENT / zoomFactor );
-
-    final double pixelTimeInterval = ( zoomFactor / dataModel.getSampleRate() );
-    System.out.println( "tickInterval = " + Utils.displayTime( pixelTimeInterval ) + ", " + tickIncr );
-
-    final long startTimeStamp = ( long )Math.max( 0L, ( timestamps[aStartIdx] / tickIncr ) * tickIncr );
-    final long endTimeStamp = Math.min( absLength, timestamps[aEndIdx] );
-
-    aCanvas.setColor( Color.GRAY );
-
-    // XXX this won't work if tickIncr < 1.0!
-    for ( long i = startTimeStamp; i < endTimeStamp; i += tickIncr )
-    {
-      int relXpos = ( int )( zoomFactor * i );
-
-      // System.out.println( "relXpos[" + i + "] = " + Utils.displayTime( i / (
-      // double )dataModel.getSampleRate() ) );
-
-      aCanvas.drawLine( relXpos, TIMELINE_HEIGHT - PADDING_Y - SHORT_TICK_HEIGHT, relXpos, TIMELINE_HEIGHT - PADDING_Y );
     }
   }
 

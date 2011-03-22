@@ -308,13 +308,13 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       {
         // We're starting to drag a channel row...
         glassPane.setDropPoint( createChannelDropPoint( coordinate, glassPane ), DragAndDropContext.CHANNEL_ROW );
-        aEvent.startDrag( Cursor.getPredefinedCursor( Cursor.MOVE_CURSOR ), new ChannelRowTransferable( row ) );
+        aEvent.startDrag( DragSource.DefaultMoveDrop, new ChannelRowTransferable( row ) );
       }
       else
       {
         // We're starting to drag a cursor...
         glassPane.setDropPoint( createCursorDropPoint( coordinate, glassPane ), DragAndDropContext.CURSOR );
-        aEvent.startDrag( Cursor.getPredefinedCursor( Cursor.MOVE_CURSOR ), new CursorTransferable( cursorIdx ) );
+        aEvent.startDrag( DragSource.DefaultCopyDrop, new CursorTransferable( cursorIdx ) );
       }
 
       glassPane.setVisible( true );

@@ -221,7 +221,9 @@ class SignalView extends JPanel
           final int sampleIdx = ( i + startIdx );
 
           int sampleValue = ( ( values[sampleIdx] & mask ) == 0 ) ? 1 : 0;
-          long timestamp = ( sampleValue == prevSampleValue ) ? timestamps[sampleIdx] : prevTimestamp;
+          // long timestamp = ( sampleValue == prevSampleValue ) ?
+          // timestamps[sampleIdx] : prevTimestamp;
+          long timestamp = timestamps[sampleIdx];
 
           x[i] = ( int )( zoomFactor * timestamp );
           y[i] = dy + ( signalHeight * sampleValue );

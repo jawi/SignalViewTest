@@ -53,9 +53,10 @@ public class SampleDataModel
     }
     else
     {
+      Random rnd = new Random();
       for ( int i = 0; i < aSize; i++ )
       {
-        this.values[i] = ( ( 1 * i ) % 1024 );
+        this.values[i] = rnd.nextInt();
         this.timestamps[i] = i;
       }
 
