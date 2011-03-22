@@ -27,7 +27,6 @@ class TimeLineView extends JComponent
   public static final int TIMELINE_HEIGHT = 30;
 
   private static final int LONG_TICK_INTERVAL = 10;
-  private static final int TIME_INTERVAL = 20;
 
   private static final int SHORT_TICK_HEIGHT = 4;
   private static final int PADDING_Y = 1;
@@ -86,7 +85,6 @@ class TimeLineView extends JComponent
 
       final long[] timestamps = dataModel.getTimestamps();
       final double zoomFactor = screenModel.getZoomFactor();
-      final long absLength = dataModel.getAbsoluteLength();
 
       final int startIdx = getStartIndex( clip );
       final int endIdx = getEndIndex( clip, timestamps.length );
@@ -100,6 +98,9 @@ class TimeLineView extends JComponent
 
       canvas.setColor( Color.GRAY );
 
+      final int y1 = TIMELINE_HEIGHT - PADDING_Y - SHORT_TICK_HEIGHT;
+      final int y2 = TIMELINE_HEIGHT - PADDING_Y;
+
       for ( int i = clip.x; i < clip.width; i += TIMELINE_INCREMENT )
       {
         int relXpos = ( i - clip.x );
@@ -108,8 +109,11 @@ class TimeLineView extends JComponent
         // (
         // double )dataModel.getSampleRate() ) );
 
-        canvas
-            .drawLine( relXpos, TIMELINE_HEIGHT - PADDING_Y - SHORT_TICK_HEIGHT, relXpos, TIMELINE_HEIGHT - PADDING_Y );
+        canvas.drawLine( relXpos, y1, relXpos, y2 );
+        if ( i % 100 == 0 )
+        {
+          canvas.drawString( Utils.displayTime( i * pixelTimeInterval ), relXpos, y1 );
+        }
       }
     }
     finally
