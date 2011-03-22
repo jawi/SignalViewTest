@@ -188,7 +188,7 @@ class SignalView extends JPanel
 
       final int startIdx = getStartIndex( clip );
       final int endIdx = getEndIndex( clip, values.length );
-      final int size = Math.min( values.length - 1, ( endIdx - startIdx ) );
+      final int size = Math.min( values.length - 1, ( endIdx - startIdx ) + 1 );
 
       final long[] timestamps = dataModel.getTimestamps();
 

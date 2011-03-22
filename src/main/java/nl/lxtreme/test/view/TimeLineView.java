@@ -108,16 +108,17 @@ class TimeLineView extends JComponent
     final double zoomFactor = screenModel.getZoomFactor();
     final long absLength = dataModel.getAbsoluteLength();
 
-    final int tickIncr = ( int )Math.ceil( TIMELINE_INCREMENT / zoomFactor );
+    final double tickIncr = ( TIMELINE_INCREMENT / zoomFactor );
 
     final double pixelTimeInterval = ( zoomFactor / dataModel.getSampleRate() );
-    System.out.println( "tickInterval = " + Utils.displayTime( pixelTimeInterval ) );
+    System.out.println( "tickInterval = " + Utils.displayTime( pixelTimeInterval ) + ", " + tickIncr );
 
-    final long startTimeStamp = Math.max( 0L, ( timestamps[aStartIdx] / tickIncr ) * tickIncr );
+    final long startTimeStamp = ( long )Math.max( 0L, ( timestamps[aStartIdx] / tickIncr ) * tickIncr );
     final long endTimeStamp = Math.min( absLength, timestamps[aEndIdx] );
 
     aCanvas.setColor( Color.GRAY );
 
+    // XXX this won't work if tickIncr < 1.0!
     for ( long i = startTimeStamp; i < endTimeStamp; i += tickIncr )
     {
       int relXpos = ( int )( zoomFactor * i );
