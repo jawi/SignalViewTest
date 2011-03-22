@@ -14,7 +14,7 @@ import javax.swing.*;
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.dnd.*;
 import nl.lxtreme.test.model.*;
-import nl.lxtreme.test.view.SignalDiagramController.*;
+import nl.lxtreme.test.view.SignalDiagramController.SignalHoverInfo;
 
 
 /**
@@ -406,7 +406,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       final SignalHoverInfo signalHover = this.controller.getSignalHover( aPoint );
       if ( signalHover != null )
       {
-        dropPoint.x = signalHover.rectangle.x;
+        // dropPoint.x = signalHover.rectangle.x;
       }
 
       SwingUtilities.convertPointToScreen( dropPoint, this.signalView );

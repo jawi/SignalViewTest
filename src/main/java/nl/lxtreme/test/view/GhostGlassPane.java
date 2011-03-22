@@ -25,14 +25,14 @@ public class GhostGlassPane extends JPanel
   private static final int CHANNEL_ROW_MARKER_HEIGHT = 2;
 
   private static final int CURSOR_MARKER_WIDTH = 2;
-  private static final int CURSOR_MARKER_HEIGHT = -1;
+  private static final int CURSOR_MARKER_HEIGHT = Integer.MAX_VALUE;
 
   private static final Stroke INDICATOR_STROKE = new BasicStroke( 1.5f );
 
   // VARIABLES
 
-  private Point oldDropPoint;
-  private Point dropPoint;
+  private volatile Point oldDropPoint;
+  private volatile Point dropPoint;
   private volatile DragAndDropContext context;
 
   private final float alpha = 0.7f;
@@ -69,25 +69,25 @@ public class GhostGlassPane extends JPanel
     int x, y, width, height;
     if ( DragAndDropContext.CHANNEL_ROW == this.context )
     {
-      width = CHANNEL_ROW_MARKER_WIDTH + 2;
+      width = Math.min( getWidth(), CHANNEL_ROW_MARKER_WIDTH ) + 2;
       height = CHANNEL_ROW_MARKER_HEIGHT + 2;
     }
     else
     {
       width = CURSOR_MARKER_WIDTH + 2;
-      height = Math.max( getHeight(), CURSOR_MARKER_HEIGHT ) + 2;
+      height = Math.min( getHeight(), CURSOR_MARKER_HEIGHT ) + 2;
     }
 
     if ( this.oldDropPoint != null )
     {
-      x = this.oldDropPoint.x - 1;
-      y = this.oldDropPoint.y - 1;
+      x = Math.max( 0, this.oldDropPoint.x - 1 );
+      y = Math.max( 0, this.oldDropPoint.y - 1 );
       repaint( x, y, width, height );
     }
-    if ( this.dropPoint != null )
+    if ( this.dropPoint != null && !this.dropPoint.equals( oldDropPoint ) )
     {
-      x = this.dropPoint.x - 1;
-      y = this.dropPoint.y - 1;
+      x = Math.max( 0, this.dropPoint.x - 1 );
+      y = Math.max( 0, this.dropPoint.y - 1 );
       repaint( x, y, width, height );
     }
   }
@@ -139,8 +139,8 @@ public class GhostGlassPane extends JPanel
       }
       else
       {
-        // g2d.setColor( Color.LIGHT_GRAY );
-        g2d.setColor( Color.YELLOW );
+        g2d.setColor( Color.LIGHT_GRAY );
+        g2d.setStroke( INDICATOR_STROKE );
         g2d.drawLine( x, y, x, clip.height );
       }
     }

@@ -7,6 +7,7 @@ package nl.lxtreme.test.view;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.dnd.*;
+
 import javax.swing.*;
 
 import nl.lxtreme.test.dnd.*;
@@ -204,18 +205,53 @@ class SignalView extends JPanel
 
       final int startIdx = getStartIndex( clip );
       final int endIdx = getEndIndex( clip, values.length );
-      final int size = ( endIdx - startIdx );
+      final int size = Math.min( values.length - 1, ( endIdx - startIdx ) );
 
-      if ( size > 1000000 )
+      final long[] timestamps = dataModel.getTimestamps();
+
+      final int[] x = new int[size];
+      final int[] y = new int[size];
+
+      final int signalHeight = screenModel.getSignalHeight();
+      final int channelHeight = screenModel.getChannelHeight();
+      // Where is the signal to be drawn?
+      final int signalOffset = screenModel.getSignalOffset();
+      final double zoomFactor = screenModel.getZoomFactor();
+
+      final int width = dataModel.getWidth();
+
+      // Determine which bits of the actual signal should be drawn...
+      final int startBit = ( int )Math.max( 0, Math.floor( clip.y / ( double )channelHeight ) );
+      final int endBit = ( int )Math.min( width, Math.ceil( ( clip.y + clip.height ) / ( double )channelHeight ) );
+
+      for ( int b = startBit; b < endBit; b++ )
       {
-        // Too many samples on one screen?!?
-        System.out.println( "size = " + size + ", start = " + startIdx + ", end = " + endIdx );
-        paintNormalDataSet( canvas, screenModel.getZoomFactor(), startIdx, endIdx );
-      }
-      else
-      {
-        // This data set might reasonably well fit on screen...
-        paintNormalDataSet( canvas, screenModel.getZoomFactor(), startIdx, endIdx );
+        final int mask = ( 1 << b );
+        // determine where we really should draw the signal...
+        final int dy = signalOffset + ( channelHeight * screenModel.toVirtualRow( b ) );
+
+        long prevTimestamp = startIdx;
+        int prevSampleValue = ( ( values[startIdx] & mask ) == 0 ) ? 1 : 0;
+
+        for ( int i = 0; i < size; i++ )
+        {
+          final int sampleIdx = ( i + startIdx );
+
+          int sampleValue = ( ( values[sampleIdx] & mask ) == 0 ) ? 1 : 0;
+          long timestamp = ( sampleValue == prevSampleValue ) ? timestamps[sampleIdx] : prevTimestamp;
+
+          int x1 = ( int )( zoomFactor * timestamp );
+          int y1 = dy + ( signalHeight * sampleValue );
+
+          x[i] = x1;
+          y[i] = y1;
+
+          prevTimestamp = timestamp;
+          prevSampleValue = sampleValue;
+        }
+
+        canvas.setColor( screenModel.getColor( b ) );
+        canvas.drawPolyline( x, y, size );
       }
     }
     finally
@@ -251,71 +287,5 @@ class SignalView extends JPanel
   {
     final Point location = aClip.getLocation();
     return Math.max( this.controller.toTimestampIndex( location ) - 1, 0 );
-  }
-
-  /**
-   * @param aCanvas
-   * @param aStartSampleIdx
-   */
-  private void paintNormalDataSet( final Graphics2D aCanvas, final double aZoomFactor, final int aStartSampleIdx,
-      final int aEndSampleIdx )
-  {
-    final SampleDataModel dataModel = this.controller.getDataModel();
-    final ScreenModel screenModel = this.controller.getScreenModel();
-
-    final int[] values = dataModel.getValues();
-    final long[] timestamps = dataModel.getTimestamps();
-
-    final int size = Math.min( values.length - 1, ( aEndSampleIdx - aStartSampleIdx ) );
-
-    final int[] x = new int[2 * size];
-    final int[] y = new int[2 * size];
-
-    final int signalHeight = screenModel.getSignalHeight();
-    final int channelHeight = screenModel.getChannelHeight();
-    // Where is the signal to be drawn?
-    final int signalOffset = screenModel.getSignalOffset();
-
-    // Determine how many signals we should draw...
-    final Rectangle clip = aCanvas.getClipBounds();
-
-    final int width = dataModel.getWidth();
-
-    // Determine which bits of the actual signal should be drawn...
-    final int startBit = ( int )Math.max( 0, Math.floor( clip.y / ( double )channelHeight ) );
-    final int endBit = ( int )Math.min( width, Math.ceil( ( clip.y + clip.height ) / ( double )channelHeight ) );
-
-    for ( int b = startBit; b < endBit; b++ )
-    {
-      final int mask = ( 1 << b );
-      // determine where we really should draw the signal...
-      final int dy = signalOffset + ( channelHeight * screenModel.toVirtualRow( b ) );
-
-      long prevTimestamp = aStartSampleIdx;
-      for ( int i = 0, p = 0; i < size; i++ )
-      {
-        final int sampleIdx = ( i + aStartSampleIdx );
-
-        int sampleValue = ( ( values[sampleIdx] & mask ) >>> b ) & 0x01;
-
-        int value = ( signalHeight * ( 1 - sampleValue ) );
-        long timestamp = timestamps[sampleIdx];
-
-        int x1 = ( int )( ( aZoomFactor * 2.0 ) * prevTimestamp );
-        int x2 = ( int )( ( aZoomFactor * 2.0 ) * timestamp );
-        final int y1 = dy + value;
-
-        x[p] = x1;
-        y[p] = y1;
-        x[p + 1] = x2;
-        y[p + 1] = y1;
-
-        p += 2;
-        prevTimestamp = timestamp;
-      }
-
-      aCanvas.setColor( screenModel.getColor( b ) );
-      aCanvas.drawPolyline( x, y, size );
-    }
   }
 }

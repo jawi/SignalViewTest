@@ -33,7 +33,7 @@ public class SampleDataModel
     this.values = new int[aSize];
     this.timestamps = new long[aSize];
 
-    final boolean run1 = true;
+    final boolean run1 = false;
     if ( run1 )
     {
       int value = 0xAAA;
