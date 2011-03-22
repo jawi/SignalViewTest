@@ -290,7 +290,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
       int row = -1;
       int cursorIdx = this.controller.findCursor( coordinate );
-      if ( cursorIdx < 0 )
+      if ( !this.controller.isCursorMode() || ( cursorIdx < 0 ) )
       {
         row = this.controller.getSignalRow( coordinate );
       }

@@ -39,7 +39,7 @@ class SignalView extends JPanel
     public void drop( final DropTargetDropEvent aEvent )
     {
       final DataFlavor[] flavors = aEvent.getCurrentDataFlavors();
-      if ( flavors == null )
+      if ( ( flavors == null ) || ( flavors.length == 0 ) )
       {
         return;
       }
@@ -60,9 +60,7 @@ class SignalView extends JPanel
       if ( result )
       {
         // Update our administration...
-        final GhostGlassPane glassPane = ( GhostGlassPane )SwingUtilities.getRootPane( SignalView.this ).getGlassPane();
-        glassPane.clearDropPoint();
-        glassPane.setVisible( false );
+        SwingUtilities.getRootPane( SignalView.this ).getGlassPane().setVisible( false );
 
         DragAndDropLock.setLocked( false );
 
@@ -76,38 +74,30 @@ class SignalView extends JPanel
      */
     private boolean dropChannelRow( final DropTargetDropEvent aEvent )
     {
-      aEvent.acceptDrop( DnDConstants.ACTION_COPY_OR_MOVE );
-
-      final Transferable transferable = aEvent.getTransferable();
-
-      Integer realRowValue = null;
       try
       {
-        realRowValue = ( Integer )transferable.getTransferData( ChannelRowTransferable.FLAVOR );
-        if ( realRowValue == null )
+        aEvent.acceptDrop( DnDConstants.ACTION_COPY_OR_MOVE );
+
+        final Transferable transferable = aEvent.getTransferable();
+
+        Integer realRowValue = ( Integer )transferable.getTransferData( ChannelRowTransferable.FLAVOR );
+        if ( realRowValue != null )
         {
-          return false;
+          final int oldRealRow = realRowValue.intValue();
+          final int newRealRow = this.ctlr.getSignalRow( aEvent.getLocation() );
+
+          // Move the channel rows...
+          this.ctlr.moveChannelRows( oldRealRow, newRealRow );
+
+          return true;
         }
       }
-      catch ( final Exception exception )
+      catch ( Exception exception )
       {
-        // NO-op
+        // NO-op XXX
       }
 
-      final SampleDataModel dataModel = this.ctlr.getDataModel();
-      final int oldRealRow = realRowValue.intValue();
-      if ( ( oldRealRow < 0 ) || ( oldRealRow >= dataModel.getWidth() ) )
-      {
-        return false;
-      }
-
-      final Point coordinate = ( Point )aEvent.getLocation().clone();
-      final int newRealRow = this.ctlr.getSignalRow( coordinate );
-
-      // Move the channel rows...
-      this.ctlr.moveChannelRows( oldRealRow, newRealRow );
-
-      return true;
+      return false;
     }
 
     /**
@@ -115,37 +105,30 @@ class SignalView extends JPanel
      */
     private boolean dropCursor( final DropTargetDropEvent aEvent )
     {
-      aEvent.acceptDrop( DnDConstants.ACTION_COPY_OR_MOVE );
-
-      final Transferable transferable = aEvent.getTransferable();
-
-      Integer cursorValue = null;
       try
       {
-        cursorValue = ( Integer )transferable.getTransferData( CursorTransferable.FLAVOR );
-        if ( cursorValue == null )
+        aEvent.acceptDrop( DnDConstants.ACTION_COPY_OR_MOVE );
+
+        final Transferable transferable = aEvent.getTransferable();
+
+        Integer cursorValue = ( Integer )transferable.getTransferData( CursorTransferable.FLAVOR );
+        if ( cursorValue != null )
         {
-          return false;
+          final int cursorIdx = cursorValue.intValue();
+          final Point newLocation = aEvent.getLocation();
+
+          // Move the cursor position...
+          this.ctlr.moveCursor( cursorIdx, newLocation, false /* aSnap */);
+
+          return true;
         }
       }
-      catch ( final Exception exception )
+      catch ( Exception exception )
       {
-        // NO-op
+        // NO-op XXX
       }
 
-      final SampleDataModel dataModel = this.ctlr.getDataModel();
-      final int cursorIdx = cursorValue.intValue();
-      if ( ( cursorIdx < 0 ) || ( cursorIdx >= dataModel.getCursors().length ) )
-      {
-        return false;
-      }
-
-      final Point coordinate = ( Point )aEvent.getLocation().clone();
-
-      // Move the cursor position...
-      this.ctlr.dragCursor( cursorIdx, coordinate, true /* aSnap */);
-
-      return true;
+      return false;
     }
   }
 
@@ -230,7 +213,7 @@ class SignalView extends JPanel
         // determine where we really should draw the signal...
         final int dy = signalOffset + ( channelHeight * screenModel.toVirtualRow( b ) );
 
-        long prevTimestamp = startIdx;
+        long prevTimestamp = timestamps[startIdx];
         int prevSampleValue = ( ( values[startIdx] & mask ) == 0 ) ? 1 : 0;
 
         for ( int i = 0; i < size; i++ )
@@ -240,17 +223,14 @@ class SignalView extends JPanel
           int sampleValue = ( ( values[sampleIdx] & mask ) == 0 ) ? 1 : 0;
           long timestamp = ( sampleValue == prevSampleValue ) ? timestamps[sampleIdx] : prevTimestamp;
 
-          int x1 = ( int )( zoomFactor * timestamp );
-          int y1 = dy + ( signalHeight * sampleValue );
+          x[i] = ( int )( zoomFactor * timestamp );
+          y[i] = dy + ( signalHeight * sampleValue );
 
-          x[i] = x1;
-          y[i] = y1;
-
-          prevTimestamp = timestamp;
+          prevTimestamp = timestamps[sampleIdx];
           prevSampleValue = sampleValue;
         }
 
-        canvas.setColor( screenModel.getColor( b ) );
+        canvas.setColor( screenModel.getChannelColor( b ) );
         canvas.drawPolyline( x, y, size );
       }
     }

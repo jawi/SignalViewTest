@@ -84,7 +84,7 @@ public class GhostGlassPane extends JPanel
       y = Math.max( 0, this.oldDropPoint.y - 1 );
       repaint( x, y, width, height );
     }
-    if ( this.dropPoint != null && !this.dropPoint.equals( oldDropPoint ) )
+    if ( ( this.dropPoint != null ) && !this.dropPoint.equals( this.oldDropPoint ) )
     {
       x = Math.max( 0, this.dropPoint.x - 1 );
       y = Math.max( 0, this.dropPoint.y - 1 );

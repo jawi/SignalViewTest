@@ -176,7 +176,7 @@ public class ScreenModel
   /**
    * @return the colors
    */
-  public Color getColor( final int aChannelIdx )
+  public Color getChannelColor( final int aChannelIdx )
   {
     return this.colors[aChannelIdx];
   }

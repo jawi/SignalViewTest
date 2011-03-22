@@ -97,37 +97,6 @@ public final class SignalDiagramController
   }
 
   /**
-   * Drags a cursor with a given index to a given point, possibly snapping to a
-   * signal edge.
-   * 
-   * @param aCursorIdx
-   *          the cursor index to move, should be &gt;= 0 && &lt; 10;
-   * @param aPoint
-   *          the new point of the cursor, in case of snapping, it will use this
-   *          point to find the nearest signal edge, cannot be <code>null</code>
-   *          ;
-   * @param aSnap
-   *          <code>true</code> if the cursor should be snapped to the nearest
-   *          signal edge, <code>false</code> otherwise.
-   */
-  public void dragCursor( final int aCursorIdx, final Point aPoint, final boolean aSnap )
-  {
-    final Point point = convertToPointOf( this.cursorView, aPoint );
-
-    if ( aSnap )
-    {
-      final SignalHoverInfo signalHover = getSignalHover( aPoint );
-      if ( signalHover != null )
-      {
-        point.x = signalHover.rectangle.x;
-        point.y = ( int )signalHover.rectangle.getCenterY();
-      }
-    }
-
-    this.cursorView.moveCursor( aCursorIdx, point );
-  }
-
-  /**
    * Enables the cursor "snap" mode.
    * 
    * @see #disableSnapMode()
@@ -298,6 +267,14 @@ public final class SignalDiagramController
     {
       return;
     }
+    if ( ( aMovedRow < 0 ) || ( aMovedRow >= this.dataModel.getWidth() ) )
+    {
+      throw new IllegalArgumentException( "Moved row invalid!" );
+    }
+    if ( ( aInsertRow < 0 ) || ( aInsertRow >= this.dataModel.getWidth() ) )
+    {
+      throw new IllegalArgumentException( "Insert row invalid!" );
+    }
 
     final int row = this.screenModel.toRealRow( aMovedRow );
     final int newRow = this.screenModel.toRealRow( aInsertRow );
@@ -338,6 +315,42 @@ public final class SignalDiagramController
       rect.y = newRowY;
       channelLabelsView.repaint( rect );
     }
+  }
+
+  /**
+   * Drags a cursor with a given index to a given point, possibly snapping to a
+   * signal edge.
+   * 
+   * @param aCursorIdx
+   *          the cursor index to move, should be &gt;= 0 && &lt; 10;
+   * @param aPoint
+   *          the new point of the cursor, in case of snapping, it will use this
+   *          point to find the nearest signal edge, cannot be <code>null</code>
+   *          ;
+   * @param aSnap
+   *          <code>true</code> if the cursor should be snapped to the nearest
+   *          signal edge, <code>false</code> otherwise.
+   */
+  public void moveCursor( final int aCursorIdx, final Point aPoint, final boolean aSnap )
+  {
+    if ( ( aCursorIdx < 0 ) || ( aCursorIdx >= this.dataModel.getCursors().length ) )
+    {
+      throw new IllegalArgumentException( "Invalid cursor index!" );
+    }
+
+    final Point point = convertToPointOf( this.cursorView, aPoint );
+
+    if ( aSnap )
+    {
+      final SignalHoverInfo signalHover = getSignalHover( aPoint );
+      if ( signalHover != null )
+      {
+        point.x = signalHover.rectangle.x;
+        point.y = ( int )signalHover.rectangle.getCenterY();
+      }
+    }
+
+    this.cursorView.moveCursor( aCursorIdx, point );
   }
 
   /**
@@ -494,7 +507,7 @@ public final class SignalDiagramController
    */
   public int toUnscaledScreenCoordinate( final Point aPoint )
   {
-    return ( int )Math.ceil( Math.abs( aPoint.getX() / this.screenModel.getZoomFactor() ) );
+    return ( int )Math.ceil( Math.abs( aPoint.x / this.screenModel.getZoomFactor() ) );
   }
 
   /**
