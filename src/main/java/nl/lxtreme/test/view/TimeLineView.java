@@ -22,11 +22,9 @@ class TimeLineView extends JComponent
   private static final long serialVersionUID = 1L;
 
   /** The tick increment (in pixels). */
-  public static final int TIMELINE_INCREMENT = 20;
+  public static final int TIMELINE_INCREMENT = 10;
   /** The height of this component. */
   public static final int TIMELINE_HEIGHT = 30;
-
-  private static final int LONG_TICK_INTERVAL = 10;
 
   private static final int SHORT_TICK_HEIGHT = 4;
   private static final int PADDING_Y = 1;
@@ -48,20 +46,13 @@ class TimeLineView extends JComponent
   {
     this.controller = aController;
 
-    setOpaque( true );
-    setBackground( Color.BLACK );
+    setBackground( Utils.parseColor( "#1E2126" ) );
 
-    this.labelFont = ( Font )UIManager.get( "Label.font" );
+    final Font baseFont = ( Font )UIManager.get( "Label.font" );
+    this.labelFont = baseFont.deriveFont( baseFont.getSize() * 0.9f );
   }
 
   // METHODS
-
-  @Override
-  public Dimension getPreferredSize()
-  {
-    Dimension result = super.getPreferredSize();
-    return new Dimension( result.width, TIMELINE_HEIGHT );
-  }
 
   /**
    * @see javax.swing.JComponent#paintComponent(java.awt.Graphics)
@@ -69,11 +60,13 @@ class TimeLineView extends JComponent
   @Override
   protected void paintComponent( final Graphics aGraphics )
   {
-    Graphics canvas = aGraphics.create();
+    Graphics2D canvas = ( Graphics2D )aGraphics.create();
 
     try
     {
       final Rectangle clip = canvas.getClipBounds();
+      // Tell Swing how we would like to render ourselves...
+      canvas.setRenderingHints( createRenderingHints() );
 
       canvas.setColor( getBackground() );
       canvas.fillRect( clip.x, clip.y, clip.width, clip.height );
@@ -85,35 +78,56 @@ class TimeLineView extends JComponent
 
       final long[] timestamps = dataModel.getTimestamps();
       final double zoomFactor = screenModel.getZoomFactor();
+      final double sampleRate = dataModel.getSampleRate();
 
       final int startIdx = getStartIndex( clip );
       final int endIdx = getEndIndex( clip, timestamps.length );
 
-      final double tickIncr = ( TIMELINE_INCREMENT / zoomFactor );
+      final long startTimeStamp = timestamps[startIdx];
+      final long endTimeStamp = timestamps[endIdx];
 
-      final double pixelTimeInterval = ( zoomFactor / dataModel.getSampleRate() );
-      System.out.println( "tickInterval = " + Utils.displayTime( pixelTimeInterval ) + ", " + tickIncr );
+      final double timeline = ( endTimeStamp - startTimeStamp ) / sampleRate;
+      final double timebase = getTimebase( timeline );
+      final double tickIncr = ( timebase / TIMELINE_INCREMENT );
 
-      System.out.println( "start = " + startIdx + " => " + endIdx );
+      final double idx = Math.max( 1.0, tickIncr * sampleRate * zoomFactor );
 
-      canvas.setColor( Color.GRAY );
+      System.out.println( "tickInterval = " + Utils.displayTime( timeline ) + ", " + Utils.displayTime( timebase )
+          + ", " + idx );
 
-      final int y1 = TIMELINE_HEIGHT - PADDING_Y - SHORT_TICK_HEIGHT;
-      final int y2 = TIMELINE_HEIGHT - PADDING_Y;
+      final int y1 = TIMELINE_HEIGHT - PADDING_Y;
+      final int y2 = TIMELINE_HEIGHT - PADDING_Y - SHORT_TICK_HEIGHT;
+      final int y3 = TIMELINE_HEIGHT - PADDING_Y - 2 * SHORT_TICK_HEIGHT;
 
-      for ( int i = clip.x; i < clip.width; i += TIMELINE_INCREMENT )
+      double timestamp = ( startTimeStamp / TIMELINE_INCREMENT ) * TIMELINE_INCREMENT;
+      while ( timestamp < endTimeStamp )
       {
-        int relXpos = ( i - clip.x );
+        int relXpos = ( int )( timestamp * zoomFactor );
 
-        // System.out.println( "relXpos[" + i + "] = " + Utils.displayTime( i /
-        // (
-        // double )dataModel.getSampleRate() ) );
+        canvas.setColor( Color.GRAY );
 
         canvas.drawLine( relXpos, y1, relXpos, y2 );
-        if ( i % 100 == 0 )
+
+        canvas.setFont( this.labelFont );
+        if ( ( timestamp % TIMELINE_INCREMENT ) == 0 )
         {
-          canvas.drawString( Utils.displayTime( i * pixelTimeInterval ), relXpos, y1 );
+          final String time = Utils.displayTime( timestamp / sampleRate );
+          int w = fm.stringWidth( time );
+
+          int textXpos = ( int )( relXpos - ( w / 2.0 ) );
+          if ( textXpos < 1 )
+          {
+            textXpos = 1;
+          }
+
+          canvas.drawString( time, textXpos, y1 - 10 );
+
+          canvas.setColor( Color.YELLOW );
+
+          canvas.drawLine( relXpos, y1, relXpos, y3 );
         }
+
+        timestamp += idx;
       }
     }
     finally
@@ -121,6 +135,14 @@ class TimeLineView extends JComponent
       canvas.dispose();
       canvas = null;
     }
+  }
+
+  /**
+   * Creates the rendering hints for this view.
+   */
+  private RenderingHints createRenderingHints()
+  {
+    return new RenderingHints( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
   }
 
   /**
@@ -143,4 +165,13 @@ class TimeLineView extends JComponent
     return Math.max( this.controller.toTimestampIndex( location ) - 1, 0 );
   }
 
+  /**
+   * @param aX
+   * @return
+   */
+  private double getTimebase( final double aX )
+  {
+    double result = Math.pow( 10, Math.ceil( Math.log10( aX ) ) - 1 );
+    return result;
+  }
 }

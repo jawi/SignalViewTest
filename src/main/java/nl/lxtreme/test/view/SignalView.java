@@ -10,6 +10,7 @@ import java.awt.dnd.*;
 
 import javax.swing.*;
 
+import nl.lxtreme.test.*;
 import nl.lxtreme.test.dnd.*;
 import nl.lxtreme.test.model.*;
 
@@ -152,8 +153,7 @@ class SignalView extends JPanel
   {
     this.controller = aController;
 
-    setOpaque( true );
-    setBackground( Color.BLACK );
+    setBackground( Utils.parseColor( "#1E2126" ) );
 
     // setDebugGraphicsOptions( DebugGraphics.LOG_OPTION );
     // DebugGraphics.setLogStream( System.err );
@@ -192,8 +192,8 @@ class SignalView extends JPanel
 
       final long[] timestamps = dataModel.getTimestamps();
 
-      final int[] x = new int[size];
-      final int[] y = new int[size];
+      final int[] x = new int[2 * size];
+      final int[] y = new int[2 * size];
 
       final int signalHeight = screenModel.getSignalHeight();
       final int channelHeight = screenModel.getChannelHeight();
@@ -209,31 +209,33 @@ class SignalView extends JPanel
 
       for ( int b = startBit; b < endBit; b++ )
       {
+        canvas.setColor( screenModel.getChannelColor( b ) );
+
         final int mask = ( 1 << b );
         // determine where we really should draw the signal...
         final int dy = signalOffset + ( channelHeight * screenModel.toVirtualRow( b ) );
 
         long prevTimestamp = timestamps[startIdx];
-        int prevSampleValue = ( ( values[startIdx] & mask ) == 0 ) ? 1 : 0;
 
+        int p = 0;
         for ( int i = 0; i < size; i++ )
         {
           final int sampleIdx = ( i + startIdx );
 
           int sampleValue = ( ( values[sampleIdx] & mask ) == 0 ) ? 1 : 0;
-          // long timestamp = ( sampleValue == prevSampleValue ) ?
-          // timestamps[sampleIdx] : prevTimestamp;
           long timestamp = timestamps[sampleIdx];
 
-          x[i] = ( int )( zoomFactor * timestamp );
-          y[i] = dy + ( signalHeight * sampleValue );
+          x[p] = ( int )( zoomFactor * prevTimestamp );
+          y[p] = dy + ( signalHeight * sampleValue );
 
-          prevTimestamp = timestamps[sampleIdx];
-          prevSampleValue = sampleValue;
+          x[p + 1] = ( int )( zoomFactor * timestamp );
+          y[p + 1] = dy + ( signalHeight * sampleValue );
+
+          p += 2;
+          prevTimestamp = timestamp;
         }
 
-        canvas.setColor( screenModel.getChannelColor( b ) );
-        canvas.drawPolyline( x, y, size );
+        canvas.drawPolyline( x, y, p );
       }
     }
     finally

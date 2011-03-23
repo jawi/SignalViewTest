@@ -638,7 +638,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   @Override
   public boolean getScrollableTracksViewportHeight()
   {
-    return false;
+    return true;
   }
 
   /**

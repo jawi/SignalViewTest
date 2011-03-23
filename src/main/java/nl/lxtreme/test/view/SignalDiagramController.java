@@ -371,16 +371,22 @@ public final class SignalDiagramController
     final JScrollPane scrollPane = ( JScrollPane )SwingUtilities.getAncestorOfClass( JScrollPane.class, this.arrowView );
     if ( scrollPane != null )
     {
-      final JViewport viewport = scrollPane.getViewport();
-
       final int width = ( int )Math.min( Integer.MAX_VALUE, getAbsoluteLength() );
       final int height = ( this.screenModel.getChannelHeight() * this.dataModel.getWidth() )
           + this.screenModel.getSignalHeight();
 
-      final Dimension newSize = new Dimension( width, height );
+      JComponent view = ( JComponent )scrollPane.getViewport().getView();
+      view.setPreferredSize( new Dimension( width, height ) );
+      view.revalidate();
 
-      final JComponent view = ( JComponent )viewport.getView();
-      view.setPreferredSize( newSize );
+      view = ( JComponent )scrollPane.getColumnHeader().getView();
+      view.setPreferredSize( new Dimension( width, TimeLineView.TIMELINE_HEIGHT ) );
+      view.setMinimumSize( view.getPreferredSize() );
+      view.revalidate();
+
+      view = ( JComponent )scrollPane.getRowHeader().getView();
+      view.setPreferredSize( new Dimension( ( ( ChannelLabelsView )view ).getMinimalWidth(), height ) );
+      view.setMinimumSize( view.getPreferredSize() );
       view.revalidate();
 
       scrollPane.repaint();
@@ -533,7 +539,7 @@ public final class SignalDiagramController
    */
   public void zoomIn()
   {
-    zoomRelative( 1.5 );
+    zoomRelative( 2.0 );
 
     recalculateDimensions();
   }
@@ -553,7 +559,7 @@ public final class SignalDiagramController
    */
   public void zoomOut()
   {
-    zoomRelative( 1.0 / 1.5 );
+    zoomRelative( 0.5 );
 
     recalculateDimensions();
   }

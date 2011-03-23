@@ -157,6 +157,14 @@ public class ScreenModel
   }
 
   /**
+   * @return the colors
+   */
+  public Color getChannelColor( final int aChannelIdx )
+  {
+    return this.colors[aChannelIdx];
+  }
+
+  /**
    * @return
    */
   public int getChannelHeight()
@@ -171,14 +179,6 @@ public class ScreenModel
   public String getChannelLabel( final int aChannelIdx )
   {
     return this.channelLabels[aChannelIdx];
-  }
-
-  /**
-   * @return the colors
-   */
-  public Color getChannelColor( final int aChannelIdx )
-  {
-    return this.colors[aChannelIdx];
   }
 
   /**

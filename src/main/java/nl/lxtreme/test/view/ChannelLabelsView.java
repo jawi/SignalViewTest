@@ -36,8 +36,7 @@ class ChannelLabelsView extends JComponent
   {
     this.controller = aController;
 
-    setOpaque( true );
-    setBackground( Color.BLACK );
+    setBackground( Utils.parseColor( "#1E2126" ) );
 
     Font font = ( Font )UIManager.get( "Label.font" );
     this.labelFont = font.deriveFont( Font.BOLD );
@@ -46,10 +45,38 @@ class ChannelLabelsView extends JComponent
 
   // METHODS
 
-  @Override
-  public Dimension getPreferredSize()
+  /**
+   * Tries the resize this component to such a width that all labels will
+   * properly fit.
+   */
+  public int getMinimalWidth()
   {
-    return new Dimension( getMinimalWidth(), 240 );
+    final SampleDataModel dataModel = this.controller.getDataModel();
+    final ScreenModel screenModel = this.controller.getScreenModel();
+
+    int minWidth = -1;
+
+    final FontMetrics fm = getFontMetrics( this.labelFont );
+    for ( int i = 0; i < dataModel.getWidth(); i++ )
+    {
+      String label = screenModel.getChannelLabel( i );
+      if ( ( label == null ) || label.trim().isEmpty() )
+      {
+        label = "W88";
+      }
+      minWidth = Math.max( minWidth, fm.stringWidth( label ) );
+    }
+
+    // Ensure there's room for some padding...
+    minWidth += 12;
+
+    // And always ensure we've got at least a minimal width...
+    if ( minWidth < 40 )
+    {
+      minWidth = 40;
+    }
+
+    return minWidth;
   }
 
   /**
@@ -79,14 +106,16 @@ class ChannelLabelsView extends JComponent
       // Where is the signal to be drawn?
       final int signalOffset = screenModel.getSignalOffset();
 
-      final int width = dataModel.getWidth();
-      for ( int b = 0; b < width; b++ )
+      final int width = getWidth();
+
+      final Color labelBackground = Utils.parseColor( "#2E323B" );
+
+      final int dataWidth = dataModel.getWidth();
+      for ( int b = 0; b < dataWidth; b++ )
       {
         final int yOffset = channelHeight * screenModel.toVirtualRow( b );
 
-        final Color darker = Color.DARK_GRAY.darker();
-
-        canvas.setColor( darker );
+        canvas.setColor( labelBackground );
         canvas.fillRoundRect( clip.x - 10, yOffset + 2, clip.width + 8, channelHeight - 2, 12, 12 );
 
         final int textYoffset = signalOffset + yOffset;
@@ -100,15 +129,15 @@ class ChannelLabelsView extends JComponent
 
         canvas.setFont( this.labelFont );
         final int labelYpos = textYoffset + ( int )( fm.getHeight() - ( 1.0 * fm.getHeight() / 3.0 ) );
-        final int labelXpos = ( clip.width - fm.stringWidth( label ) - 6 );
+        final int labelXpos = ( width - fm.stringWidth( label ) - 6 );
 
-        canvas.setColor( Utils.getContrastColor( darker ) );
+        canvas.setColor( Utils.getContrastColor( labelBackground ) );
         canvas.drawString( label, labelXpos, labelYpos );
 
         // paint the channel number below the label
         canvas.setFont( this.indexFont );
         final int indexYpos = textYoffset + ( int )( indexFm.getHeight() + ( 2.0 * fm.getHeight() / 3.0 ) );
-        final int indexXpos = ( clip.width - indexFm.stringWidth( indexStr ) - 6 );
+        final int indexXpos = ( width - indexFm.stringWidth( indexStr ) - 6 );
 
         canvas.drawString( indexStr, indexXpos, indexYpos );
       }
@@ -132,40 +161,6 @@ class ChannelLabelsView extends JComponent
     hints.put( RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED );
     hints.put( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED );
     return hints;
-  }
-
-  /**
-   * Tries the resize this component to such a width that all labels will
-   * properly fit.
-   */
-  private int getMinimalWidth()
-  {
-    final SampleDataModel dataModel = this.controller.getDataModel();
-    final ScreenModel screenModel = this.controller.getScreenModel();
-
-    int minWidth = -1;
-
-    final FontMetrics fm = getFontMetrics( this.labelFont );
-    for ( int i = 0; i < dataModel.getWidth(); i++ )
-    {
-      String label = screenModel.getChannelLabel( i );
-      if ( ( label == null ) || label.trim().isEmpty() )
-      {
-        label = "W88";
-      }
-      minWidth = Math.max( minWidth, fm.stringWidth( label ) );
-    }
-
-    // Ensure there's room for some padding...
-    minWidth += 12;
-
-    // And always ensure we've got at least a minimal width...
-    if ( minWidth < 40 )
-    {
-      minWidth = 40;
-    }
-
-    return minWidth;
   }
 
 }
