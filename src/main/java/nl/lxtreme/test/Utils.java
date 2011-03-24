@@ -112,7 +112,7 @@ public final class Utils
    */
   public static String displayTime( final double aTime )
   {
-    return displayTime( aTime, 3, " " );
+    return displayTime( aTime, 3, " ", true /* aIncludeUnit */);
   }
 
   /**
@@ -127,7 +127,8 @@ public final class Utils
    * @return the display representation of the given time, never
    *         <code>null</code>.
    */
-  public static String displayTime( final double aTime, final int aPrecision, final String aSeparator )
+  public static String displayTime( final double aTime, final int aPrecision, final String aSeparator,
+      final boolean aIncludeUnit )
   {
     if ( ( aPrecision < 0 ) || ( aPrecision > 6 ) )
     {
@@ -157,7 +158,11 @@ public final class Utils
       i = Math.min( i, unitVals.length - 1 );
     }
 
-    final String format = "%." + aPrecision + "f" + aSeparator + "%s";
+    String format = "%." + aPrecision + "f";
+    if ( aIncludeUnit )
+    {
+      format = format.concat( aSeparator + "%s" );
+    }
     return String.format( format, Double.valueOf( aTime / unitVals[i] ), unitStrs[i] );
   }
 

@@ -185,12 +185,11 @@ class SignalView extends JPanel
       final SampleDataModel dataModel = this.controller.getDataModel();
       final ScreenModel screenModel = this.controller.getScreenModel();
       final int[] values = dataModel.getValues();
+      final long[] timestamps = dataModel.getTimestamps();
 
       final int startIdx = getStartIndex( clip );
       final int endIdx = getEndIndex( clip, values.length );
       final int size = Math.min( values.length - 1, ( endIdx - startIdx ) + 1 );
-
-      final long[] timestamps = dataModel.getTimestamps();
 
       final int[] x = new int[2 * size];
       final int[] y = new int[2 * size];
@@ -216,23 +215,32 @@ class SignalView extends JPanel
         final int dy = signalOffset + ( channelHeight * screenModel.toVirtualRow( b ) );
 
         long prevTimestamp = timestamps[startIdx];
+        int prevSampleValue = ( ( values[startIdx] & mask ) == 0 ) ? 1 : 0;
 
-        int p = 0;
-        for ( int i = 0; i < size; i++ )
+        x[0] = ( int )( zoomFactor * prevTimestamp );
+        y[0] = dy + ( signalHeight * prevSampleValue );
+        int p = 1;
+
+        for ( int i = 1; i < size; i++ )
         {
           final int sampleIdx = ( i + startIdx );
 
           int sampleValue = ( ( values[sampleIdx] & mask ) == 0 ) ? 1 : 0;
           long timestamp = timestamps[sampleIdx];
 
-          x[p] = ( int )( zoomFactor * prevTimestamp );
+          if ( prevSampleValue != sampleValue )
+          {
+            x[p] = ( int )( zoomFactor * prevTimestamp );
+            y[p] = dy + ( signalHeight * sampleValue );
+            p++;
+          }
+
+          x[p] = ( int )( zoomFactor * timestamp );
           y[p] = dy + ( signalHeight * sampleValue );
+          p++;
 
-          x[p + 1] = ( int )( zoomFactor * timestamp );
-          y[p + 1] = dy + ( signalHeight * sampleValue );
-
-          p += 2;
           prevTimestamp = timestamp;
+          prevSampleValue = sampleValue;
         }
 
         canvas.drawPolyline( x, y, p );

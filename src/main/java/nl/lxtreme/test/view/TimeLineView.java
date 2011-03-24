@@ -86,32 +86,33 @@ class TimeLineView extends JComponent
       final long startTimeStamp = timestamps[startIdx];
       final long endTimeStamp = timestamps[endIdx];
 
-      final double timeline = ( endTimeStamp - startTimeStamp ) / sampleRate;
-      final double timebase = getTimebase( timeline );
+      final double timebase = getTimebase( ( endTimeStamp - startTimeStamp ), sampleRate );
       final double tickIncr = ( timebase / TIMELINE_INCREMENT );
-
-      final double idx = Math.max( 1.0, tickIncr * sampleRate * zoomFactor );
-
-      System.out.println( "tickInterval = " + Utils.displayTime( timeline ) + ", " + Utils.displayTime( timebase )
-          + ", " + idx );
 
       final int y1 = TIMELINE_HEIGHT - PADDING_Y;
       final int y2 = TIMELINE_HEIGHT - PADDING_Y - SHORT_TICK_HEIGHT;
       final int y3 = TIMELINE_HEIGHT - PADDING_Y - 2 * SHORT_TICK_HEIGHT;
 
       double timestamp = ( startTimeStamp / TIMELINE_INCREMENT ) * TIMELINE_INCREMENT;
+      double majorTimestamp = timestamp;
       while ( timestamp < endTimeStamp )
       {
         int relXpos = ( int )( timestamp * zoomFactor );
 
-        canvas.setColor( Color.GRAY );
-
-        canvas.drawLine( relXpos, y1, relXpos, y2 );
-
-        canvas.setFont( this.labelFont );
-        if ( ( timestamp % TIMELINE_INCREMENT ) == 0 )
+        if ( ( ( timestamp - startTimeStamp ) % TIMELINE_INCREMENT ) == 0 )
         {
-          final String time = Utils.displayTime( timestamp / sampleRate );
+          boolean major = ( ( ( timestamp - startTimeStamp ) % timebase ) == 0 );
+
+          final String time;
+          if ( major )
+          {
+            majorTimestamp = timestamp;
+            time = Utils.displayTime( majorTimestamp / sampleRate, 3, "", true /* aIncludeUnit */);
+          }
+          else
+          {
+            time = Utils.displayTime( timestamp / sampleRate, 0, "", major /* aIncludeUnit */);
+          }
           int w = fm.stringWidth( time );
 
           int textXpos = ( int )( relXpos - ( w / 2.0 ) );
@@ -120,14 +121,29 @@ class TimeLineView extends JComponent
             textXpos = 1;
           }
 
-          canvas.drawString( time, textXpos, y1 - 10 );
+          int textYpos = major ? y1 - 20 : y1 - 10;
+          if ( textYpos < 1 )
+          {
+            textYpos = 1;
+          }
+
+          canvas.setColor( Color.GRAY );
+
+          canvas.setFont( this.labelFont );
+          canvas.drawString( time, textXpos, textYpos );
 
           canvas.setColor( Color.YELLOW );
 
           canvas.drawLine( relXpos, y1, relXpos, y3 );
         }
+        else
+        {
+          canvas.setColor( Color.GRAY );
 
-        timestamp += idx;
+          canvas.drawLine( relXpos, y1, relXpos, y2 );
+        }
+
+        timestamp += tickIncr;
       }
     }
     finally
@@ -166,12 +182,12 @@ class TimeLineView extends JComponent
   }
 
   /**
-   * @param aX
+   * @param aTimeline
    * @return
    */
-  private double getTimebase( final double aX )
+  private double getTimebase( final double aTimeline, final double aSampleRate )
   {
-    double result = Math.pow( 10, Math.ceil( Math.log10( aX ) ) - 1 );
-    return result;
+    double result = Math.pow( 10, Math.ceil( Math.log10( aTimeline / aSampleRate ) ) - 1 );
+    return result * aSampleRate;
   }
 }

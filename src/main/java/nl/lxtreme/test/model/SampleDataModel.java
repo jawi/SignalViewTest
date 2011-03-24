@@ -40,13 +40,10 @@ public class SampleDataModel
       for ( int i = 0; i < aSize; i++ )
       {
         // A transition each 5ns...
-        if ( ( i % 5 ) == 0 )
-        {
-          value = ( value == 0xAAA ) ? 0x555 : 0xAAA;
-        }
-
         this.values[i] = value;
-        this.timestamps[i] = i;
+        this.timestamps[i] = ( 5 * i );
+
+        value = ~value & 0xFFF;
       }
 
       this.sampleRate = 1000000000; // 1000MHz
