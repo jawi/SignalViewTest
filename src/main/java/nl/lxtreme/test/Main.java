@@ -6,10 +6,12 @@ package nl.lxtreme.test;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.*;
 
 import javax.swing.*;
 
 import nl.lxtreme.test.model.*;
+import nl.lxtreme.test.model.SampleDataModel.*;
 import nl.lxtreme.test.view.*;
 
 
@@ -18,6 +20,101 @@ import nl.lxtreme.test.view.*;
  */
 public class Main
 {
+  // INNER TYPES
+
+  /**
+   * Provides only samples with alternating values.
+   */
+  static class AlternatingDataProvider implements SampleDataProvider
+  {
+    @Override
+    public int getSampleData( final int[] aValues, final long[] aTimestamps, final int aSize )
+    {
+      for ( int i = 0; i < aSize; i++ )
+      {
+        if ( i > 0 )
+        {
+          aValues[i] = aValues[i - 1] == 0xAAAA ? 0x5555 : 0xAAAA;
+        }
+        else
+        {
+          aValues[i] = 0xAAAA;
+        }
+        aTimestamps[i] = i;
+      }
+      return 1000000000; // 1000MHz
+    }
+  }
+
+  /**
+   * Provides only samples that together form a 10-bit counter.
+   */
+  static class CounterDataProvider implements SampleDataProvider
+  {
+    @Override
+    public int getSampleData( final int[] aValues, final long[] aTimestamps, final int aSize )
+    {
+      for ( int i = 0; i < aSize; i++ )
+      {
+        aValues[i] = i % 1024;
+        aTimestamps[i] = i;
+      }
+      return 100000000; // 100MHz
+    }
+  }
+
+  /**
+   * Provides only samples with ones.
+   */
+  static class OneDataProvider implements SampleDataProvider
+  {
+    @Override
+    public int getSampleData( final int[] aValues, final long[] aTimestamps, final int aSize )
+    {
+      for ( int i = 0; i < aSize; i++ )
+      {
+        aValues[i] = 0xFFFF;
+        aTimestamps[i] = i;
+      }
+      return 1;
+    }
+  }
+
+  /**
+   * Provides only samples with random data.
+   */
+  static class RandomDataProvider implements SampleDataProvider
+  {
+    @Override
+    public int getSampleData( final int[] aValues, final long[] aTimestamps, final int aSize )
+    {
+      final Random rnd = new Random();
+      for ( int i = 0; i < aSize; i++ )
+      {
+        aValues[i] = rnd.nextInt();
+        aTimestamps[i] = i;
+      }
+      return 10000000; // 10MHz
+    }
+  }
+
+  /**
+   * Provides only zero samples.
+   */
+  static class ZeroDataProvider implements SampleDataProvider
+  {
+    @Override
+    public int getSampleData( final int[] aValues, final long[] aTimestamps, final int aSize )
+    {
+      for ( int i = 0; i < aSize; i++ )
+      {
+        aValues[i] = 0;
+        aTimestamps[i] = i;
+      }
+      return 1;
+    }
+  }
+
   // VARIABLES
 
   private SignalDiagramController controller;
@@ -131,7 +228,7 @@ public class Main
     } );
     diagramMenu.add( diagramEnableMeasureModeItem );
 
-    final SampleDataModel model = new SampleDataModel( 1024 * 64 /* * 1024 */);
+    final SampleDataModel model = new SampleDataModel( 1024 * 64 /* * 1024 */, new CounterDataProvider() );
     this.controller = new SignalDiagramController( model );
   }
 

@@ -6,25 +6,40 @@ package nl.lxtreme.test.model;
 
 import java.util.*;
 
+import nl.lxtreme.test.*;
+
 
 /**
  * @author jajans
  */
 public class SampleDataModel
 {
+  // INNER TYPES
+
+  public static interface SampleDataProvider
+  {
+    /**
+     * @param aValues
+     * @param aTimestamps
+     * @param aSize
+     * @return the sample rate, in Hertz.
+     */
+    int getSampleData( final int[] aValues, final long[] aTimestamps, final int aSize );
+  }
+
   // VARIABLES
 
   private final int[] values;
   private final long[] timestamps;
   private final int[] cursors;
-  private int sampleRate;
+  private final int sampleRate;
 
   // CONSTRUCTORS
 
   /**
    * @param aSize
    */
-  public SampleDataModel( final int aSize )
+  public SampleDataModel( final int aSize, final SampleDataProvider aProvider )
   {
     if ( aSize <= 0 )
     {
@@ -33,32 +48,12 @@ public class SampleDataModel
     this.values = new int[aSize];
     this.timestamps = new long[aSize];
 
-    final boolean run1 = true;
-    if ( run1 )
-    {
-      int value = 0xAAA;
-      for ( int i = 0; i < aSize; i++ )
-      {
-        // A transition each 5ns...
-        this.values[i] = value;
-        this.timestamps[i] = ( 5 * i );
+    this.sampleRate = aProvider.getSampleData( this.values, this.timestamps, aSize );
 
-        value = ~value & 0xFFF;
-      }
+    System.out.println( "Data sample rate  : " + Utils.displayFrequency( this.sampleRate ) );
+    System.out.println( "Data size         : " + aSize + " samples." );
+    System.out.println( "Total sample time : " + Utils.displayTime( aSize / ( double )this.sampleRate ) );
 
-      this.sampleRate = 1000000000; // 1000MHz
-    }
-    else
-    {
-      Random rnd = new Random();
-      for ( int i = 0; i < aSize; i++ )
-      {
-        this.values[i] = rnd.nextInt();
-        this.timestamps[i] = i;
-      }
-
-      this.sampleRate = 1000000000;
-    }
     this.cursors = new int[] { 100, 200 };
   }
 

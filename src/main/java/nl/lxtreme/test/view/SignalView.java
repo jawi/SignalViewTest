@@ -214,10 +214,10 @@ class SignalView extends JPanel
         // determine where we really should draw the signal...
         final int dy = signalOffset + ( channelHeight * screenModel.toVirtualRow( b ) );
 
-        long prevTimestamp = timestamps[startIdx];
+        long timestamp = timestamps[startIdx];
         int prevSampleValue = ( ( values[startIdx] & mask ) == 0 ) ? 1 : 0;
 
-        x[0] = ( int )( zoomFactor * prevTimestamp );
+        x[0] = ( int )( zoomFactor * timestamp );
         y[0] = dy + ( signalHeight * prevSampleValue );
         int p = 1;
 
@@ -226,12 +226,12 @@ class SignalView extends JPanel
           final int sampleIdx = ( i + startIdx );
 
           int sampleValue = ( ( values[sampleIdx] & mask ) == 0 ) ? 1 : 0;
-          long timestamp = timestamps[sampleIdx];
+          timestamp = timestamps[sampleIdx];
 
           if ( prevSampleValue != sampleValue )
           {
-            x[p] = ( int )( zoomFactor * prevTimestamp );
-            y[p] = dy + ( signalHeight * sampleValue );
+            x[p] = ( int )( zoomFactor * timestamp );
+            y[p] = dy + ( signalHeight * prevSampleValue );
             p++;
           }
 
@@ -239,7 +239,6 @@ class SignalView extends JPanel
           y[p] = dy + ( signalHeight * sampleValue );
           p++;
 
-          prevTimestamp = timestamp;
           prevSampleValue = sampleValue;
         }
 

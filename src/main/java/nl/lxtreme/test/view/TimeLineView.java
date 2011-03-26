@@ -86,22 +86,31 @@ class TimeLineView extends JComponent
       final long startTimeStamp = timestamps[startIdx];
       final long endTimeStamp = timestamps[endIdx];
 
-      final double timebase = getTimebase( ( endTimeStamp - startTimeStamp ), sampleRate );
-      final double tickIncr = ( timebase / TIMELINE_INCREMENT );
+      final long timeline = endTimeStamp - startTimeStamp;
+      final double timebase = getTimebase( timeline );
+      double tickIncr = ( timebase / TIMELINE_INCREMENT );
+
+      System.out.println( "Clip = " + clip );
+      System.out.println( "  index     = " + startIdx + " => " + endIdx + " (" + timeline + ")" );
+      System.out.println( "  timestamp = " + startTimeStamp + " => " + endTimeStamp );
+      System.out.println( "  timebase  = " + timebase + ", tick incr = " + tickIncr );
 
       final int y1 = TIMELINE_HEIGHT - PADDING_Y;
       final int y2 = TIMELINE_HEIGHT - PADDING_Y - SHORT_TICK_HEIGHT;
       final int y3 = TIMELINE_HEIGHT - PADDING_Y - 2 * SHORT_TICK_HEIGHT;
 
-      double timestamp = ( startTimeStamp / TIMELINE_INCREMENT ) * TIMELINE_INCREMENT;
+      long timestamp = ( long )( ( startTimeStamp / tickIncr ) * tickIncr );
       double majorTimestamp = timestamp;
-      while ( timestamp < endTimeStamp )
+      for ( int i = 0; i < timeline; i++ )
       {
         int relXpos = ( int )( timestamp * zoomFactor );
 
-        if ( ( ( timestamp - startTimeStamp ) % TIMELINE_INCREMENT ) == 0 )
+        // System.out.println( "timestamp = " + timestamp + ", relXpos = " +
+        // relXpos );
+
+        if ( ( timestamp % TIMELINE_INCREMENT ) == 0 )
         {
-          boolean major = ( ( ( timestamp - startTimeStamp ) % timebase ) == 0 );
+          boolean major = ( ( timestamp % timebase ) == 0 );
 
           final String time;
           if ( major )
@@ -111,8 +120,9 @@ class TimeLineView extends JComponent
           }
           else
           {
-            time = Utils.displayTime( timestamp / sampleRate, 0, "", major /* aIncludeUnit */);
+            time = Utils.displayTime( ( timestamp - majorTimestamp ) / sampleRate, 0, "", true /* aIncludeUnit */);
           }
+
           int w = fm.stringWidth( time );
 
           int textXpos = ( int )( relXpos - ( w / 2.0 ) );
@@ -185,9 +195,9 @@ class TimeLineView extends JComponent
    * @param aTimeline
    * @return
    */
-  private double getTimebase( final double aTimeline, final double aSampleRate )
+  private double getTimebase( final double aTimeline )
   {
-    double result = Math.pow( 10, Math.ceil( Math.log10( aTimeline / aSampleRate ) ) - 1 );
-    return result * aSampleRate;
+    double result = Math.pow( 10, Math.ceil( Math.log10( aTimeline ) ) - 1 );
+    return result;
   }
 }
