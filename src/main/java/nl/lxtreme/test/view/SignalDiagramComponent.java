@@ -14,7 +14,6 @@ import javax.swing.*;
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.dnd.*;
 import nl.lxtreme.test.model.*;
-import nl.lxtreme.test.view.SignalDiagramController.SignalHoverInfo;
 
 
 /**

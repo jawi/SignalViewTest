@@ -4,13 +4,11 @@
 package nl.lxtreme.test.view;
 
 
-import static nl.lxtreme.test.Utils.*;
-
 import java.awt.*;
+import java.awt.font.*;
+import java.text.*;
 
 import javax.swing.*;
-
-import nl.lxtreme.test.view.SignalDiagramController.SignalHoverInfo;
 
 
 /**
@@ -31,7 +29,7 @@ class ArrowView extends JComponent
 
   private final Rectangle textRectangle;
   private final Rectangle arrowRectangle;
-  private final SignalDiagramController controller;
+  private final Font textFont;
 
   private volatile SignalHoverInfo signalHover;
 
@@ -45,14 +43,15 @@ class ArrowView extends JComponent
    */
   public ArrowView( final SignalDiagramController aController )
   {
-    this.controller = aController;
-
     this.arrowRectangle = new Rectangle();
     this.textRectangle = new Rectangle();
 
     aController.setArrowView( this );
 
     setOpaque( false );
+
+    final Font baseFont = ( Font )UIManager.get( "Label.font" );
+    this.textFont = baseFont.deriveFont( baseFont.getSize2D() * 0.9f );
   }
 
   // METHODS
@@ -132,12 +131,8 @@ class ArrowView extends JComponent
       return;
     }
 
-    final int startIdx = this.signalHover.firstSample;
-    final int endIdx = this.signalHover.lastSample;
-    final int timestampIdx = this.signalHover.referenceSample;
-
     //
-    this.arrowRectangle.setBounds( this.signalHover.rectangle );
+    this.arrowRectangle.setBounds( this.signalHover.getRectangle() );
 
     final Graphics2D g2d = ( Graphics2D )aGraphics.create();
     try
@@ -148,6 +143,7 @@ class ArrowView extends JComponent
 
       final int x1 = this.arrowRectangle.x + 1;
       final int x2 = this.arrowRectangle.x + this.arrowRectangle.width - 1;
+      final int x3 = this.signalHover.getMiddleXpos();
 
       final double yOffset = this.arrowRectangle.getCenterY();
       final int y = ( int )( yOffset );
@@ -156,19 +152,56 @@ class ArrowView extends JComponent
       {
         g2d.setColor( Color.YELLOW );
         drawDoubleHeadedArrow( g2d, x1, y, x2 );
+        // When given, show an additional arrowhead to denote the pulse
+        // itself, taking care of the "smallest" pulse we're displaying...
+        int dir = LEFT_FACING;
+        if ( ( x3 >= x1 ) && ( ( x2 - x3 ) > ( x3 - x1 ) ) )
+        {
+          dir = RIGHT_FACING;
+        }
+        drawArrowHead( g2d, x3, y, dir, 8, 8 );
       }
 
-      final FontMetrics fm = g2d.getFontMetrics();
+      final String text = this.signalHover.toString();
 
-      final String pulseTime = "Width: " + displayTime( this.controller.getTimeInterval( startIdx, endIdx ) );
-      final String sampleTime = "Time: " + displayTime( this.controller.getTimeValue( timestampIdx ) );
-      final String channel = String.format( "Channel: %d", Integer.valueOf( this.signalHover.channelIdx ) );
+      final float textXpos = ( x1 + ( ( x2 - x1 ) / 2.0f ) ) + 8;
+      final float textYpos = ( float )( yOffset + 8 );
 
-      this.textRectangle.x = ( int )( x1 + ( ( x2 - x1 ) / 2.0f ) ) + 8;
-      this.textRectangle.y = ( int )( yOffset + 8 );
-      this.textRectangle.width = Math.max( fm.stringWidth( channel ),
-          Math.max( fm.stringWidth( pulseTime ), fm.stringWidth( sampleTime ) ) ) + 10;
-      this.textRectangle.height = ( 3 * fm.getHeight() ) + 10;
+      FontRenderContext frc = g2d.getFontRenderContext();
+      final AttributedCharacterIterator iterator = new AttributedString( text ).getIterator();
+
+      LineBreakMeasurer lineMeasurer = new LineBreakMeasurer( iterator, frc );
+      lineMeasurer.setPosition( iterator.getBeginIndex() );
+
+      float drawPosY = textYpos;
+      float formatWidth = 300.0f;
+      float maxLineWidth = 0;
+
+      while ( lineMeasurer.getPosition() < iterator.getEndIndex() )
+      {
+        TextLayout layout = lineMeasurer.nextLayout( formatWidth );
+        // Move y-coordinate by the ascent of the layout.
+        drawPosY += layout.getAscent();
+
+        maxLineWidth = Math.max( maxLineWidth, layout.getAdvance() );
+
+        // Compute pen x position. If the paragraph is
+        // right-to-left, we want to align the TextLayouts
+        // to the right edge of the panel.
+        float drawPosX = textXpos;
+        if ( !layout.isLeftToRight() )
+        {
+          drawPosX = formatWidth - layout.getAdvance();
+        }
+
+        g2d.setColor( Color.WHITE.darker() );
+
+        // Draw the TextLayout at (drawPosX, drawPosY).
+        layout.draw( g2d, drawPosX, drawPosY );
+
+        // Move y-coordinate in preparation for next layout.
+        drawPosY += layout.getDescent() + layout.getLeading();
+      }
 
       // Fit as much of the tooltip on screen as possible...
       ensureRectangleWithinBounds( this.textRectangle, getViewBounds() );
@@ -176,13 +209,6 @@ class ArrowView extends JComponent
       g2d.setColor( Color.DARK_GRAY );
       g2d.fillRoundRect( this.textRectangle.x, this.textRectangle.y, this.textRectangle.width,
           this.textRectangle.height, 8, 8 );
-
-      final int leftMargin = this.textRectangle.x + 4;
-
-      g2d.setColor( Color.WHITE.darker() );
-      g2d.drawString( pulseTime, leftMargin, ( int )( this.textRectangle.getCenterY() + ( fm.getHeight() / 2.0 ) - 20 ) );
-      g2d.drawString( sampleTime, leftMargin, ( int )( this.textRectangle.getCenterY() + fm.getHeight() - 10 ) );
-      g2d.drawString( channel, leftMargin, ( int )( this.textRectangle.getCenterY() + 2 * fm.getHeight() - 8 ) );
 
       g2d.setColor( Color.DARK_GRAY.brighter() );
       g2d.setStroke( THICK );
@@ -203,9 +229,9 @@ class ArrowView extends JComponent
     RenderingHints hints = new RenderingHints( RenderingHints.KEY_INTERPOLATION,
         RenderingHints.VALUE_INTERPOLATION_BICUBIC );
     hints.put( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
-    hints.put( RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY );
+    hints.put( RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED );
     hints.put( RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED );
-    hints.put( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED );
+    hints.put( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY );
     return hints;
   }
 
@@ -378,5 +404,7 @@ class ArrowView extends JComponent
 
       repaint( x, y, w, h );
     }
+
+    repaint();// XXX
   }
 }

@@ -75,7 +75,7 @@ class CursorView extends JComponent
    */
   public void moveCursor( final int aCursorIdx, final Point aPoint )
   {
-    final int[] cursors = getCursors();
+    final long[] cursors = getCursors();
 
     repaintPartially( cursors, aCursorIdx );
 
@@ -124,7 +124,7 @@ class CursorView extends JComponent
       final int y2 = clip.y + clip.height;
 
       final ScreenModel screenModel = this.controller.getScreenModel();
-      final int[] cursors = getCursors();
+      final long[] cursors = getCursors();
 
       for ( int i = 0; i < cursors.length; i++ )
       {
@@ -163,7 +163,7 @@ class CursorView extends JComponent
   /**
    * @return
    */
-  private int[] getCursors()
+  private long[] getCursors()
   {
     return this.controller.getDataModel().getCursors();
   }
@@ -174,7 +174,7 @@ class CursorView extends JComponent
    * @param aCursorIdx
    *          the cursor index of the cursor to repaint.
    */
-  private void repaintPartially( final int[] aCursors, final int aCursorIdx )
+  private void repaintPartially( final long[] aCursors, final int aCursorIdx )
   {
     int x, y, w, h;
 

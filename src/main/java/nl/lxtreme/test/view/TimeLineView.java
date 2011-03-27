@@ -13,7 +13,8 @@ import nl.lxtreme.test.model.*;
 
 
 /**
- * @author jawi
+ * Provides a time line view, displaying ticks at regular intervals along with
+ * timing information.
  */
 class TimeLineView extends JComponent
 {
@@ -78,27 +79,20 @@ class TimeLineView extends JComponent
       canvas.setColor( getBackground() );
       canvas.fillRect( clip.x, clip.y, clip.width, clip.height );
 
-      final SampleDataModel dataModel = this.controller.getDataModel();
-      final ScreenModel screenModel = this.controller.getScreenModel();
-
       final FontMetrics majorFM = canvas.getFontMetrics( this.majorTickFont );
-      final int majorFontHeight = majorFM.getHeight();
-
       final FontMetrics minorFM = canvas.getFontMetrics( this.minorTickFont );
       final int minorFontHeight = minorFM.getHeight();
 
-      final long[] timestamps = dataModel.getTimestamps();
+      final SampleDataModel dataModel = this.controller.getDataModel();
+      final ScreenModel screenModel = this.controller.getScreenModel();
+
       final double zoomFactor = screenModel.getZoomFactor();
       final double sampleRate = dataModel.getSampleRate();
 
-      final int startIdx = getStartIndex( clip );
-      final int endIdx = getEndIndex( clip, timestamps.length );
+      final long startTimeStamp = getStartTimestamp( clip );
+      final long endTimeStamp = getEndTimestamp( clip );
 
-      final long startTimeStamp = timestamps[startIdx];
-      final long endTimeStamp = timestamps[endIdx];
-
-      final long timeline = endTimeStamp - startTimeStamp;
-      final double timebase = getTimebase( timeline );
+      final double timebase = getTimebase( endTimeStamp - startTimeStamp );
 
       double tickIncr = Math.max( 1.0, timebase / TIMELINE_INCREMENT );
       double timeIncr = Math.max( 1.0, timebase / ( 10.0 * TIMELINE_INCREMENT ) );
@@ -176,32 +170,56 @@ class TimeLineView extends JComponent
   }
 
   /**
+   * Determines the ending time stamp until which the time line should be drawn
+   * given the clip boundaries of this component.
+   * 
    * @param aClip
-   * @return
+   *          the clip boundaries of this component, cannot be <code>null</code>
+   *          .
+   * @return the ending time stamp, as long value.
    */
-  private int getEndIndex( final Rectangle aClip, final int aLength )
+  private long getEndTimestamp( final Rectangle aClip )
   {
     final Point location = new Point( aClip.x + aClip.width, 0 );
-    return Math.min( this.controller.toTimestampIndex( location ) + 1, aLength - 1 );
+
+    final SampleDataModel dataModel = this.controller.getDataModel();
+    final long[] timestamps = dataModel.getTimestamps();
+
+    final int idx = Math.min( this.controller.toTimestampIndex( location ) + 1, timestamps.length - 1 );
+    return timestamps[idx] + 1;
   }
 
   /**
+   * Determines the starting time stamp from which the time line should be drawn
+   * given the clip boundaries of this component.
+   * 
    * @param aClip
-   * @return
+   *          the clip boundaries of this component, cannot be <code>null</code>
+   *          .
+   * @return the starting time stamp, as long value.
    */
-  private int getStartIndex( final Rectangle aClip )
+  private long getStartTimestamp( final Rectangle aClip )
   {
     final Point location = aClip.getLocation();
-    return Math.max( this.controller.toTimestampIndex( location ) - 1, 0 );
+
+    final SampleDataModel dataModel = this.controller.getDataModel();
+    final long[] timestamps = dataModel.getTimestamps();
+
+    final int idx = Math.max( this.controller.toTimestampIndex( location ) - 1, 0 );
+    return timestamps[idx];
   }
 
   /**
-   * @param aTimeline
-   * @return
+   * Determines the time base for the given absolute time (= total time
+   * displayed).
+   * 
+   * @param aAbsoluteTime
+   *          the absolute time displayed by this component, that is the ending
+   *          time stamp - starting time stamp.
+   * @return a time base, as power of 10.
    */
-  private double getTimebase( final double aTimeline )
+  private double getTimebase( final double aAbsoluteTime )
   {
-    double result = Math.pow( 10, Math.round( Math.log10( aTimeline ) ) );
-    return result;
+    return Math.pow( 10, Math.round( Math.log10( aAbsoluteTime ) ) );
   }
 }

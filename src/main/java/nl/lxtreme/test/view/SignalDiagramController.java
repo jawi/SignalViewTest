@@ -12,51 +12,11 @@ import nl.lxtreme.test.model.*;
 
 
 /**
- * @author jajans
+ * Provides the main component controller for the signal diagram component.
  */
 public final class SignalDiagramController
 {
   // INNER TYPES
-
-  /**
-   * @author Quintor
-   */
-  static class SignalHoverInfo implements Cloneable
-  {
-    public final Rectangle rectangle;
-    public final int firstSample;
-    public final int lastSample;
-    public final int referenceSample;
-    public final int channelIdx;
-
-    public SignalHoverInfo( final Rectangle aRectangle, final int aFirstSample, final int aLastSample,
-        final int aReferenceSample, final int aChannelIdx )
-    {
-      this.rectangle = aRectangle;
-      this.firstSample = aFirstSample;
-      this.lastSample = aLastSample;
-      this.referenceSample = aReferenceSample;
-      this.channelIdx = aChannelIdx;
-    }
-
-    /**
-     * @see java.lang.Object#clone()
-     */
-    @Override
-    public SignalHoverInfo clone()
-    {
-      try
-      {
-        return ( SignalHoverInfo )super.clone();
-      }
-      catch ( CloneNotSupportedException exception )
-      {
-        throw new RuntimeException( exception );
-      }
-    }
-  }
-
-  // CONSTANTS
 
   /**
    * Defines the area around each cursor in which the mouse cursor should be in
@@ -117,11 +77,11 @@ public final class SignalDiagramController
   public int findCursor( final Point aPoint )
   {
     final Point point = convertToPointOf( this.cursorView, aPoint );
-    final int refIdx = toUnscaledScreenCoordinate( point );
+    final long refIdx = toUnscaledScreenCoordinate( point );
 
     final double snapArea = CURSOR_SENSITIVITY_AREA / this.screenModel.getZoomFactor();
 
-    final int[] cursors = this.dataModel.getCursors();
+    final long[] cursors = this.dataModel.getCursors();
     for ( int i = 0; i < cursors.length; i++ )
     {
       final double min = cursors[i] - snapArea;
@@ -176,39 +136,6 @@ public final class SignalDiagramController
     }
 
     return this.screenModel.toVirtualRow( row );
-  }
-
-  /**
-   * Returns the actual time interval of the samples denoted by the given start
-   * and end index, or <tt>T[end index] - T[start index]</tt>.
-   * 
-   * @param aStartIdx
-   *          the start sample index of the time interval, >= 0;
-   * @param aEndIdx
-   *          the end sample index of the time interval, >= 0.
-   * @return a time interval value, in seconds.
-   */
-  public double getTimeInterval( final int aStartIdx, final int aEndIdx )
-  {
-    final long[] timestamps = this.dataModel.getTimestamps();
-    final long relTime = timestamps[aEndIdx] - timestamps[aStartIdx];
-    final double absTime = relTime / ( double )this.dataModel.getSampleRate();
-    return absTime;
-  }
-
-  /**
-   * Returns the time value of the sample denoted by the given index.
-   * 
-   * @param aSampleIdx
-   *          the sample index to return the time value for, >= 0.
-   * @return a time value, in seconds.
-   */
-  public double getTimeValue( final int aSampleIdx )
-  {
-    final long[] timestamps = this.dataModel.getTimestamps();
-    final long relTime = timestamps[aSampleIdx];
-    final double absTime = relTime / ( double )this.dataModel.getSampleRate();
-    return absTime;
   }
 
   /**
@@ -345,8 +272,9 @@ public final class SignalDiagramController
       final SignalHoverInfo signalHover = getSignalHover( aPoint );
       if ( signalHover != null )
       {
-        point.x = signalHover.rectangle.x;
-        point.y = ( int )signalHover.rectangle.getCenterY();
+        Rectangle rect = signalHover.getRectangle();
+        point.x = rect.x;
+        point.y = ( int )rect.getCenterY();
       }
     }
 
@@ -511,9 +439,9 @@ public final class SignalDiagramController
    *          the screen coordinate to convert, cannot be <code>null</code>.
    * @return an unscaled version of the given coordinate's X-position, >= 0.
    */
-  public int toUnscaledScreenCoordinate( final Point aPoint )
+  public long toUnscaledScreenCoordinate( final Point aPoint )
   {
-    return ( int )Math.ceil( Math.abs( aPoint.x / this.screenModel.getZoomFactor() ) );
+    return ( long )Math.ceil( Math.abs( aPoint.x / this.screenModel.getZoomFactor() ) );
   }
 
   /**
@@ -574,7 +502,7 @@ public final class SignalDiagramController
    * @return the rectangle of the signal the given coordinate contains,
    *         <code>null</code> if not found.
    */
-  SignalHoverInfo getSignalHover( final Point aPoint )
+  final SignalHoverInfo getSignalHover( final Point aPoint )
   {
     final int signalWidth = this.dataModel.getWidth();
     final int signalHeight = this.screenModel.getSignalHeight();
@@ -587,24 +515,21 @@ public final class SignalDiagramController
     }
 
     final int realRow = this.screenModel.toRealRow( virtualRow );
+    final double zoomFactor = this.screenModel.getZoomFactor();
 
-    final Rectangle rect = new Rectangle();
-    rect.x = rect.width = 0;
-    rect.y = ( virtualRow * channelHeight ) + this.screenModel.getSignalOffset();
-    rect.height = signalHeight;
+    final long[] timestamps = this.dataModel.getTimestamps();
+
+    long startTimestamp = -1L;
+    long middleTimestamp = -1L;
+    long endTimestamp = -1L;
+    int middleXpos = -1;
 
     // find the reference time value; which is the "timestamp" under the
     // cursor...
     final int refIdx = toTimestampIndex( aPoint );
-
-    int firstSample = -1;
-    int lastSample = -1;
-
     final int[] values = this.dataModel.getValues();
     if ( ( refIdx >= 0 ) && ( refIdx < values.length ) )
     {
-      final long[] timestamps = this.dataModel.getTimestamps();
-
       final int mask = ( 1 << realRow );
       final int refValue = ( values[refIdx] & mask );
 
@@ -614,6 +539,10 @@ public final class SignalDiagramController
         idx--;
       }
       while ( ( idx >= 0 ) && ( ( values[idx] & mask ) == refValue ) );
+      // convert the found index back to "screen" values...
+      int middleSampleIdx = Math.max( 0, idx + 1 );
+      middleTimestamp = timestamps[middleSampleIdx];
+
       // Search for the original value again, to complete the pulse...
       do
       {
@@ -622,8 +551,8 @@ public final class SignalDiagramController
       while ( ( idx >= 0 ) && ( ( values[idx] & mask ) != refValue ) );
 
       // convert the found index back to "screen" values...
-      firstSample = Math.max( 0, idx + 1 );
-      rect.x = toScaledScreenCoordinate( timestamps[firstSample] ).x;
+      int startSampleIdx = Math.max( 0, idx + 1 );
+      startTimestamp = timestamps[startSampleIdx];
 
       idx = refIdx;
       do
@@ -633,11 +562,26 @@ public final class SignalDiagramController
       while ( ( idx < values.length ) && ( ( values[idx] & mask ) == refValue ) );
 
       // convert the found index back to "screen" values...
-      lastSample = Math.min( idx, timestamps.length - 1 );
-      rect.width = toScaledScreenCoordinate( timestamps[lastSample] ).x - rect.x;
+      int endSampleIdx = Math.min( idx, timestamps.length - 1 );
+      endTimestamp = timestamps[endSampleIdx];
     }
 
-    return new SignalHoverInfo( rect, firstSample, lastSample, refIdx, realRow );
+    final Rectangle rect = new Rectangle();
+    rect.x = ( int )( zoomFactor * startTimestamp );
+    rect.width = ( int )( zoomFactor * ( endTimestamp - startTimestamp ) );
+    rect.y = ( virtualRow * channelHeight ) + this.screenModel.getSignalOffset();
+    rect.height = signalHeight;
+
+    // The position where the "other" signal transition should be...
+    middleXpos = ( int )( zoomFactor * middleTimestamp );
+
+    // Calculate the "absolute" time based on the mouse position, use a
+    // "over sampling" factor to allow intermediary (between two time stamps)
+    // time value to be shown...
+    final long timestamp = ( long )( ( SignalHoverInfo.TIMESTAMP_FACTOR * aPoint.x ) / zoomFactor );
+
+    return new SignalHoverInfo( rect, startTimestamp, endTimestamp, middleTimestamp, timestamp, middleXpos, realRow,
+        this.dataModel.getSampleRate() );
   }
 
   /**

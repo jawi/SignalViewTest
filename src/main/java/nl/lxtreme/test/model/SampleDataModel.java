@@ -31,7 +31,7 @@ public class SampleDataModel
 
   private final int[] values;
   private final long[] timestamps;
-  private final int[] cursors;
+  private final long[] cursors;
   private final int sampleRate;
 
   // CONSTRUCTORS
@@ -54,7 +54,7 @@ public class SampleDataModel
     System.out.println( "Data size         : " + aSize + " samples." );
     System.out.println( "Total sample time : " + Utils.displayTime( aSize / ( double )this.sampleRate ) );
 
-    this.cursors = new int[] { 100, 200 };
+    this.cursors = new long[] { 100, 200 };
   }
 
   // METHODS
@@ -134,7 +134,7 @@ public class SampleDataModel
     return -1;
   }
 
-  public int[] getCursors()
+  public long[] getCursors()
   {
     return this.cursors;
   }
