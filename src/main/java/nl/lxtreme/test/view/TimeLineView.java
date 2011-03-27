@@ -24,15 +24,21 @@ class TimeLineView extends JComponent
   /** The tick increment (in pixels). */
   public static final int TIMELINE_INCREMENT = 10;
   /** The height of this component. */
-  public static final int TIMELINE_HEIGHT = 30;
+  public static final int TIMELINE_HEIGHT = 40;
 
   private static final int SHORT_TICK_HEIGHT = 4;
   private static final int PADDING_Y = 1;
 
+  private static final int BASE_TICK_Y_POS = TIMELINE_HEIGHT - PADDING_Y;
+  private static final int SHORT_TICK_Y_POS = TIMELINE_HEIGHT - PADDING_Y - SHORT_TICK_HEIGHT;
+  private static final int LONG_TICK_Y_POS = TIMELINE_HEIGHT - PADDING_Y - 2 * SHORT_TICK_HEIGHT;
+
   // VARIABLES
 
   private final SignalDiagramController controller;
-  private final Font labelFont;
+
+  private final Font majorTickFont;
+  private final Font minorTickFont;
 
   // CONSTRUCTORS
 
@@ -49,7 +55,8 @@ class TimeLineView extends JComponent
     setBackground( Utils.parseColor( "#1E2126" ) );
 
     final Font baseFont = ( Font )UIManager.get( "Label.font" );
-    this.labelFont = baseFont.deriveFont( baseFont.getSize() * 0.9f );
+    this.minorTickFont = baseFont.deriveFont( baseFont.getSize() * 0.8f );
+    this.majorTickFont = baseFont.deriveFont( baseFont.getSize() * 0.9f );
   }
 
   // METHODS
@@ -74,7 +81,11 @@ class TimeLineView extends JComponent
       final SampleDataModel dataModel = this.controller.getDataModel();
       final ScreenModel screenModel = this.controller.getScreenModel();
 
-      final FontMetrics fm = canvas.getFontMetrics( this.labelFont );
+      final FontMetrics majorFM = canvas.getFontMetrics( this.majorTickFont );
+      final int majorFontHeight = majorFM.getHeight();
+
+      final FontMetrics minorFM = canvas.getFontMetrics( this.minorTickFont );
+      final int minorFontHeight = minorFM.getHeight();
 
       final long[] timestamps = dataModel.getTimestamps();
       final double zoomFactor = screenModel.getZoomFactor();
@@ -88,72 +99,65 @@ class TimeLineView extends JComponent
 
       final long timeline = endTimeStamp - startTimeStamp;
       final double timebase = getTimebase( timeline );
-      double tickIncr = ( timebase / TIMELINE_INCREMENT );
 
-      System.out.println( "Clip = " + clip );
-      System.out.println( "  index     = " + startIdx + " => " + endIdx + " (" + timeline + ")" );
-      System.out.println( "  timestamp = " + startTimeStamp + " => " + endTimeStamp );
-      System.out.println( "  timebase  = " + timebase + ", tick incr = " + tickIncr );
+      double tickIncr = Math.max( 1.0, timebase / TIMELINE_INCREMENT );
+      double timeIncr = Math.max( 1.0, timebase / ( 10.0 * TIMELINE_INCREMENT ) );
 
-      final int y1 = TIMELINE_HEIGHT - PADDING_Y;
-      final int y2 = TIMELINE_HEIGHT - PADDING_Y - SHORT_TICK_HEIGHT;
-      final int y3 = TIMELINE_HEIGHT - PADDING_Y - 2 * SHORT_TICK_HEIGHT;
-
-      long timestamp = ( long )( ( startTimeStamp / tickIncr ) * tickIncr );
+      double timestamp = ( Math.ceil( startTimeStamp / tickIncr ) * tickIncr );
       double majorTimestamp = timestamp;
-      for ( int i = 0; i < timeline; i++ )
+
+      for ( ; timestamp <= endTimeStamp; timestamp += timeIncr )
       {
         int relXpos = ( int )( timestamp * zoomFactor );
 
-        // System.out.println( "timestamp = " + timestamp + ", relXpos = " +
-        // relXpos );
-
-        if ( ( timestamp % TIMELINE_INCREMENT ) == 0 )
+        if ( ( timestamp % tickIncr ) == 0 )
         {
           boolean major = ( ( timestamp % timebase ) == 0 );
 
           final String time;
+          final int textWidth;
+          final int textHeight;
+
           if ( major )
           {
             majorTimestamp = timestamp;
-            time = Utils.displayTime( majorTimestamp / sampleRate, 3, "", true /* aIncludeUnit */);
+            final double tickTime = majorTimestamp / sampleRate;
+            time = Utils.displayTime( tickTime, 3, "", true /* aIncludeUnit */);
+
+            canvas.setFont( this.majorTickFont );
+            textWidth = majorFM.stringWidth( time ) + 2;
+            textHeight = 2 * minorFontHeight;
           }
           else
           {
-            time = Utils.displayTime( ( timestamp - majorTimestamp ) / sampleRate, 0, "", true /* aIncludeUnit */);
+            final double tickTime = ( timestamp - majorTimestamp ) / sampleRate;
+            time = "+" + Utils.displayTime( tickTime, 1, "", true /* aIncludeUnit */);
+
+            canvas.setFont( this.minorTickFont );
+            textWidth = minorFM.stringWidth( time ) + 2;
+            textHeight = minorFontHeight;
           }
 
-          int w = fm.stringWidth( time );
+          int textXpos = Math.max( 1, ( int )( relXpos - ( textWidth / 2.0 ) ) );
+          int textYpos = Math.max( 1, ( BASE_TICK_Y_POS - textHeight ) );
 
-          int textXpos = ( int )( relXpos - ( w / 2.0 ) );
-          if ( textXpos < 1 )
-          {
-            textXpos = 1;
-          }
+          canvas.setColor( Color.LIGHT_GRAY );
 
-          int textYpos = major ? y1 - 20 : y1 - 10;
-          if ( textYpos < 1 )
-          {
-            textYpos = 1;
-          }
-
-          canvas.setColor( Color.GRAY );
-
-          canvas.setFont( this.labelFont );
           canvas.drawString( time, textXpos, textYpos );
 
-          canvas.setColor( Color.YELLOW );
+          if ( major )
+          {
+            canvas.setColor( Color.LIGHT_GRAY.brighter() );
+          }
 
-          canvas.drawLine( relXpos, y1, relXpos, y3 );
+          canvas.drawLine( relXpos, BASE_TICK_Y_POS, relXpos, LONG_TICK_Y_POS );
         }
         else
         {
-          canvas.setColor( Color.GRAY );
+          canvas.setColor( Color.DARK_GRAY );
 
-          canvas.drawLine( relXpos, y1, relXpos, y2 );
+          canvas.drawLine( relXpos, BASE_TICK_Y_POS, relXpos, SHORT_TICK_Y_POS );
         }
-
-        timestamp += tickIncr;
       }
     }
     finally
@@ -197,7 +201,7 @@ class TimeLineView extends JComponent
    */
   private double getTimebase( final double aTimeline )
   {
-    double result = Math.pow( 10, Math.ceil( Math.log10( aTimeline ) ) - 1 );
+    double result = Math.pow( 10, Math.round( Math.log10( aTimeline ) ) );
     return result;
   }
 }

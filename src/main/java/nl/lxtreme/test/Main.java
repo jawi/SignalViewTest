@@ -94,7 +94,7 @@ public class Main
         aValues[i] = rnd.nextInt();
         aTimestamps[i] = i;
       }
-      return 10000000; // 10MHz
+      return 25000000; // 25MHz
     }
   }
 
@@ -228,7 +228,7 @@ public class Main
     } );
     diagramMenu.add( diagramEnableMeasureModeItem );
 
-    final SampleDataModel model = new SampleDataModel( 1024 * 64 /* * 1024 */, new CounterDataProvider() );
+    final SampleDataModel model = new SampleDataModel( 1024 * 64 /* * 1024 */, new RandomDataProvider() );
     this.controller = new SignalDiagramController( model );
   }
 

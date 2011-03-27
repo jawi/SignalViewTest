@@ -783,7 +783,7 @@ public final class SignalDiagramController
    */
   private void zoomRelative( final double aFactor )
   {
-    final double factor = this.screenModel.getZoomFactor();
-    zoomAbsolute( aFactor * factor );
+    final double newFactor = Math.min( 1000.0, aFactor * this.screenModel.getZoomFactor() );
+    zoomAbsolute( newFactor );
   }
 }
