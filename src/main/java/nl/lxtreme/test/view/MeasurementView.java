@@ -6,7 +6,8 @@ package nl.lxtreme.test.view;
 
 import java.awt.*;
 import java.awt.font.*;
-import java.text.*;
+import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 
@@ -14,8 +15,28 @@ import javax.swing.*;
 /**
  * @author jajans
  */
-class ArrowView extends JComponent
+class MeasurementView extends JComponent
 {
+  // INNER TYPES
+
+  /**
+   * @author jawi
+   */
+  static class ToolTipTextPart
+  {
+    public final TextLayout layout;
+    public final float relYpos;
+
+    /**
+     * Creates a new MeasurementView.ToolTipPart instance.
+     */
+    public ToolTipTextPart( final TextLayout aLayout, final float aRelYPos )
+    {
+      this.layout = aLayout;
+      this.relYpos = aRelYPos;
+    }
+  }
+
   // CONSTANTS
 
   private static final long serialVersionUID = 1L;
@@ -41,7 +62,7 @@ class ArrowView extends JComponent
    * @param aController
    *          the controller to use, cannot be <code>null</code>.
    */
-  public ArrowView( final SignalDiagramController aController )
+  public MeasurementView( final SignalDiagramController aController )
   {
     this.arrowRectangle = new Rectangle();
     this.textRectangle = new Rectangle();
@@ -104,7 +125,7 @@ class ArrowView extends JComponent
   public void moveHover( final SignalHoverInfo aSignalHover )
   {
     repaintPartially();
-    this.signalHover = aSignalHover.clone();
+    this.signalHover = aSignalHover == null ? null : aSignalHover.clone();
     repaintPartially();
   }
 
@@ -162,58 +183,11 @@ class ArrowView extends JComponent
         drawArrowHead( g2d, x3, y, dir, 8, 8 );
       }
 
+      final float textXpos = ( x1 + ( ( x2 - x1 ) / 2.0f ) ) + 8;
+      final float textYpos = ( float )( yOffset ) + 8;
       final String text = this.signalHover.toString();
 
-      final float textXpos = ( x1 + ( ( x2 - x1 ) / 2.0f ) ) + 8;
-      final float textYpos = ( float )( yOffset + 8 );
-
-      FontRenderContext frc = g2d.getFontRenderContext();
-      final AttributedCharacterIterator iterator = new AttributedString( text ).getIterator();
-
-      LineBreakMeasurer lineMeasurer = new LineBreakMeasurer( iterator, frc );
-      lineMeasurer.setPosition( iterator.getBeginIndex() );
-
-      float drawPosY = textYpos;
-      float formatWidth = 300.0f;
-      float maxLineWidth = 0;
-
-      while ( lineMeasurer.getPosition() < iterator.getEndIndex() )
-      {
-        TextLayout layout = lineMeasurer.nextLayout( formatWidth );
-        // Move y-coordinate by the ascent of the layout.
-        drawPosY += layout.getAscent();
-
-        maxLineWidth = Math.max( maxLineWidth, layout.getAdvance() );
-
-        // Compute pen x position. If the paragraph is
-        // right-to-left, we want to align the TextLayouts
-        // to the right edge of the panel.
-        float drawPosX = textXpos;
-        if ( !layout.isLeftToRight() )
-        {
-          drawPosX = formatWidth - layout.getAdvance();
-        }
-
-        g2d.setColor( Color.WHITE.darker() );
-
-        // Draw the TextLayout at (drawPosX, drawPosY).
-        layout.draw( g2d, drawPosX, drawPosY );
-
-        // Move y-coordinate in preparation for next layout.
-        drawPosY += layout.getDescent() + layout.getLeading();
-      }
-
-      // Fit as much of the tooltip on screen as possible...
-      ensureRectangleWithinBounds( this.textRectangle, getViewBounds() );
-
-      g2d.setColor( Color.DARK_GRAY );
-      g2d.fillRoundRect( this.textRectangle.x, this.textRectangle.y, this.textRectangle.width,
-          this.textRectangle.height, 8, 8 );
-
-      g2d.setColor( Color.DARK_GRAY.brighter() );
-      g2d.setStroke( THICK );
-      g2d.drawRoundRect( this.textRectangle.x, this.textRectangle.y, this.textRectangle.width - 1,
-          this.textRectangle.height - 1, 8, 8 );
+      drawToolTip( g2d, text, textXpos, textYpos );
     }
     finally
     {
@@ -353,20 +327,84 @@ class ArrowView extends JComponent
   }
 
   /**
+   * Draws the tooltip text at the given X,Y position, using a simple line
+   * wrapping mechanism.
+   * 
+   * @param aCanvas
+   *          the canvas to draw on;
+   * @param aText
+   *          the tooltip text to draw;
+   * @param aXpos
+   *          the X-position to draw the tooltip text;
+   * @param aYpos
+   *          the Y-position to draw the tooltip text.
+   */
+  private void drawToolTip( final Graphics2D aCanvas, final String aText, final float aXpos, final float aYpos )
+  {
+    aCanvas.setFont( this.textFont );
+
+    float linePos = 0;
+    float width = 0;
+
+    List<ToolTipTextPart> textParts = new ArrayList<ToolTipTextPart>();
+    TextLayout layout;
+
+    final SimpleLineMeasurer lineMeasurer = new SimpleLineMeasurer( aText, aCanvas.getFontRenderContext() );
+    while ( ( layout = lineMeasurer.next() ) != null )
+    {
+      if ( linePos != 0.0f )
+      {
+        // Move y-coordinate in preparation for next layout.
+        linePos += layout.getDescent() + layout.getLeading();
+      }
+
+      // Move y-coordinate by the ascent of the layout.
+      linePos += layout.getAscent();
+
+      textParts.add( new ToolTipTextPart( layout, linePos ) );
+
+      width = Math.max( width, layout.getVisibleAdvance() );
+    }
+
+    final Rectangle rect = new Rectangle( ( int )aXpos, ( int )aYpos, ( int )width + 8, ( int )linePos + 8 );
+    // Fit as much of the tooltip on screen as possible...
+    ensureRectangleWithinBounds( rect, getViewBounds() );
+
+    aCanvas.setColor( Color.DARK_GRAY );
+    aCanvas.fillRoundRect( rect.x, rect.y, rect.width, rect.height, 8, 8 );
+
+    aCanvas.setColor( Color.DARK_GRAY.brighter() );
+    aCanvas.setStroke( THICK );
+    aCanvas.drawRoundRect( rect.x, rect.y, rect.width - 1, rect.height - 1, 8, 8 );
+
+    aCanvas.setColor( Color.WHITE.darker() );
+
+    for ( ToolTipTextPart textPart : textParts )
+    {
+      float x = ( rect.x + 4 );
+      float y = ( rect.y + textPart.relYpos + 4 );
+      textPart.layout.draw( aCanvas, x, y );
+    }
+
+    this.textRectangle.setBounds( rect );
+  }
+
+  /**
    * Returns the view boundaries.
    * 
    * @return a view boundaries, never <code>null</code>.
    */
   private Rectangle getViewBounds()
   {
-    Component comp = SwingUtilities.getAncestorOfClass( JViewport.class, this );
-    if ( comp == null )
+    Rectangle result = getBounds();
+    JViewport viewPort = ( JViewport )SwingUtilities.getAncestorOfClass( JViewport.class, this );
+    if ( viewPort != null )
     {
-      comp = this;
+      result = viewPort.getViewRect();
     }
 
-    final Rectangle result = comp.getBounds();
-    final Insets screenInsets = Toolkit.getDefaultToolkit().getScreenInsets( comp.getGraphicsConfiguration() );
+    final Toolkit toolkit = Toolkit.getDefaultToolkit();
+    final Insets screenInsets = toolkit.getScreenInsets( getGraphicsConfiguration() );
 
     // Take into account screen insets, decrease viewport
     result.x += screenInsets.left;
@@ -388,23 +426,21 @@ class ArrowView extends JComponent
   {
     if ( this.arrowRectangle != null )
     {
-      final int x = this.arrowRectangle.x - 1;
-      final int y = this.arrowRectangle.y - 1;
-      final int w = this.arrowRectangle.width + 2;
-      final int h = this.arrowRectangle.height + 2;
+      final int x = this.arrowRectangle.x - 10;
+      final int y = this.arrowRectangle.y - 10;
+      final int w = this.arrowRectangle.width + 20;
+      final int h = this.arrowRectangle.height + 20;
 
       repaint( x, y, w, h );
     }
     if ( this.textRectangle != null )
     {
-      final int x = this.textRectangle.x - 1;
-      final int y = this.textRectangle.y - 1;
-      final int w = this.textRectangle.width + 2;
-      final int h = this.textRectangle.height + 2;
+      final int x = this.textRectangle.x - 10;
+      final int y = this.textRectangle.y - 10;
+      final int w = this.textRectangle.width + 20;
+      final int h = this.textRectangle.height + 20;
 
       repaint( x, y, w, h );
     }
-
-    repaint();// XXX
   }
 }

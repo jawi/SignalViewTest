@@ -535,7 +535,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
   private final SignalView signalView;
   private final CursorView cursorView;
-  private final ArrowView arrowView;
+  private final MeasurementView arrowView;
 
   private ComponentSizeListener componentSizeListener;
   private CursorMouseListener cursorMouseListener;
@@ -558,7 +558,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
     this.signalView = new SignalView( this.controller );
     this.cursorView = new CursorView( this.controller );
-    this.arrowView = new ArrowView( this.controller );
+    this.arrowView = new MeasurementView( this.controller );
 
     add( this.signalView, StackLayout.TOP );
     add( this.cursorView, StackLayout.TOP );

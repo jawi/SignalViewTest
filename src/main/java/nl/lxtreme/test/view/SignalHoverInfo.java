@@ -220,9 +220,9 @@ final class SignalHoverInfo implements Cloneable
   public String toString()
   {
     final StringBuilder sb = new StringBuilder();
-    sb.append( "Width: " ).append( displayTime( getPulseWidth() ) ).append( "; " );
-    sb.append( "period: " ).append( displayTime( getTotalPulseWidth() ) ).append( '\n' );
-    sb.append( "Time:" ).append( displayTime( getTimeValue() ) ).append( '\n' );
+    sb.append( "Width: " ).append( displayTime( getPulseWidth() ) ).append( '\n' );
+    sb.append( "Period: " ).append( displayTime( getTotalPulseWidth() ) ).append( '\n' );
+    sb.append( "Time: " ).append( displayTime( getTimeValue() ) ).append( '\n' );
     sb.append( "Channel: " ).append( getChannelIndex() );
     return sb.toString();
   }

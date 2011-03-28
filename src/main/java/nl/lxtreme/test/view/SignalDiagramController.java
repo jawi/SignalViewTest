@@ -31,7 +31,7 @@ public final class SignalDiagramController
 
   private SignalView signalView;
   private CursorView cursorView;
-  private ArrowView arrowView;
+  private MeasurementView arrowView;
 
   // CONSTRUCTORS
 
@@ -600,7 +600,7 @@ public final class SignalDiagramController
    * @param aArrowView
    *          an arrow view instance, cannot be <code>null</code>.
    */
-  final void setArrowView( final ArrowView aArrowView )
+  final void setArrowView( final MeasurementView aArrowView )
   {
     this.arrowView = aArrowView;
   }
