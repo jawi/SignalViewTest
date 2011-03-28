@@ -67,8 +67,6 @@ class MeasurementView extends JComponent
     this.arrowRectangle = new Rectangle();
     this.textRectangle = new Rectangle();
 
-    aController.setMeasurementView( this );
-
     setOpaque( false );
 
     final Font baseFont = ( Font )UIManager.get( "Label.font" );

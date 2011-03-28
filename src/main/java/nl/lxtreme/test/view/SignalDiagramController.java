@@ -29,9 +29,7 @@ public final class SignalDiagramController
   private SampleDataModel dataModel;
   private ScreenModel screenModel;
 
-  private SignalView signalView;
-  private CursorView cursorView;
-  private MeasurementView measurementView;
+  private SignalDiagramComponent signalDiagram;
 
   // CONSTRUCTORS
 
@@ -53,7 +51,7 @@ public final class SignalDiagramController
    */
   public void disableSnapMode()
   {
-    this.cursorView.setSnapMode( false );
+    this.screenModel.setSnapCursor( false );
   }
 
   /**
@@ -63,7 +61,7 @@ public final class SignalDiagramController
    */
   public void enableSnapMode()
   {
-    this.cursorView.setSnapMode( true );
+    this.screenModel.setSnapCursor( true );
   }
 
   /**
@@ -76,16 +74,21 @@ public final class SignalDiagramController
    */
   public int findCursor( final Point aPoint )
   {
-    final Point point = convertToPointOf( this.cursorView, aPoint );
+    final Point point = convertToPointOf( getCursorView(), aPoint );
     final long refIdx = toUnscaledScreenCoordinate( point );
 
     final double snapArea = CURSOR_SENSITIVITY_AREA / this.screenModel.getZoomFactor();
 
-    final long[] cursors = this.dataModel.getCursors();
+    final Long[] cursors = this.dataModel.getCursors();
     for ( int i = 0; i < cursors.length; i++ )
     {
-      final double min = cursors[i] - snapArea;
-      final double max = cursors[i] + snapArea;
+      if ( cursors[i] == null )
+      {
+        continue;
+      }
+
+      final double min = cursors[i].longValue() - snapArea;
+      final double max = cursors[i].longValue() + snapArea;
 
       if ( ( refIdx >= min ) && ( refIdx <= max ) )
       {
@@ -144,7 +147,7 @@ public final class SignalDiagramController
    */
   public boolean hideHover()
   {
-    this.measurementView.hideHover();
+    getMeasurementView().hideHover();
     return false;
   }
 
@@ -169,7 +172,7 @@ public final class SignalDiagramController
    */
   public boolean isSnapModeEnabled()
   {
-    return this.cursorView.isSnapModeEnabled();
+    return this.screenModel.isSnapCursor();
   }
 
   /**
@@ -210,7 +213,7 @@ public final class SignalDiagramController
     this.screenModel.moveRows( row, newRow );
 
     final JScrollPane scrollPane = ( JScrollPane )SwingUtilities.getAncestorOfClass( JScrollPane.class,
-        this.measurementView );
+        getMeasurementView() );
     if ( scrollPane != null )
     {
       final int signalOffset = this.screenModel.getSignalOffset();
@@ -266,7 +269,8 @@ public final class SignalDiagramController
       throw new IllegalArgumentException( "Invalid cursor index!" );
     }
 
-    final Point point = convertToPointOf( this.cursorView, aPoint );
+    final CursorView cursorView = getCursorView();
+    final Point point = convertToPointOf( cursorView, aPoint );
 
     if ( aSnap )
     {
@@ -279,9 +283,9 @@ public final class SignalDiagramController
       }
     }
 
-    this.cursorView.moveCursor( aCursorIdx, point );
+    cursorView.moveCursor( aCursorIdx, point );
 
-    repaintLater( SwingUtilities.getAncestorOfClass( SignalDiagramComponent.class, this.cursorView ) );
+    repaintLater( cursorView, getTimeLineView() );
   }
 
   /**
@@ -289,9 +293,9 @@ public final class SignalDiagramController
    */
   public void moveHover( final Point aPoint )
   {
-    final SignalHoverInfo signalHover = getSignalHover( convertToPointOf( this.signalView, aPoint ) );
+    final SignalHoverInfo signalHover = getSignalHover( convertToPointOf( getSignalView(), aPoint ) );
 
-    this.measurementView.moveHover( signalHover );
+    getMeasurementView().moveHover( signalHover );
   }
 
   /**
@@ -300,7 +304,7 @@ public final class SignalDiagramController
   public void recalculateDimensions()
   {
     final JScrollPane scrollPane = ( JScrollPane )SwingUtilities.getAncestorOfClass( JScrollPane.class,
-        this.measurementView );
+        getMeasurementView() );
     if ( scrollPane != null )
     {
       final int width = ( int )Math.min( Integer.MAX_VALUE, getAbsoluteLength() );
@@ -339,7 +343,7 @@ public final class SignalDiagramController
   public void setCursorsVisible( final boolean aVisible )
   {
     this.screenModel.setCursorMode( aVisible );
-    repaintLater( SwingUtilities.getAncestorOfClass( SignalDiagramComponent.class, this.cursorView ) );
+    repaintLater( getCursorView(), getTimeLineView() );
   }
 
   /**
@@ -352,7 +356,7 @@ public final class SignalDiagramController
   public void setMeasurementMode( final boolean aEnabled )
   {
     this.screenModel.setMeasurementMode( aEnabled );
-    repaintLater( this.measurementView );
+    repaintLater( getMeasurementView() );
   }
 
   /**
@@ -396,10 +400,10 @@ public final class SignalDiagramController
    */
   public boolean showHover( final Point aPoint )
   {
-    final SignalHoverInfo signalHover = getSignalHover( convertToPointOf( this.signalView, aPoint ) );
+    final SignalHoverInfo signalHover = getSignalHover( convertToPointOf( getSignalView(), aPoint ) );
     if ( signalHover != null )
     {
-      this.measurementView.showHover( signalHover );
+      getMeasurementView().showHover( signalHover );
     }
 
     return ( signalHover != null );
@@ -589,49 +593,11 @@ public final class SignalDiagramController
   }
 
   /**
-   * Returns the actual signal view component.
-   * 
-   * @return a signal view component, never <code>null</code>.
+   * @param aComponent
    */
-  final SignalView getSignalView()
+  final void setSignalDiagram( final SignalDiagramComponent aComponent )
   {
-    return this.signalView;
-  }
-
-  /**
-   * Sets the actual cursor view instance to is to be managed by this
-   * controller.
-   * 
-   * @param aCursorView
-   *          a cursor view instance, cannot be <code>null</code>.
-   */
-  final void setCursorView( final CursorView aCursorView )
-  {
-    this.cursorView = aCursorView;
-  }
-
-  /**
-   * Sets the actual measurement view instance to is to be managed by this
-   * controller.
-   * 
-   * @param aMeasurementView
-   *          a measurement view instance, cannot be <code>null</code>.
-   */
-  final void setMeasurementView( final MeasurementView aMeasurementView )
-  {
-    this.measurementView = aMeasurementView;
-  }
-
-  /**
-   * Sets the actual signal view instance to is to be managed by this
-   * controller.
-   * 
-   * @param aSignalView
-   *          a signal view instance, cannot be <code>null</code>.
-   */
-  final void setSignalView( final SignalView aSignalView )
-  {
-    this.signalView = aSignalView;
+    this.signalDiagram = aComponent;
   }
 
   /**
@@ -671,6 +637,46 @@ public final class SignalDiagramController
   }
 
   /**
+   * @return the cursorView
+   */
+  private CursorView getCursorView()
+  {
+    return this.signalDiagram.getCursorView();
+  }
+
+  /**
+   * @return the arrowView
+   */
+  private MeasurementView getMeasurementView()
+  {
+    return this.signalDiagram.getMeasurementView();
+  }
+
+  /**
+   * Returns the actual signal view component.
+   * 
+   * @return a signal view component, never <code>null</code>.
+   */
+  private SignalView getSignalView()
+  {
+    return this.signalDiagram.getSignalView();
+  }
+
+  /**
+   * @return
+   */
+  private TimeLineView getTimeLineView()
+  {
+    JScrollPane scrollPane = ( JScrollPane )SwingUtilities.getAncestorOfClass( JScrollPane.class, this.signalDiagram );
+    if ( scrollPane == null )
+    {
+      throw new IllegalStateException();
+    }
+
+    return ( TimeLineView )scrollPane.getColumnHeader().getView();
+  }
+
+  /**
    * Returns the dimensions of the visible view, taking care of viewports (such
    * as used in {@link JScrollPane}).
    * 
@@ -678,18 +684,19 @@ public final class SignalDiagramController
    */
   private Dimension getVisibleViewSize()
   {
-    Rectangle rect;
+    final MeasurementView measurementView = getMeasurementView();
 
-    JScrollPane scrollPane = ( JScrollPane )SwingUtilities.getAncestorOfClass( JScrollPane.class, this.measurementView );
+    final JScrollPane scrollPane = ( JScrollPane )SwingUtilities
+        .getAncestorOfClass( JScrollPane.class, measurementView );
+
+    final Rectangle rect;
     if ( scrollPane != null )
     {
       rect = scrollPane.getViewport().getVisibleRect();
     }
     else
     {
-      SignalDiagramComponent parent = ( SignalDiagramComponent )SwingUtilities.getAncestorOfClass(
-          SignalDiagramComponent.class, this.measurementView );
-      rect = parent.getVisibleRect();
+      rect = this.signalDiagram.getVisibleRect();
     }
 
     return rect.getSize();
@@ -707,7 +714,18 @@ public final class SignalDiagramController
       {
         for ( Component comp : aComponentList )
         {
-          comp.repaint();
+          safeRepaint( comp );
+        }
+      }
+
+      /**
+       * @param aComponent
+       */
+      private void safeRepaint( final Component aComponent )
+      {
+        if ( aComponent != null )
+        {
+          aComponent.repaint();
         }
       }
     };

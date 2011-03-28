@@ -10,6 +10,8 @@ import javax.swing.*;
 
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.model.*;
+import nl.lxtreme.test.view.renderer.*;
+import nl.lxtreme.test.view.renderer.Renderer;
 
 
 /**
@@ -162,31 +164,13 @@ final class TimeLineView extends JComponent
 
       canvas.setFont( this.minorTickFont );
 
-      final int h = minorFM.getHeight() + 4;
-      final int y1 = clip.height - h;
+      Renderer renderer = new CursorFlagRenderer();
 
-      final long[] cursors = this.controller.getDataModel().getCursors();
+      final Long[] cursors = this.controller.getDataModel().getCursors();
       for ( int i = 0; i < cursors.length; i++ )
       {
-        final long cursorTime = cursors[i];
-
-        final int x1 = this.controller.toScaledScreenCoordinate( cursorTime ).x;
-
-        final String timeStr = String.format( "%s: %s", screenModel.getCursorLabel( i ),
-            Utils.displayTime( cursorTime / sampleRate ) );
-        final int w = minorFM.stringWidth( timeStr ) + 6;
-
-        if ( clip.contains( x1, y1 ) || clip.contains( x1 + w, y1 + h ) )
-        {
-          canvas.setColor( screenModel.getCursorColor( i ) );
-
-          canvas.drawRect( x1, y1, w, h - 1 );
-
-          final int textXpos = x1 + 3;
-          final int textYpos = y1 + minorFM.getLeading() + minorFM.getAscent() + 2;
-
-          canvas.drawString( timeStr, textXpos, textYpos );
-        }
+        renderer.setContext( this.controller, clip, Integer.valueOf( i ) );
+        renderer.render( canvas, 0, 0 );
       }
     }
     finally

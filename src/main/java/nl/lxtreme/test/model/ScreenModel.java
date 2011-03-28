@@ -68,6 +68,7 @@ public class ScreenModel
   private int channelHeight;
   private boolean measurementMode;
   private boolean cursorMode;
+  private boolean snapCursor;
   private final int[] virtualRowMapping;
   private final Color[] colors;
   private final String[] channelLabels;
@@ -267,6 +268,14 @@ public class ScreenModel
   }
 
   /**
+   * @return the snapCursor
+   */
+  public boolean isSnapCursor()
+  {
+    return this.snapCursor;
+  }
+
+  /**
    * @return the zoomAll
    */
   public boolean isZoomAll()
@@ -329,6 +338,15 @@ public class ScreenModel
   public void setSignalHeight( final int aSignalHeight )
   {
     this.signalHeight = aSignalHeight;
+  }
+
+  /**
+   * @param aSnapCursor
+   *          the snapCursor to set
+   */
+  public void setSnapCursor( final boolean aSnapCursor )
+  {
+    this.snapCursor = aSnapCursor;
   }
 
   /**

@@ -23,7 +23,6 @@ class CursorView extends JComponent
   // VARIABLES
 
   private final SignalDiagramController controller;
-  private volatile boolean snapMode;
   private Point lastPoint;
 
   // CONSTRUCTORS
@@ -39,8 +38,6 @@ class CursorView extends JComponent
     this.controller = aController;
 
     setOpaque( false );
-
-    this.controller.setCursorView( this );
   }
 
   // METHODS
@@ -52,14 +49,6 @@ class CursorView extends JComponent
       return false;
     }
     return ( aX >= aPoint.x - 5 ) && ( aX <= aPoint.x + 5 );
-  }
-
-  /**
-   * @return
-   */
-  public boolean isSnapModeEnabled()
-  {
-    return this.snapMode;
   }
 
   /**
@@ -75,13 +64,13 @@ class CursorView extends JComponent
    */
   public void moveCursor( final int aCursorIdx, final Point aPoint )
   {
-    final long[] cursors = getCursors();
+    final Long[] cursors = getCursors();
 
     repaintPartially( cursors, aCursorIdx );
 
     cursors[aCursorIdx] = this.controller.toUnscaledScreenCoordinate( aPoint );
 
-    if ( this.snapMode )
+    if ( this.controller.isSnapModeEnabled() )
     {
       this.lastPoint = aPoint;
     }
@@ -91,14 +80,6 @@ class CursorView extends JComponent
     }
 
     repaintPartially( cursors, aCursorIdx );
-  }
-
-  /**
-   * @param aSnapMode
-   */
-  public void setSnapMode( final boolean aSnapMode )
-  {
-    this.snapMode = aSnapMode;
   }
 
   /**
@@ -124,18 +105,24 @@ class CursorView extends JComponent
       final int y2 = clip.y + clip.height;
 
       final ScreenModel screenModel = this.controller.getScreenModel();
-      final long[] cursors = getCursors();
+      final Long[] cursors = getCursors();
 
       for ( int i = 0; i < cursors.length; i++ )
       {
-        final int x = this.controller.toScaledScreenCoordinate( cursors[i] ).x;
+        final Long cursorTimestamp = cursors[i];
+        if ( cursorTimestamp == null )
+        {
+          continue;
+        }
+
+        final int x = this.controller.toScaledScreenCoordinate( cursorTimestamp ).x;
 
         if ( clip.contains( x, y1 ) || clip.contains( x, y2 ) )
         {
           g2d.setColor( screenModel.getCursorColor( i ) );
           g2d.drawLine( x, y1, x, y2 );
 
-          if ( this.snapMode && inArea( this.lastPoint, x ) )
+          if ( this.controller.isSnapModeEnabled() && inArea( this.lastPoint, x ) )
           {
             g2d.drawOval( x - 4, this.lastPoint.y - 4, 8, 8 );
           }
@@ -163,7 +150,7 @@ class CursorView extends JComponent
   /**
    * @return
    */
-  private long[] getCursors()
+  private Long[] getCursors()
   {
     return this.controller.getDataModel().getCursors();
   }
@@ -174,16 +161,20 @@ class CursorView extends JComponent
    * @param aCursorIdx
    *          the cursor index of the cursor to repaint.
    */
-  private void repaintPartially( final long[] aCursors, final int aCursorIdx )
+  private void repaintPartially( final Long[] aCursors, final int aCursorIdx )
   {
     int x, y, w, h;
 
-    x = this.controller.toScaledScreenCoordinate( aCursors[aCursorIdx] ).x - 1;
-    y = 0;
-    w = 2;
-    h = getHeight();
+    final Long cursorTimestamp = aCursors[aCursorIdx];
+    if ( cursorTimestamp != null )
+    {
+      x = this.controller.toScaledScreenCoordinate( cursorTimestamp ).x - 1;
+      y = 0;
+      w = 2;
+      h = getHeight();
 
-    repaint( x, y, w, h );
+      repaint( x, y, w, h );
+    }
 
     if ( this.lastPoint != null )
     {

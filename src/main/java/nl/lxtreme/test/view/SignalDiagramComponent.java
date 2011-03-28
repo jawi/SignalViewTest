@@ -227,10 +227,10 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     /**
      * @param aController
      */
-    public DragAndDropListener( final SignalDiagramController aController )
+    public DragAndDropListener( final SignalDiagramController aController, final SignalView aSignalView )
     {
       this.controller = aController;
-      this.signalView = aController.getSignalView();
+      this.signalView = aSignalView;
     }
 
     // METHODS
@@ -533,7 +533,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
   private final SignalView signalView;
   private final CursorView cursorView;
-  private final MeasurementView arrowView;
+  private final MeasurementView measurementView;
 
   private ComponentSizeListener componentSizeListener;
   private CursorMouseListener cursorMouseListener;
@@ -556,11 +556,13 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
     this.signalView = new SignalView( this.controller );
     this.cursorView = new CursorView( this.controller );
-    this.arrowView = new MeasurementView( this.controller );
+    this.measurementView = new MeasurementView( this.controller );
 
     add( this.signalView, StackLayout.TOP );
     add( this.cursorView, StackLayout.TOP );
-    add( this.arrowView, StackLayout.TOP );
+    add( this.measurementView, StackLayout.TOP );
+
+    this.controller.setSignalDiagram( this );
   }
 
   // METHODS
@@ -592,7 +594,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       addMouseListener( this.cursorMouseListener );
       addMouseMotionListener( this.cursorMouseListener );
 
-      this.dndListener = new DragAndDropListener( this.controller );
+      this.dndListener = new DragAndDropListener( this.controller, this.signalView );
 
       final DragSource dragSource = DragSource.getDefaultDragSource();
       dragSource.createDefaultDragGestureRecognizer( this, DnDConstants.ACTION_COPY_OR_MOVE, this.dndListener );
@@ -751,6 +753,32 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     {
       super.removeNotify();
     }
+  }
+
+  /**
+   * @return the cursorView
+   */
+  final CursorView getCursorView()
+  {
+    return this.cursorView;
+  }
+
+  /**
+   * @return the arrowView
+   */
+  final MeasurementView getMeasurementView()
+  {
+    return this.measurementView;
+  }
+
+  /**
+   * Returns the actual signal view component.
+   * 
+   * @return a signal view component, never <code>null</code>.
+   */
+  final SignalView getSignalView()
+  {
+    return this.signalView;
   }
 
   /**

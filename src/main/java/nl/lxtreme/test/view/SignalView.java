@@ -158,8 +158,6 @@ class SignalView extends JPanel
     // setDebugGraphicsOptions( DebugGraphics.LOG_OPTION );
     // DebugGraphics.setLogStream( System.err );
 
-    this.controller.setSignalView( this );
-
     final DnDTargetController targetController = new DnDTargetController();
     setDropTarget( new DropTarget( this, targetController ) );
   }
