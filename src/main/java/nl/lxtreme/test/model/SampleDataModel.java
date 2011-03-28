@@ -54,7 +54,7 @@ public class SampleDataModel
     System.out.println( "Data size         : " + aSize + " samples." );
     System.out.println( "Total sample time : " + Utils.displayTime( aSize / ( double )this.sampleRate ) );
 
-    this.cursors = new long[] { 100, 200 };
+    this.cursors = new long[] { 100L, 200L, -1L, -1L, -1L };
   }
 
   // METHODS

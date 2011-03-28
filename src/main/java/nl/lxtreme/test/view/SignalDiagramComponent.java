@@ -109,10 +109,17 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
    */
   static final class CursorMouseListener extends MouseAdapter
   {
+    // CONSTANTS
+
+    private static final Cursor DEFAULT = Cursor.getDefaultCursor();
+    private static final Cursor CURSOR_HOVER = Cursor.getPredefinedCursor( Cursor.CROSSHAIR_CURSOR );
+    private static final Cursor CURSOR_MOVE_CURSOR = Cursor.getPredefinedCursor( Cursor.MOVE_CURSOR );
+
     // VARIABLES
 
-    private boolean showing = false;
     private final SignalDiagramController controller;
+
+    private volatile boolean showing = false;
 
     // CONSTRUCTORS
 
@@ -130,9 +137,13 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
      * {@inheritDoc}
      */
     @Override
-    public void mouseDragged( final MouseEvent aEvent )
+    public void mouseClicked( final MouseEvent aEvent )
     {
-      // NO-op
+      if ( this.controller.isCursorMode() && ( aEvent.getClickCount() == 2 ) )
+      {
+        final Point point = aEvent.getPoint();
+        this.controller.moveCursor( 3, point, false /* aSnap */);
+      }
     }
 
     /**
@@ -148,17 +159,17 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
         if ( this.controller.isMeasurementMode() )
         {
           this.showing = this.controller.showHover( point );
-          setCursor( aEvent, CURSOR_HOVER );
+          setMouseCursor( aEvent, CURSOR_HOVER );
         }
         else if ( this.controller.isCursorMode() )
         {
           if ( this.controller.findCursor( aEvent.getPoint() ) >= 0 )
           {
-            setCursor( aEvent, CURSOR_MOVE_CURSOR );
+            setMouseCursor( aEvent, CURSOR_MOVE_CURSOR );
           }
           else
           {
-            setCursor( aEvent, DEFAULT );
+            setMouseCursor( aEvent, DEFAULT );
           }
         }
       }
@@ -167,11 +178,11 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
         if ( !this.controller.isMeasurementMode() )
         {
           this.showing = this.controller.hideHover();
-          setCursor( aEvent, DEFAULT );
+          setMouseCursor( aEvent, DEFAULT );
         }
         else
         {
-          setCursor( aEvent, CURSOR_HOVER );
+          setMouseCursor( aEvent, CURSOR_HOVER );
           this.controller.moveHover( point );
         }
       }
@@ -181,25 +192,16 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
      * {@inheritDoc}
      */
     @Override
-    public void mousePressed( final MouseEvent aEvent )
-    {
-      // NO-op
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public void mouseReleased( final MouseEvent aEvent )
     {
-      setCursor( aEvent, DEFAULT );
+      setMouseCursor( aEvent, DEFAULT );
     }
 
     /**
      * @param aEvent
      * @param aCursor
      */
-    private void setCursor( final MouseEvent aEvent, final Cursor aCursor )
+    private void setMouseCursor( final MouseEvent aEvent, final Cursor aCursor )
     {
       if ( aEvent.getSource() instanceof JComponent )
       {
@@ -525,10 +527,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
   private static final boolean DEBUG = false;
 
-  private static final Cursor DEFAULT = Cursor.getDefaultCursor();
-  private static final Cursor CURSOR_HOVER = Cursor.getPredefinedCursor( Cursor.CROSSHAIR_CURSOR );
-  private static final Cursor CURSOR_MOVE_CURSOR = Cursor.getPredefinedCursor( Cursor.MOVE_CURSOR );
-
   // VARIABLES
 
   private final SignalDiagramController controller;
@@ -579,6 +577,9 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     {
       final Container parent = getParent();
       final Container window = SwingUtilities.getWindowAncestor( parent );
+
+      final JRootPane rootPane = SwingUtilities.getRootPane( parent );
+      rootPane.setGlassPane( new GhostGlassPane() );
 
       this.componentSizeListener = new ComponentSizeListener( this.controller );
       this.keyboardListener = new KeyboardControlListener( this.controller );
@@ -779,8 +780,13 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
           return;
         }
 
-        scrollPane.setColumnHeaderView( new TimeLineView( this.controller ) );
+        final TimeLineView timelineView = new TimeLineView( this.controller );
+        timelineView.addMouseListener( this.cursorMouseListener );
+
+        scrollPane.setColumnHeaderView( timelineView );
         scrollPane.setRowHeaderView( new ChannelLabelsView( this.controller ) );
+
+        scrollPane.setCorner( ScrollPaneConstants.UPPER_LEADING_CORNER, new JPanel() );
       }
     }
   }
@@ -810,6 +816,9 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
         {
           return;
         }
+
+        scrollPane.getColumnHeader().removeMouseListener( this.cursorMouseListener );
+
         scrollPane.setColumnHeaderView( null );
         scrollPane.setRowHeaderView( null );
         scrollPane.setCorner( ScrollPaneConstants.UPPER_LEADING_CORNER, null );

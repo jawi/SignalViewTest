@@ -11,7 +11,7 @@ import java.util.*;
 import javax.swing.*;
 
 import nl.lxtreme.test.model.*;
-import nl.lxtreme.test.model.SampleDataModel.*;
+import nl.lxtreme.test.model.SampleDataModel.SampleDataProvider;
 import nl.lxtreme.test.view.*;
 
 
@@ -118,6 +118,7 @@ public class Main
   // VARIABLES
 
   private SignalDiagramController controller;
+  private SignalDiagramComponent signalDiagram;
   private JFrame mainFrame;
   private JMenuBar menuBar;
 
@@ -147,9 +148,7 @@ public class Main
    */
   private void build()
   {
-    final SignalDiagramComponent layeredPane = new SignalDiagramComponent( this.controller );
-
-    final JScrollPane contentPane = new JScrollPane( layeredPane );
+    final JScrollPane contentPane = new JScrollPane( this.signalDiagram );
     contentPane.setHorizontalScrollBarPolicy( ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS );
     contentPane.setVerticalScrollBarPolicy( ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED );
 
@@ -179,7 +178,6 @@ public class Main
     this.mainFrame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
     this.mainFrame.setPreferredSize( dims );
     this.mainFrame.setSize( dims );
-    this.mainFrame.setGlassPane( new GhostGlassPane() );
 
     this.menuBar = new JMenuBar();
 
@@ -229,7 +227,10 @@ public class Main
     diagramMenu.add( diagramEnableMeasureModeItem );
 
     final SampleDataModel model = new SampleDataModel( 1024 * 64 /* * 1024 */, new RandomDataProvider() );
+
     this.controller = new SignalDiagramController( model );
+
+    this.signalDiagram = new SignalDiagramComponent( this.controller );
   }
 
   /**

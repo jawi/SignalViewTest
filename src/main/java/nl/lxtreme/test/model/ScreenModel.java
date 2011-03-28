@@ -71,6 +71,7 @@ public class ScreenModel
   private final int[] virtualRowMapping;
   private final Color[] colors;
   private final String[] channelLabels;
+  private final String[] cursorLabels;
   private SignalAlignment signalAlignment;
 
   // CONSTRUCTORS
@@ -123,6 +124,12 @@ public class ScreenModel
     for ( int i = 0; i < this.channelLabels.length; i++ )
     {
       this.channelLabels[i] = String.format( "Channel %c", Integer.valueOf( i + 'A' ) );
+    }
+
+    this.cursorLabels = new String[10]; // XXX
+    for ( int i = 0; i < this.cursorLabels.length; i++ )
+    {
+      this.cursorLabels[i] = String.format( "T%c", Integer.valueOf( i + 'a' ) );
     }
   }
 
@@ -186,7 +193,16 @@ public class ScreenModel
    */
   public Color getCursorColor( final int aCursorIdx )
   {
-    return this.colors[aCursorIdx].brighter();
+    return this.colors[aCursorIdx].darker().darker();
+  }
+
+  /**
+   * @param aChannelIdx
+   * @return
+   */
+  public String getCursorLabel( final int aCursorIdx )
+  {
+    return this.cursorLabels[aCursorIdx];
   }
 
   /**

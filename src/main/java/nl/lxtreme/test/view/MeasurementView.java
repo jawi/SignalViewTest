@@ -67,7 +67,7 @@ class MeasurementView extends JComponent
     this.arrowRectangle = new Rectangle();
     this.textRectangle = new Rectangle();
 
-    aController.setArrowView( this );
+    aController.setMeasurementView( this );
 
     setOpaque( false );
 
@@ -125,7 +125,7 @@ class MeasurementView extends JComponent
   public void moveHover( final SignalHoverInfo aSignalHover )
   {
     repaintPartially();
-    this.signalHover = aSignalHover == null ? null : aSignalHover.clone();
+    this.signalHover = ( aSignalHover == null ) ? null : aSignalHover.clone();
     repaintPartially();
   }
 
@@ -137,8 +137,11 @@ class MeasurementView extends JComponent
    */
   public void showHover( final SignalHoverInfo aSignalHover )
   {
-    this.signalHover = aSignalHover.clone();
-    repaintPartially();
+    if ( aSignalHover != null )
+    {
+      this.signalHover = aSignalHover.clone();
+      repaintPartially();
+    }
   }
 
   /**
@@ -152,7 +155,7 @@ class MeasurementView extends JComponent
       return;
     }
 
-    //
+    // Copy the boundaries of the arrow rectangle...
     this.arrowRectangle.setBounds( this.signalHover.getRectangle() );
 
     final Graphics2D g2d = ( Graphics2D )aGraphics.create();
@@ -347,22 +350,25 @@ class MeasurementView extends JComponent
     float width = 0;
 
     List<ToolTipTextPart> textParts = new ArrayList<ToolTipTextPart>();
-    TextLayout layout;
+    TextLayout layout = null;
 
     final SimpleLineMeasurer lineMeasurer = new SimpleLineMeasurer( aText, aCanvas.getFontRenderContext() );
-    while ( ( layout = lineMeasurer.next() ) != null )
+    while ( lineMeasurer.hasNext() )
     {
-      if ( linePos != 0.0f )
+      if ( layout != null )
       {
-        // Move y-coordinate in preparation for next layout.
+        // Move y-coordinate in preparation for next layout...
         linePos += layout.getDescent() + layout.getLeading();
       }
 
-      // Move y-coordinate by the ascent of the layout.
+      layout = lineMeasurer.next();
+
+      // Move y-coordinate by the ascent of the layout...
       linePos += layout.getAscent();
 
       textParts.add( new ToolTipTextPart( layout, linePos ) );
 
+      // Determine the maximum line width...
       width = Math.max( width, layout.getVisibleAdvance() );
     }
 
@@ -424,7 +430,7 @@ class MeasurementView extends JComponent
    */
   private void repaintPartially()
   {
-    if ( this.arrowRectangle != null )
+    if ( !this.arrowRectangle.isEmpty() )
     {
       final int x = this.arrowRectangle.x - 10;
       final int y = this.arrowRectangle.y - 10;
@@ -433,7 +439,7 @@ class MeasurementView extends JComponent
 
       repaint( x, y, w, h );
     }
-    if ( this.textRectangle != null )
+    if ( !this.textRectangle.isEmpty() )
     {
       final int x = this.textRectangle.x - 10;
       final int y = this.textRectangle.y - 10;

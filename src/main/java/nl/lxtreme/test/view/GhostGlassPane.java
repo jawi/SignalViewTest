@@ -15,7 +15,7 @@ import nl.lxtreme.test.dnd.*;
  * Provides a glass pane for use while dragging channels around. This glass pane
  * will show a marker where the drop location of the channel will be.
  */
-public class GhostGlassPane extends JPanel
+final class GhostGlassPane extends JPanel
 {
   // CONSTANTS
 
@@ -81,13 +81,13 @@ public class GhostGlassPane extends JPanel
     if ( this.oldDropPoint != null )
     {
       x = Math.max( 0, this.oldDropPoint.x - 1 );
-      y = Math.max( 0, this.oldDropPoint.y - 1 );
+      y = Math.max( 0, this.oldDropPoint.y + 1 );
       repaint( x, y, width, height );
     }
     if ( ( this.dropPoint != null ) && !this.dropPoint.equals( this.oldDropPoint ) )
     {
       x = Math.max( 0, this.dropPoint.x - 1 );
-      y = Math.max( 0, this.dropPoint.y - 1 );
+      y = Math.max( 0, this.dropPoint.y + 1 );
       repaint( x, y, width, height );
     }
   }
