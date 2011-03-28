@@ -1,5 +1,22 @@
-/**
+/*
+ * OpenBench LogicSniffer / SUMP project 
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or (at
+ * your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin St, Fifth Floor, Boston, MA 02110, USA
+ *
  * 
+ * Copyright (C) 2010-2011 - J.W. Janssen, http://www.lxtreme.nl
  */
 package nl.lxtreme.test.view.renderer;
 
@@ -19,7 +36,7 @@ public class CursorFlagRenderer extends BaseRenderer
 {
   // VARIABLES
 
-  private int cursorIdx;
+  private volatile int cursorIdx;
 
   // METHODS
 
@@ -49,6 +66,9 @@ public class CursorFlagRenderer extends BaseRenderer
 
     final FontMetrics fm = aCanvas.getFontMetrics();
 
+    // Move the canvas to the requested position...
+    aCanvas.translate( aXpos, aYpos );
+
     final int w = fm.stringWidth( timeStr ) + 6;
     final int h = fm.getHeight() + 4;
 
@@ -72,12 +92,12 @@ public class CursorFlagRenderer extends BaseRenderer
    * {@inheritDoc}
    */
   @Override
-  protected void setUserParams( final Object... aUserParams )
+  public void setContext( final Object... aParameters )
   {
-    if ( ( aUserParams == null ) || ( aUserParams.length < 1 ) )
+    if ( ( aParameters == null ) || ( aParameters.length < 1 ) )
     {
-      throw new IllegalArgumentException();
+      throw new IllegalArgumentException( "Expected an Integer parameter!" );
     }
-    this.cursorIdx = ( ( Integer )aUserParams[0] ).intValue();
+    this.cursorIdx = ( ( Integer )aParameters[0] ).intValue();
   }
 }
