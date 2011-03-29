@@ -576,15 +576,13 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   {
     try
     {
-      final Container parent = getParent();
-      final Container window = SwingUtilities.getWindowAncestor( parent );
-
-      final JRootPane rootPane = SwingUtilities.getRootPane( parent );
+      final JRootPane rootPane = SwingUtilities.getRootPane( this );
       rootPane.setGlassPane( new GhostGlassPane() );
 
       this.componentSizeListener = new ComponentSizeListener( this.controller );
       this.keyboardListener = new KeyboardControlListener( this.controller );
 
+      final Container window = SwingUtilities.getWindowAncestor( this );
       window.addComponentListener( this.componentSizeListener );
       window.addKeyListener( this.keyboardListener );
 
@@ -596,7 +594,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       this.dndListener = new DragAndDropListener( this.controller, this.signalView );
 
       final DragSource dragSource = DragSource.getDefaultDragSource();
-      dragSource.createDefaultDragGestureRecognizer( this, DnDConstants.ACTION_COPY_OR_MOVE, this.dndListener );
+      dragSource.createDefaultDragGestureRecognizer( this, DnDConstants.ACTION_MOVE, this.dndListener );
       dragSource.addDragSourceMotionListener( this.dndListener );
       dragSource.addDragSourceListener( this.dndListener );
 
