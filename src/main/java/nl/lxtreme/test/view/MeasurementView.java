@@ -22,46 +22,23 @@ package nl.lxtreme.test.view;
 
 
 import java.awt.*;
-import java.awt.font.*;
-import java.util.*;
-import java.util.List;
-
 import javax.swing.*;
+
+import nl.lxtreme.test.view.renderer.*;
+import nl.lxtreme.test.view.renderer.Renderer;
 
 
 /**
  * @author jajans
  */
-class MeasurementView extends JComponent
+final class MeasurementView extends JComponent
 {
-  // INNER TYPES
-
-  /**
-   * @author jawi
-   */
-  static class ToolTipTextPart
-  {
-    public final TextLayout layout;
-    public final float relYpos;
-
-    /**
-     * Creates a new MeasurementView.ToolTipPart instance.
-     */
-    public ToolTipTextPart( final TextLayout aLayout, final float aRelYPos )
-    {
-      this.layout = aLayout;
-      this.relYpos = aRelYPos;
-    }
-  }
-
   // CONSTANTS
 
   private static final long serialVersionUID = 1L;
 
   private static final int LEFT_FACING = 1;
   private static final int RIGHT_FACING = -1;
-
-  private static Stroke THICK = new BasicStroke( 2.0f );
 
   // VARIABLES
 
@@ -93,36 +70,6 @@ class MeasurementView extends JComponent
   // METHODS
 
   /**
-   * Ensures that the given rectangle is within the given view boundaries,
-   * moving the location of the rectangle if needed. Note that the width and
-   * height of the given rectangle are <em>not</em> modified.
-   * 
-   * @param aRectangle
-   *          the rectangle to move within the given view boundaries;
-   * @param aViewBounds
-   *          the view boundaries to move the rectangle in.
-   */
-  private static void ensureRectangleWithinBounds( final Rectangle aRectangle, final Rectangle aViewBounds )
-  {
-    if ( aRectangle.x < aViewBounds.x )
-    {
-      aRectangle.x = aViewBounds.x;
-    }
-    else if ( aRectangle.x - aViewBounds.x + aRectangle.width > aViewBounds.width )
-    {
-      aRectangle.x = aViewBounds.x + Math.max( 0, aViewBounds.width - aRectangle.width - 4 );
-    }
-    if ( aRectangle.y < aViewBounds.y )
-    {
-      aRectangle.y = aViewBounds.y;
-    }
-    else if ( aRectangle.y - aViewBounds.y + aRectangle.height > aViewBounds.height )
-    {
-      aRectangle.y = aViewBounds.y + Math.max( 0, aViewBounds.height - aRectangle.height - 4 );
-    }
-  }
-
-  /**
    * Hides the hover from screen.
    */
   public void hideHover()
@@ -141,6 +88,12 @@ class MeasurementView extends JComponent
   {
     repaintPartially();
     this.signalHover = ( aSignalHover == null ) ? null : aSignalHover.clone();
+    if ( this.signalHover != null )
+    {
+      // Copy the boundaries of the arrow rectangle...
+      this.arrowRectangle.setBounds( this.signalHover.getRectangle() );
+    }
+
     repaintPartially();
   }
 
@@ -155,6 +108,8 @@ class MeasurementView extends JComponent
     if ( aSignalHover != null )
     {
       this.signalHover = aSignalHover.clone();
+      // Copy the boundaries of the arrow rectangle...
+      this.arrowRectangle.setBounds( this.signalHover.getRectangle() );
       repaintPartially();
     }
   }
@@ -169,9 +124,6 @@ class MeasurementView extends JComponent
     {
       return;
     }
-
-    // Copy the boundaries of the arrow rectangle...
-    this.arrowRectangle.setBounds( this.signalHover.getRectangle() );
 
     final Graphics2D g2d = ( Graphics2D )aGraphics.create();
     try
@@ -201,8 +153,8 @@ class MeasurementView extends JComponent
         drawArrowHead( g2d, x3, y, dir, 8, 8 );
       }
 
-      final float textXpos = ( x1 + ( ( x2 - x1 ) / 2.0f ) ) + 8;
-      final float textYpos = ( float )( yOffset ) + 8;
+      final int textXpos = ( int )( ( x1 + ( ( x2 - x1 ) / 2.0f ) ) + 8 );
+      final int textYpos = ( int )( yOffset + 8 );
       final String text = this.signalHover.toString();
 
       drawToolTip( g2d, text, textXpos, textYpos );
@@ -357,56 +309,16 @@ class MeasurementView extends JComponent
    * @param aYpos
    *          the Y-position to draw the tooltip text.
    */
-  private void drawToolTip( final Graphics2D aCanvas, final String aText, final float aXpos, final float aYpos )
+  private void drawToolTip( final Graphics2D aCanvas, final String aText, final int aXpos, final int aYpos )
   {
     aCanvas.setFont( this.textFont );
 
-    float linePos = 0;
-    float width = 0;
+    Renderer signalInfoRenderer = new SignalInfoRenderer();
+    signalInfoRenderer.initialize( null, getViewBounds() );
 
-    List<ToolTipTextPart> textParts = new ArrayList<ToolTipTextPart>();
-    TextLayout layout = null;
+    signalInfoRenderer.setContext( aText );
 
-    final SimpleLineMeasurer lineMeasurer = new SimpleLineMeasurer( aText, aCanvas.getFontRenderContext() );
-    while ( lineMeasurer.hasNext() )
-    {
-      if ( layout != null )
-      {
-        // Move y-coordinate in preparation for next layout...
-        linePos += layout.getDescent() + layout.getLeading();
-      }
-
-      layout = lineMeasurer.next();
-
-      // Move y-coordinate by the ascent of the layout...
-      linePos += layout.getAscent();
-
-      textParts.add( new ToolTipTextPart( layout, linePos ) );
-
-      // Determine the maximum line width...
-      width = Math.max( width, layout.getVisibleAdvance() );
-    }
-
-    final Rectangle rect = new Rectangle( ( int )aXpos, ( int )aYpos, ( int )width + 8, ( int )linePos + 8 );
-    // Fit as much of the tooltip on screen as possible...
-    ensureRectangleWithinBounds( rect, getViewBounds() );
-
-    aCanvas.setColor( Color.DARK_GRAY );
-    aCanvas.fillRoundRect( rect.x, rect.y, rect.width, rect.height, 8, 8 );
-
-    aCanvas.setColor( Color.DARK_GRAY.brighter() );
-    aCanvas.setStroke( THICK );
-    aCanvas.drawRoundRect( rect.x, rect.y, rect.width - 1, rect.height - 1, 8, 8 );
-
-    aCanvas.setColor( Color.WHITE.darker() );
-
-    for ( ToolTipTextPart textPart : textParts )
-    {
-      float x = ( rect.x + 4 );
-      float y = ( rect.y + textPart.relYpos + 4 );
-      textPart.layout.draw( aCanvas, x, y );
-    }
-
+    Rectangle rect = signalInfoRenderer.render( aCanvas, aXpos, aYpos );
     this.textRectangle.setBounds( rect );
   }
 

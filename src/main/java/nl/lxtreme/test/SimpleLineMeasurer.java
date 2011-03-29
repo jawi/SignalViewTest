@@ -18,7 +18,7 @@
  * 
  * Copyright (C) 2010-2011 - J.W. Janssen, http://www.lxtreme.nl
  */
-package nl.lxtreme.test.view;
+package nl.lxtreme.test;
 
 
 import java.awt.font.*;
@@ -35,7 +35,7 @@ import java.util.*;
  * the various lines.
  * </p>
  */
-final class SimpleLineMeasurer implements Iterator<TextLayout>
+public final class SimpleLineMeasurer implements Iterator<TextLayout>
 {
   // VARIABLES
 

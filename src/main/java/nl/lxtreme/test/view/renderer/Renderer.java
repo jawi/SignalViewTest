@@ -58,9 +58,12 @@ public interface Renderer
    * </p>
    * 
    * @param aCanvas
-   *          the canvas to use to render, never <code>null</code>;
+   *          the canvas to use to render, never <code>null</code>.
+   * @return the rectangle with the coordinates of the affected area on the
+   *         given canvas, or <code>null</code> if the entire canvas is
+   *         affected.
    */
-  void render( final Graphics2D aCanvas );
+  Rectangle render( final Graphics2D aCanvas );
 
   /**
    * Renders the UI-part on the given canvas.
@@ -71,8 +74,11 @@ public interface Renderer
    *          the X-position, >= 0;
    * @param aYpos
    *          the Y-position, >= 0.
+   * @return the rectangle with the coordinates of the affected area on the
+   *         given canvas, or <code>null</code> if the entire canvas is
+   *         affected.
    */
-  void render( final Graphics2D aCanvas, final int aXpos, final int aYpos );
+  Rectangle render( final Graphics2D aCanvas, final int aXpos, final int aYpos );
 
   /**
    * Sets the rendering context, allowing this renderer to be parameterized.

@@ -174,21 +174,9 @@ final class TimeLineView extends JComponent
       }
 
       // Draw the cursor "flags"...
-      if ( !this.controller.isCursorMode() )
+      if ( this.controller.isCursorMode() )
       {
-        return;
-      }
-
-      canvas.setFont( this.minorTickFont );
-
-      final Renderer renderer = new CursorFlagRenderer();
-      renderer.initialize( this.controller, clip );
-
-      final Long[] cursors = this.controller.getDataModel().getCursors();
-      for ( int i = 0; i < cursors.length; i++ )
-      {
-        renderer.setContext( Integer.valueOf( i ) );
-        renderer.render( canvas, 0, clip.height );
+        paintCursorFlags( canvas, clip );
       }
     }
     finally
@@ -258,5 +246,34 @@ final class TimeLineView extends JComponent
   private double getTimebase( final double aAbsoluteTime )
   {
     return Math.pow( 10, Math.round( Math.log10( aAbsoluteTime ) ) );
+  }
+
+  /**
+   * @param aCanvas
+   * @param aClip
+   */
+  private void paintCursorFlags( final Graphics2D aCanvas, final Rectangle aClip )
+  {
+    aCanvas.setFont( this.minorTickFont );
+
+    final Renderer renderer = new CursorFlagRenderer();
+    renderer.initialize( this.controller, aClip );
+
+    final Long[] cursors = this.controller.getDataModel().getCursors();
+    for ( int i = 0; i < cursors.length; i++ )
+    {
+      final Long cursorTimestamp = cursors[i];
+      if ( cursorTimestamp == null )
+      {
+        continue;
+      }
+
+      renderer.setContext( Integer.valueOf( i ), cursorTimestamp );
+
+      int x = this.controller.toScaledScreenCoordinate( cursorTimestamp.longValue() ).x;
+      int y = aClip.height;
+
+      renderer.render( aCanvas, x, y );
+    }
   }
 }

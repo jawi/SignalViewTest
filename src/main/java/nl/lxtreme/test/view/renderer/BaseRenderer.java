@@ -52,14 +52,16 @@ abstract class BaseRenderer implements Renderer
    * {@inheritDoc}
    */
   @Override
-  public final void render( final Graphics2D aCanvas, final int aXpos, final int aYpos )
+  public final Rectangle render( final Graphics2D aCanvas, final int aXpos, final int aYpos )
   {
     // Move the canvas to the requested position...
     aCanvas.translate( aXpos, aYpos );
 
     try
     {
-      render( aCanvas );
+      final Rectangle result = render( aCanvas );
+      result.translate( -aXpos, -aYpos );
+      return result;
     }
     finally
     {

@@ -45,6 +45,7 @@ public class CursorFlagRenderer extends BaseRenderer
   // VARIABLES
 
   private volatile int cursorIdx;
+  private volatile long cursorTimestamp;
 
   // METHODS
 
@@ -52,45 +53,41 @@ public class CursorFlagRenderer extends BaseRenderer
    * {@inheritDoc}
    */
   @Override
-  public void render( final Graphics2D aCanvas )
+  public Rectangle render( final Graphics2D aCanvas )
   {
+    final Rectangle result = new Rectangle();
+
     final SignalDiagramController controller = getController();
-
     final SampleDataModel dataModel = controller.getDataModel();
-
-    final Long cursorTimestamp = dataModel.getCursor( this.cursorIdx );
-    if ( cursorTimestamp == null )
-    {
-      return;
-    }
-
-    final int sampleRate = dataModel.getSampleRate();
-
     final ScreenModel screenModel = controller.getScreenModel();
 
+    final double sampleRate = dataModel.getSampleRate();
+
     final String timeStr = String.format( "%s: %s", screenModel.getCursorLabel( this.cursorIdx ),
-        Utils.displayTime( cursorTimestamp.doubleValue() / sampleRate ) );
+        Utils.displayTime( this.cursorTimestamp / sampleRate ) );
 
     final FontMetrics fm = aCanvas.getFontMetrics();
 
-    final int w = fm.stringWidth( timeStr ) + PADDING_WIDTH;
-    final int h = fm.getHeight() + PADDING_HEIGHT;
+    result.width = fm.stringWidth( timeStr ) + PADDING_WIDTH;
+    result.height = fm.getHeight() + PADDING_HEIGHT;
 
-    final int x1 = controller.toScaledScreenCoordinate( cursorTimestamp.longValue() ).x;
-    final int y1 = -h;
+    result.x = 0;
+    result.y = -result.height;
 
     final Color flagColor = screenModel.getCursorColor( this.cursorIdx );
     aCanvas.setColor( flagColor );
 
-    aCanvas.fillRect( x1, y1, w, h - 1 );
+    aCanvas.fillRect( result.x, result.y, result.width, result.height - 1 );
 
-    final int textXpos = x1 + PADDING_LEFT;
-    final int textYpos = y1 + fm.getLeading() + fm.getAscent() + PADDING_TOP;
+    final int textXpos = result.x + PADDING_LEFT;
+    final int textYpos = result.y + fm.getLeading() + fm.getAscent() + PADDING_TOP;
 
     final Color textColor = Utils.getContrastColor( flagColor );
     aCanvas.setColor( textColor );
 
     aCanvas.drawString( timeStr, textXpos, textYpos );
+
+    return result;
   }
 
   /**
@@ -99,10 +96,11 @@ public class CursorFlagRenderer extends BaseRenderer
   @Override
   public void setContext( final Object... aParameters )
   {
-    if ( ( aParameters == null ) || ( aParameters.length < 1 ) )
+    if ( ( aParameters == null ) || ( aParameters.length < 2 ) )
     {
-      throw new IllegalArgumentException( "Expected an Integer parameter!" );
+      throw new IllegalArgumentException( "Expected an Integer & Long parameter!" );
     }
     this.cursorIdx = ( ( Integer )aParameters[0] ).intValue();
+    this.cursorTimestamp = ( ( Long )aParameters[1] ).longValue();
   }
 }
