@@ -86,8 +86,7 @@ class CursorView extends JComponent
     repaintPartially( cursors, aCursorIdx );
 
     final long newCursorTimestamp = this.controller.toUnscaledScreenCoordinate( aPoint );
-    cursors[aCursorIdx] = Long.valueOf( newCursorTimestamp ); // XXX should be
-                                                              // moved to model!
+    this.controller.getDataModel().setCursor( aCursorIdx, Long.valueOf( newCursorTimestamp ) );
 
     if ( this.controller.isSnapModeEnabled() )
     {

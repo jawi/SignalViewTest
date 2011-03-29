@@ -24,6 +24,7 @@ package nl.lxtreme.test.view;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.dnd.*;
+import java.util.logging.*;
 
 import javax.swing.*;
 
@@ -112,7 +113,7 @@ class SignalView extends JPanel
       }
       catch ( Exception exception )
       {
-        // NO-op XXX
+        LOG.log( Level.WARNING, "Getting transfer data failed!", exception );
       }
 
       return false;
@@ -143,7 +144,7 @@ class SignalView extends JPanel
       }
       catch ( Exception exception )
       {
-        // NO-op XXX
+        LOG.log( Level.WARNING, "Getting transfer data failed!", exception );
       }
 
       return false;
@@ -153,6 +154,8 @@ class SignalView extends JPanel
   // CONSTANTS
 
   private static final long serialVersionUID = 1L;
+
+  private static final Logger LOG = Logger.getLogger( SignalView.class.getName() );
 
   // VARIABLES
 

@@ -43,6 +43,8 @@ public class ScreenModel
 
   // CONSTANTS
 
+  private static final int MAX_CURSORS = 10;
+
   private static final Color[] SALEAE_COLORS = { //
   Utils.parseColor( "000000" ), //
       Utils.parseColor( "8B4513" ), //
@@ -144,7 +146,7 @@ public class ScreenModel
       this.channelLabels[i] = String.format( "Channel %c", Integer.valueOf( i + 'A' ) );
     }
 
-    this.cursorLabels = new String[10]; // XXX
+    this.cursorLabels = new String[MAX_CURSORS];
     for ( int i = 0; i < this.cursorLabels.length; i++ )
     {
       this.cursorLabels[i] = String.format( "T%c", Integer.valueOf( i + 'a' ) );

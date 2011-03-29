@@ -153,6 +153,19 @@ public class SampleDataModel
     return -1;
   }
 
+  /**
+   * @param aCursorIdx
+   * @return
+   */
+  public Long getCursor( final int aCursorIdx )
+  {
+    if ( ( aCursorIdx < 0 ) || ( aCursorIdx > this.cursors.length ) )
+    {
+      throw new IllegalArgumentException();
+    }
+    return this.cursors[aCursorIdx];
+  }
+
   public Long[] getCursors()
   {
     return this.cursors;
@@ -187,5 +200,18 @@ public class SampleDataModel
   public int getWidth()
   {
     return 9;
+  }
+
+  /**
+   * @param aCursorIdx
+   * @return
+   */
+  public void setCursor( final int aCursorIdx, final Long aTimestamp )
+  {
+    if ( ( aCursorIdx < 0 ) || ( aCursorIdx > this.cursors.length ) )
+    {
+      throw new IllegalArgumentException();
+    }
+    this.cursors[aCursorIdx] = aTimestamp;
   }
 }

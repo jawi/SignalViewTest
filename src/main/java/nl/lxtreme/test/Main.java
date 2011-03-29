@@ -217,6 +217,26 @@ public class Main
     final JMenu diagramMenu = new JMenu( "Diagram" );
     this.menuBar.add( diagramMenu );
 
+    final JMenuItem diagramSnapCursorsItem = new JCheckBoxMenuItem( new AbstractAction( "Snap Cursors?" )
+    {
+      private static final long serialVersionUID = 1L;
+
+      @Override
+      public void actionPerformed( final ActionEvent aEvent )
+      {
+        AbstractButton button = ( AbstractButton )aEvent.getSource();
+        if ( button.getModel().isSelected() )
+        {
+          Main.this.controller.enableSnapMode();
+        }
+        else
+        {
+          Main.this.controller.disableSnapMode();
+        }
+      }
+    } );
+    diagramMenu.add( diagramSnapCursorsItem );
+
     final JMenuItem diagramEnableCursorsItem = new JCheckBoxMenuItem( new AbstractAction( "Cursor mode" )
     {
       private static final long serialVersionUID = 1L;

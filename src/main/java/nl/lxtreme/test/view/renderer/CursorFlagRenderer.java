@@ -34,6 +34,14 @@ import nl.lxtreme.test.view.*;
  */
 public class CursorFlagRenderer extends BaseRenderer
 {
+  // CONSTANTS
+
+  private static final int PADDING_TOP = 2;
+  private static final int PADDING_LEFT = 3;
+
+  private static final int PADDING_WIDTH = 2 * PADDING_LEFT;
+  private static final int PADDING_HEIGHT = 2 * PADDING_TOP;
+
   // VARIABLES
 
   private volatile int cursorIdx;
@@ -44,14 +52,13 @@ public class CursorFlagRenderer extends BaseRenderer
    * {@inheritDoc}
    */
   @Override
-  public void render( final Graphics2D aCanvas, final int aXpos, final int aYpos )
+  public void render( final Graphics2D aCanvas )
   {
     final SignalDiagramController controller = getController();
-    final Rectangle clip = getClipBounds();
 
     final SampleDataModel dataModel = controller.getDataModel();
 
-    final Long cursorTimestamp = dataModel.getCursors()[this.cursorIdx];
+    final Long cursorTimestamp = dataModel.getCursor( this.cursorIdx );
     if ( cursorTimestamp == null )
     {
       return;
@@ -66,26 +73,24 @@ public class CursorFlagRenderer extends BaseRenderer
 
     final FontMetrics fm = aCanvas.getFontMetrics();
 
-    // Move the canvas to the requested position...
-    aCanvas.translate( aXpos, aYpos );
-
-    final int w = fm.stringWidth( timeStr ) + 6;
-    final int h = fm.getHeight() + 4;
+    final int w = fm.stringWidth( timeStr ) + PADDING_WIDTH;
+    final int h = fm.getHeight() + PADDING_HEIGHT;
 
     final int x1 = controller.toScaledScreenCoordinate( cursorTimestamp.longValue() ).x;
-    final int y1 = clip.height - h;
+    final int y1 = -h;
 
-    if ( clip.contains( x1, y1 ) || clip.contains( x1 + w, y1 + h ) )
-    {
-      aCanvas.setColor( screenModel.getCursorColor( this.cursorIdx ) );
+    final Color flagColor = screenModel.getCursorColor( this.cursorIdx );
+    aCanvas.setColor( flagColor );
 
-      aCanvas.drawRect( x1, y1, w, h - 1 );
+    aCanvas.fillRect( x1, y1, w, h - 1 );
 
-      final int textXpos = x1 + 3;
-      final int textYpos = y1 + fm.getLeading() + fm.getAscent() + 2;
+    final int textXpos = x1 + PADDING_LEFT;
+    final int textYpos = y1 + fm.getLeading() + fm.getAscent() + PADDING_TOP;
 
-      aCanvas.drawString( timeStr, textXpos, textYpos );
-    }
+    final Color textColor = Utils.getContrastColor( flagColor );
+    aCanvas.setColor( textColor );
+
+    aCanvas.drawString( timeStr, textXpos, textYpos );
   }
 
   /**

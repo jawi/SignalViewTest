@@ -420,11 +420,13 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     {
       final Point dropPoint = new Point( aPoint.x, 0 );
 
-      // XXX test snap mode...
-      final SignalHoverInfo signalHover = this.controller.getSignalHover( aPoint );
-      if ( signalHover != null )
+      if ( this.controller.isSnapModeEnabled() )
       {
-        // dropPoint.x = signalHover.rectangle.x;
+        final SignalHoverInfo signalHover = this.controller.getSignalHover( aPoint );
+        if ( signalHover != null )
+        {
+          dropPoint.x = signalHover.getRectangle().x;
+        }
       }
 
       SwingUtilities.convertPointToScreen( dropPoint, this.signalView );

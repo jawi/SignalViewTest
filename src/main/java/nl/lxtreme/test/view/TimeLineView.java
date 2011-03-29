@@ -188,7 +188,7 @@ final class TimeLineView extends JComponent
       for ( int i = 0; i < cursors.length; i++ )
       {
         renderer.setContext( Integer.valueOf( i ) );
-        renderer.render( canvas );
+        renderer.render( canvas, 0, clip.height );
       }
     }
     finally
