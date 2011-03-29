@@ -121,7 +121,7 @@ final class TimeLineView extends JComponent
 
       for ( ; timestamp <= endTimeStamp; timestamp += timeIncr )
       {
-        int relXpos = ( int )( timestamp * zoomFactor );
+        int relXpos = ( int )( zoomFactor * timestamp );
 
         if ( ( timestamp % tickIncr ) == 0 )
         {

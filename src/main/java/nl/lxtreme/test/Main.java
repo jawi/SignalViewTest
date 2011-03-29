@@ -57,7 +57,7 @@ public class Main
         {
           aValues[i] = 0xAAAA;
         }
-        aTimestamps[i] = i;
+        aTimestamps[i] = ( i * 10 );
       }
       return 1000000000; // 1000MHz
     }
@@ -225,14 +225,7 @@ public class Main
       public void actionPerformed( final ActionEvent aEvent )
       {
         AbstractButton button = ( AbstractButton )aEvent.getSource();
-        if ( button.getModel().isSelected() )
-        {
-          Main.this.controller.enableSnapMode();
-        }
-        else
-        {
-          Main.this.controller.disableSnapMode();
-        }
+        Main.this.controller.setSnapModeEnabled( button.getModel().isSelected() );
       }
     } );
     diagramMenu.add( diagramSnapCursorsItem );
@@ -263,7 +256,7 @@ public class Main
     } );
     diagramMenu.add( diagramEnableMeasureModeItem );
 
-    final SampleDataModel model = new SampleDataModel( 1024 * 64 /* * 1024 */, new RandomDataProvider() );
+    final SampleDataModel model = new SampleDataModel( 1024 * 64 /* * 1024 */, new AlternatingDataProvider() );
 
     this.controller = new SignalDiagramController( model );
 

@@ -107,6 +107,11 @@ final class GhostGlassPane extends JPanel
       y = Math.max( 0, this.dropPoint.y + 1 );
       repaint( x, y, width, height );
     }
+
+    if ( DragAndDropContext.CHANNEL_ROW == this.context )
+    {
+      repaint(); // TODO fix me!
+    }
   }
 
   /**

@@ -107,6 +107,8 @@ public class ScreenModel
 
     this.signalAlignment = SignalAlignment.CENTER;
 
+    this.snapCursor = false;
+
     this.virtualRowMapping = new int[aDataWidth];
     for ( int i = 0; i < aDataWidth; i++ )
     {

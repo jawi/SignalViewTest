@@ -22,24 +22,83 @@ package nl.lxtreme.test.view;
 
 
 import java.awt.*;
+import java.awt.datatransfer.*;
+import java.awt.dnd.*;
+import java.util.logging.*;
 
 import javax.swing.*;
 
+import nl.lxtreme.test.dnd.*;
+import nl.lxtreme.test.dnd.DragAndDropTargetController.DragAndDropHandler;
 import nl.lxtreme.test.model.*;
 
 
 /**
  * @author jajans
  */
-class CursorView extends JComponent
+final class CursorView extends JComponent
 {
+  // INNER TYPES
+
+  /**
+   * Provides the D&D drop controller for accepting dropped cursors.
+   */
+  static class DropHandler implements DragAndDropHandler
+  {
+    // METHODS
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean acceptDrop( final SignalDiagramController aController, final DropTargetDropEvent aEvent )
+    {
+      try
+      {
+        final Transferable transferable = aEvent.getTransferable();
+
+        Integer cursorValue = ( Integer )transferable.getTransferData( CursorTransferable.FLAVOR );
+        if ( cursorValue != null )
+        {
+          aEvent.acceptDrop( DnDConstants.ACTION_MOVE );
+
+          final int cursorIdx = cursorValue.intValue();
+          final Point newLocation = aEvent.getLocation();
+
+          // Move the cursor position...
+          aController.moveCursor( cursorIdx, newLocation );
+
+          return true;
+        }
+      }
+      catch ( Exception exception )
+      {
+        LOG.log( Level.WARNING, "Getting transfer data failed!", exception );
+      }
+
+      return false;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public DataFlavor getFlavor()
+    {
+      return CursorTransferable.FLAVOR;
+    }
+  }
+
   // CONSTANTS
 
   private static final long serialVersionUID = 1L;
 
+  private static final Logger LOG = Logger.getLogger( CursorView.class.getName() );
+
   // VARIABLES
 
   private final SignalDiagramController controller;
+  private final DropHandler dropHandler;
   private Point lastPoint;
 
   // CONSTRUCTORS
@@ -53,12 +112,18 @@ class CursorView extends JComponent
   public CursorView( final SignalDiagramController aController )
   {
     this.controller = aController;
+    this.dropHandler = new DropHandler();
 
     setOpaque( false );
   }
 
   // METHODS
 
+  /**
+   * @param aPoint
+   * @param aX
+   * @return
+   */
   private static boolean inArea( final Point aPoint, final int aX )
   {
     if ( aPoint == null )
@@ -66,6 +131,18 @@ class CursorView extends JComponent
       return false;
     }
     return ( aX >= aPoint.x - 5 ) && ( aX <= aPoint.x + 5 );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void addNotify()
+  {
+    super.addNotify();
+
+    final SignalDiagramComponent parent = ( SignalDiagramComponent )getParent();
+    parent.getDndTargetController().addHandler( this.dropHandler );
   }
 
   /**
@@ -98,6 +175,18 @@ class CursorView extends JComponent
     }
 
     repaintPartially( cursors, aCursorIdx );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void removeNotify()
+  {
+    final SignalDiagramComponent parent = ( SignalDiagramComponent )getParent();
+    parent.getDndTargetController().removeHandler( this.dropHandler );
+
+    super.removeNotify();
   }
 
   /**

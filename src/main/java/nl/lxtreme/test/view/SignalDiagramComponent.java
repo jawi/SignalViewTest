@@ -156,10 +156,11 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     @Override
     public void mouseClicked( final MouseEvent aEvent )
     {
+      // TODO: this should be done through a context menu...
       if ( this.controller.isCursorMode() && ( aEvent.getClickCount() == 2 ) )
       {
         final Point point = aEvent.getPoint();
-        this.controller.moveCursor( 3, point, false /* aSnap */);
+        this.controller.moveCursor( 3, point );
       }
     }
 
@@ -262,12 +263,16 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       {
         return;
       }
+
       DragAndDropLock.setDragAndDropStarted( false );
+      DragAndDropLock.setLocked( false );
 
       GhostGlassPane glassPane = ( GhostGlassPane )SwingUtilities.getRootPane( this.signalView ).getGlassPane();
 
       glassPane.clearDropPoint();
-      glassPane.repaintPartially();
+      glassPane.repaint();
+
+      glassPane.setVisible( false );
     }
 
     /**
@@ -349,6 +354,8 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       {
         return;
       }
+
+      this.controller.setSnapModeEnabled( isSnapModeKeyEvent( aEvent ) );
 
       final Point coordinate = ( Point )aEvent.getLocation().clone();
       SwingUtilities.convertPointFromScreen( coordinate, this.signalView );
@@ -448,6 +455,15 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       }
       return DragAndDropContext.CHANNEL_ROW;
     }
+
+    /**
+     * @param aEvent
+     * @return
+     */
+    private boolean isSnapModeKeyEvent( final DragSourceDragEvent aEvent )
+    {
+      return ( aEvent.getGestureModifiersEx() & InputEvent.SHIFT_DOWN_MASK ) == InputEvent.SHIFT_DOWN_MASK;
+    }
   }
 
   /**
@@ -471,30 +487,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     }
 
     // METHODS
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void keyPressed( final KeyEvent aEvent )
-    {
-      if ( isSnapModeKeyEvent( aEvent ) )
-      {
-        this.controller.enableSnapMode();
-      }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void keyReleased( final KeyEvent aEvent )
-    {
-      if ( this.controller.isSnapModeEnabled() )
-      {
-        this.controller.disableSnapMode();
-      }
-    }
 
     /**
      * {@inheritDoc}
@@ -524,20 +516,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
         this.controller.zoomOriginal();
       }
     }
-
-    /**
-     * @param aEvent
-     * @return
-     */
-    private boolean isSnapModeKeyEvent( final KeyEvent aEvent )
-    {
-      if ( this.controller.isSnapModeEnabled() )
-      {
-        return false;
-      }
-
-      return ( aEvent.isAltDown() || aEvent.isAltGraphDown() ) && aEvent.isControlDown();
-    }
   }
 
   // CONSTANTS
@@ -553,6 +531,8 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   private final SignalView signalView;
   private final CursorView cursorView;
   private final MeasurementView measurementView;
+
+  private DragAndDropTargetController dndTargetController;
 
   private ComponentSizeListener componentSizeListener;
   private CursorMouseListener cursorMouseListener;
@@ -619,6 +599,9 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       dragSource.createDefaultDragGestureRecognizer( this, DnDConstants.ACTION_COPY_OR_MOVE, this.dndListener );
       dragSource.addDragSourceMotionListener( this.dndListener );
       dragSource.addDragSourceListener( this.dndListener );
+
+      this.dndTargetController = new DragAndDropTargetController( this.controller );
+      setDropTarget( new DropTarget( this, this.dndTargetController ) );
 
       configureEnclosingScrollPane();
     }
@@ -780,6 +763,14 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   final CursorView getCursorView()
   {
     return this.cursorView;
+  }
+
+  /**
+   * @return the dndTargetController
+   */
+  final DragAndDropTargetController getDndTargetController()
+  {
+    return this.dndTargetController;
   }
 
   /**

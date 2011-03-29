@@ -62,26 +62,6 @@ public final class SignalDiagramController
   // METHODS
 
   /**
-   * Disables the cursor "snap" mode.
-   * 
-   * @see #enableSnapMode()
-   */
-  public void disableSnapMode()
-  {
-    this.screenModel.setSnapCursor( false );
-  }
-
-  /**
-   * Enables the cursor "snap" mode.
-   * 
-   * @see #disableSnapMode()
-   */
-  public void enableSnapMode()
-  {
-    this.screenModel.setSnapCursor( true );
-  }
-
-  /**
    * Finds the cursor under the given point.
    * 
    * @param aPoint
@@ -274,12 +254,9 @@ public final class SignalDiagramController
    * @param aPoint
    *          the new point of the cursor, in case of snapping, it will use this
    *          point to find the nearest signal edge, cannot be <code>null</code>
-   *          ;
-   * @param aSnap
-   *          <code>true</code> if the cursor should be snapped to the nearest
-   *          signal edge, <code>false</code> otherwise.
+   *          .
    */
-  public void moveCursor( final int aCursorIdx, final Point aPoint, final boolean aSnap )
+  public void moveCursor( final int aCursorIdx, final Point aPoint )
   {
     if ( ( aCursorIdx < 0 ) || ( aCursorIdx >= this.dataModel.getCursors().length ) )
     {
@@ -289,7 +266,7 @@ public final class SignalDiagramController
     final CursorView cursorView = getCursorView();
     final Point point = convertToPointOf( cursorView, aPoint );
 
-    if ( aSnap )
+    if ( isSnapModeEnabled() )
     {
       final SignalHoverInfo signalHover = getSignalHover( aPoint );
       if ( signalHover != null )
@@ -404,6 +381,18 @@ public final class SignalDiagramController
       throw new IllegalArgumentException();
     }
     this.screenModel = aScreenModel;
+  }
+
+  /**
+   * Disables the cursor "snap" mode.
+   * 
+   * @param aSnapMode
+   *          <code>true</code> if the snap mode should be enabled,
+   *          <code>false</code> otherwise.
+   */
+  public void setSnapModeEnabled( final boolean aSnapMode )
+  {
+    this.screenModel.setSnapCursor( aSnapMode );
   }
 
   /**

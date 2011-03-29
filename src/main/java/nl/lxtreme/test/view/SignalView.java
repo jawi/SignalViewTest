@@ -30,85 +30,49 @@ import javax.swing.*;
 
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.dnd.*;
+import nl.lxtreme.test.dnd.DragAndDropTargetController.DragAndDropHandler;
 import nl.lxtreme.test.model.*;
 
 
 /**
  * @author jajans
  */
-class SignalView extends JPanel
+final class SignalView extends JPanel
 {
   // INNER TYPES
 
   /**
-   * @author jajans
+   * Provides the D&D drop handler for accepting dropped channels.
    */
-  final class DnDTargetController extends DropTargetAdapter
+  static class DropHandler implements DragAndDropHandler
   {
-    // VARIABLES
-
-    private final SignalDiagramController ctlr = SignalView.this.controller;
-
     // METHODS
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void drop( final DropTargetDropEvent aEvent )
-    {
-      final DataFlavor[] flavors = aEvent.getCurrentDataFlavors();
-      if ( ( flavors == null ) || ( flavors.length == 0 ) )
-      {
-        return;
-      }
-
-      boolean result = false;
-      for ( int i = flavors.length - 1; !result && ( i >= 0 ); i-- )
-      {
-        if ( ChannelRowTransferable.FLAVOR.equals( flavors[i] ) )
-        {
-          result = dropChannelRow( aEvent );
-        }
-        else if ( CursorTransferable.FLAVOR.equals( flavors[i] ) )
-        {
-          result = dropCursor( aEvent );
-        }
-      }
-
-      if ( result )
-      {
-        // Update our administration...
-        SwingUtilities.getRootPane( SignalView.this ).getGlassPane().setVisible( false );
-
-        DragAndDropLock.setLocked( false );
-
-        // Acknowledge that we've successfully dropped the item...
-        aEvent.dropComplete( true );
-      }
-    }
-
-    /**
-     * @param aEvent
-     */
-    private boolean dropChannelRow( final DropTargetDropEvent aEvent )
+    public boolean acceptDrop( final SignalDiagramController aController, final DropTargetDropEvent aEvent )
     {
       try
       {
-        aEvent.acceptDrop( DnDConstants.ACTION_COPY_OR_MOVE );
-
         final Transferable transferable = aEvent.getTransferable();
 
         Integer realRowValue = ( Integer )transferable.getTransferData( ChannelRowTransferable.FLAVOR );
         if ( realRowValue != null )
         {
           final int oldRealRow = realRowValue.intValue();
-          final int newRealRow = this.ctlr.getSignalRow( aEvent.getLocation() );
+          final int newRealRow = aController.getSignalRow( aEvent.getLocation() );
 
-          // Move the channel rows...
-          this.ctlr.moveChannelRows( oldRealRow, newRealRow );
+          if ( ( oldRealRow >= 0 ) && ( newRealRow >= 0 ) )
+          {
+            aEvent.acceptDrop( DnDConstants.ACTION_MOVE );
 
-          return true;
+            // Move the channel rows...
+            aController.moveChannelRows( oldRealRow, newRealRow );
+
+            return true;
+          }
         }
       }
       catch ( Exception exception )
@@ -120,34 +84,11 @@ class SignalView extends JPanel
     }
 
     /**
-     * @param aEvent
+     * {@inheritDoc}
      */
-    private boolean dropCursor( final DropTargetDropEvent aEvent )
+    public DataFlavor getFlavor()
     {
-      try
-      {
-        aEvent.acceptDrop( DnDConstants.ACTION_COPY_OR_MOVE );
-
-        final Transferable transferable = aEvent.getTransferable();
-
-        Integer cursorValue = ( Integer )transferable.getTransferData( CursorTransferable.FLAVOR );
-        if ( cursorValue != null )
-        {
-          final int cursorIdx = cursorValue.intValue();
-          final Point newLocation = aEvent.getLocation();
-
-          // Move the cursor position...
-          this.ctlr.moveCursor( cursorIdx, newLocation, false /* aSnap */);
-
-          return true;
-        }
-      }
-      catch ( Exception exception )
-      {
-        LOG.log( Level.WARNING, "Getting transfer data failed!", exception );
-      }
-
-      return false;
+      return ChannelRowTransferable.FLAVOR;
     }
   }
 
@@ -160,6 +101,7 @@ class SignalView extends JPanel
   // VARIABLES
 
   private final SignalDiagramController controller;
+  private final DropHandler dropHandler;
 
   // CONSTRUCTORS
 
@@ -172,17 +114,39 @@ class SignalView extends JPanel
   public SignalView( final SignalDiagramController aController )
   {
     this.controller = aController;
+    this.dropHandler = new DropHandler();
 
     setBackground( Utils.parseColor( "#1E2126" ) );
 
     // setDebugGraphicsOptions( DebugGraphics.LOG_OPTION );
     // DebugGraphics.setLogStream( System.err );
-
-    final DnDTargetController targetController = new DnDTargetController();
-    setDropTarget( new DropTarget( this, targetController ) );
   }
 
   // METHODS
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void addNotify()
+  {
+    super.addNotify();
+
+    final SignalDiagramComponent parent = ( SignalDiagramComponent )getParent();
+    parent.getDndTargetController().addHandler( this.dropHandler );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void removeNotify()
+  {
+    final SignalDiagramComponent parent = ( SignalDiagramComponent )getParent();
+    parent.getDndTargetController().removeHandler( this.dropHandler );
+
+    super.removeNotify();
+  }
 
   /**
    * {@inheritDoc}
