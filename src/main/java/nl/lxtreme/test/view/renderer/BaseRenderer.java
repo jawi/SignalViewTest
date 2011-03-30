@@ -23,43 +23,26 @@ package nl.lxtreme.test.view.renderer;
 
 import java.awt.*;
 
-import nl.lxtreme.test.view.*;
-
 
 /**
  * Provides an abstract base class for a renderer.
  */
 abstract class BaseRenderer implements Renderer
 {
-  // VARIABLES
-
-  private SignalDiagramController controller;
-  private Rectangle clipBounds;
-
   // METHODS
 
   /**
    * {@inheritDoc}
    */
   @Override
-  public void initialize( final SignalDiagramController aController, final Rectangle aClipBounds )
-  {
-    this.controller = aController;
-    this.clipBounds = aClipBounds;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public final Rectangle render( final Graphics2D aCanvas, final int aXpos, final int aYpos )
+  public final Rectangle render( final Graphics2D aCanvas, final Rectangle aClip, final int aXpos, final int aYpos )
   {
     // Move the canvas to the requested position...
     aCanvas.translate( aXpos, aYpos );
 
     try
     {
-      final Rectangle result = render( aCanvas );
+      final Rectangle result = render( aCanvas, aClip );
       // the resulting rectangle is in the (0, 0) coordinate space, while we're
       // actually at the (aXpos, aYpos) coordinate space...
       result.translate( aXpos, aYpos );
@@ -73,18 +56,23 @@ abstract class BaseRenderer implements Renderer
   }
 
   /**
-   * @return the clipBounds
+   * Renders the UI-part on the given canvas. The renderer itself is responsible
+   * for determining the absolute coordinates where it should render the
+   * UI-part.
+   * <p>
+   * This method is a convenience for
+   * <code>{@link #render(Graphics2D, int, int, Object...)}</code> with the
+   * coordinates (0, 0).
+   * </p>
+   * 
+   * @param aCanvas
+   *          the canvas to use to render, never <code>null</code>;
+   * @param aClip
+   *          the clip rectangle to use while rendering, never <code>null</code>
+   *          .
+   * @return the rectangle with the coordinates of the affected area on the
+   *         given canvas, or <code>null</code> if the entire canvas is
+   *         affected.
    */
-  protected final Rectangle getClipBounds()
-  {
-    return this.clipBounds;
-  }
-
-  /**
-   * @return the controller
-   */
-  protected final SignalDiagramController getController()
-  {
-    return this.controller;
-  }
+  protected abstract Rectangle render( final Graphics2D aCanvas, final Rectangle aClip );
 }

@@ -30,7 +30,8 @@ import javax.swing.*;
 
 import nl.lxtreme.test.dnd.*;
 import nl.lxtreme.test.dnd.DragAndDropTargetController.DragAndDropHandler;
-import nl.lxtreme.test.model.*;
+import nl.lxtreme.test.view.renderer.*;
+import nl.lxtreme.test.view.renderer.Renderer;
 
 
 /**
@@ -208,12 +209,12 @@ final class CursorView extends JComponent
       // Tell Swing how we would like to render ourselves...
       g2d.setRenderingHints( createRenderingHints() );
 
-      final int y1 = clip.y;
-      final int y2 = clip.y + clip.height;
+      // negative in order to ensure the flag itself is hidden
+      final int y = -40;
 
-      final ScreenModel screenModel = this.controller.getScreenModel();
+      final Renderer renderer = new CursorFlagRenderer();
+
       final Long[] cursors = getCursors();
-
       for ( int i = 0; i < cursors.length; i++ )
       {
         final Long cursorTimestamp = cursors[i];
@@ -224,15 +225,13 @@ final class CursorView extends JComponent
 
         final int x = this.controller.toScaledScreenCoordinate( cursorTimestamp.longValue() ).x;
 
-        if ( clip.contains( x, y1 ) || clip.contains( x, y2 ) )
-        {
-          g2d.setColor( screenModel.getCursorColor( i ) );
-          g2d.drawLine( x, y1, x, y2 );
+        renderer.setContext( this.controller, Integer.valueOf( i ), cursorTimestamp );
 
-          if ( this.controller.isSnapModeEnabled() && inArea( this.lastPoint, x ) )
-          {
-            g2d.drawOval( x - 4, this.lastPoint.y - 4, 8, 8 );
-          }
+        renderer.render( g2d, clip, x, y );
+
+        if ( this.controller.isSnapModeEnabled() && inArea( this.lastPoint, x ) )
+        {
+          g2d.drawOval( x - 4, this.lastPoint.y - 4, 8, 8 );
         }
       }
     }

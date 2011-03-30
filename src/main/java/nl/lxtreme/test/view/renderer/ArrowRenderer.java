@@ -48,7 +48,7 @@ public class ArrowRenderer extends BaseRenderer
    * {@inheritDoc}
    */
   @Override
-  public Rectangle render( final Graphics2D aCanvas )
+  public Rectangle render( final Graphics2D aCanvas, final Rectangle aClip1 )
   {
     // When given, show an additional arrowhead to denote the pulse
     // itself, taking care of the "smallest" pulse we're displaying...

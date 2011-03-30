@@ -249,15 +249,18 @@ final class TimeLineView extends JComponent
   }
 
   /**
+   * Paints the cursors on this timeline.
+   * 
    * @param aCanvas
+   *          the canvas to paint the cursor (flags) on;
    * @param aClip
+   *          the clip boundaries.
    */
   private void paintCursorFlags( final Graphics2D aCanvas, final Rectangle aClip )
   {
     aCanvas.setFont( this.minorTickFont );
 
     final Renderer renderer = new CursorFlagRenderer();
-    renderer.initialize( this.controller, aClip );
 
     final Long[] cursors = this.controller.getDataModel().getCursors();
     for ( int i = 0; i < cursors.length; i++ )
@@ -268,12 +271,12 @@ final class TimeLineView extends JComponent
         continue;
       }
 
-      renderer.setContext( Integer.valueOf( i ), cursorTimestamp );
+      renderer.setContext( this.controller, Integer.valueOf( i ), cursorTimestamp );
 
       int x = this.controller.toScaledScreenCoordinate( cursorTimestamp.longValue() ).x;
-      int y = aClip.height;
+      int y = 4;
 
-      renderer.render( aCanvas, x, y );
+      renderer.render( aCanvas, aClip, x, y );
     }
   }
 }

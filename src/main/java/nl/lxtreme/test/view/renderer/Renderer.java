@@ -23,8 +23,6 @@ package nl.lxtreme.test.view.renderer;
 
 import java.awt.*;
 
-import nl.lxtreme.test.view.*;
-
 
 /**
  * Provides a renderer of a specific UI-part.
@@ -38,38 +36,13 @@ public interface Renderer
   // METHODS
 
   /**
-   * Sets the context in which this renderer should function.
-   * 
-   * @param aController
-   *          the controller to use, never <code>null</code>;
-   * @param aClipBounds
-   *          the clip boundaries to use, cannot be <code>null</code>.
-   */
-  void initialize( final SignalDiagramController aController, final Rectangle aClipBounds );
-
-  /**
-   * Renders the UI-part on the given canvas. The renderer itself is responsible
-   * for determining the absolute coordinates where it should render the
-   * UI-part.
-   * <p>
-   * This method is a convenience for
-   * <code>{@link #render(Graphics2D, int, int, Object...)}</code> with the
-   * coordinates (0, 0).
-   * </p>
-   * 
-   * @param aCanvas
-   *          the canvas to use to render, never <code>null</code>.
-   * @return the rectangle with the coordinates of the affected area on the
-   *         given canvas, or <code>null</code> if the entire canvas is
-   *         affected.
-   */
-  Rectangle render( final Graphics2D aCanvas );
-
-  /**
    * Renders the UI-part on the given canvas.
    * 
    * @param aCanvas
    *          the canvas to use to render, never <code>null</code>;
+   * @param aClip
+   *          the clip rectangle to use while rendering, never <code>null</code>
+   *          ;
    * @param aXpos
    *          the X-position, >= 0;
    * @param aYpos
@@ -78,7 +51,7 @@ public interface Renderer
    *         given canvas, or <code>null</code> if the entire canvas is
    *         affected.
    */
-  Rectangle render( final Graphics2D aCanvas, final int aXpos, final int aYpos );
+  Rectangle render( final Graphics2D aCanvas, final Rectangle aClip, final int aXpos, final int aYpos );
 
   /**
    * Sets the rendering context, allowing this renderer to be parameterized.

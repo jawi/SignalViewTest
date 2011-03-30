@@ -98,7 +98,7 @@ public class SignalInfoRenderer extends BaseRenderer
    * {@inheritDoc}
    */
   @Override
-  public Rectangle render( final Graphics2D aCanvas )
+  public Rectangle render( final Graphics2D aCanvas, final Rectangle aClip1 )
   {
     float linePos = 0;
     float width = 0;
@@ -128,7 +128,7 @@ public class SignalInfoRenderer extends BaseRenderer
 
     final Rectangle rect = new Rectangle( 0, 0, ( int )width + 8, ( int )linePos + 8 );
     // Fit as much of the tooltip on screen as possible...
-    ensureRectangleWithinBounds( rect, getClipBounds() );
+    ensureRectangleWithinBounds( rect, aCanvas.getClipBounds() );
 
     aCanvas.setColor( Color.DARK_GRAY );
     aCanvas.fillRoundRect( rect.x, rect.y, rect.width, rect.height, 8, 8 );
