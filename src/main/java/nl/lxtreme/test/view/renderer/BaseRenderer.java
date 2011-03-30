@@ -60,12 +60,14 @@ abstract class BaseRenderer implements Renderer
     try
     {
       final Rectangle result = render( aCanvas );
-      result.translate( -aXpos, -aYpos );
+      // the resulting rectangle is in the (0, 0) coordinate space, while we're
+      // actually at the (aXpos, aYpos) coordinate space...
+      result.translate( aXpos, aYpos );
       return result;
     }
     finally
     {
-      // Move the canvas to the requested position...
+      // Move the canvas back from the requested position...
       aCanvas.translate( -aXpos, -aYpos );
     }
   }

@@ -77,7 +77,7 @@ public final class SimpleLineMeasurer implements Iterator<TextLayout>
   @Override
   public boolean hasNext()
   {
-    return ( this.pos >= this.limit );
+    return ( this.pos < this.limit );
   }
 
   /**
@@ -89,23 +89,21 @@ public final class SimpleLineMeasurer implements Iterator<TextLayout>
   @Override
   public TextLayout next()
   {
-    if ( this.pos < this.limit )
+    if ( !hasNext() )
     {
-      int layoutLimit = nextOffset();
-      if ( layoutLimit == this.pos )
-      {
-        return null;
-      }
-
-      TextLayout result = this.measurer.getLayout( this.pos, layoutLimit );
-      this.pos = layoutLimit;
-
-      return result;
+      throw new NoSuchElementException();
     }
-    else
+
+    int layoutLimit = nextOffset();
+    if ( layoutLimit == this.pos )
     {
       return null;
     }
+
+    TextLayout result = this.measurer.getLayout( this.pos, layoutLimit );
+    this.pos = layoutLimit;
+
+    return result;
   }
 
   /**
