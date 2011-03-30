@@ -108,13 +108,13 @@ final class TimeLineView extends JComponent
       final double zoomFactor = screenModel.getZoomFactor();
       final double sampleRate = dataModel.getSampleRate();
 
-      final long startTimeStamp = getStartTimestamp( clip );
-      final long endTimeStamp = getEndTimestamp( clip );
-
-      final double timebase = getTimebase( endTimeStamp - startTimeStamp );
+      final double timebase = getTimebase( zoomFactor );
 
       double tickIncr = Math.max( 1.0, timebase / TIMELINE_INCREMENT );
       double timeIncr = Math.max( 1.0, timebase / ( 10.0 * TIMELINE_INCREMENT ) );
+
+      final long startTimeStamp = getStartTimestamp( clip );
+      final long endTimeStamp = getEndTimestamp( clip );
 
       double timestamp = ( Math.ceil( startTimeStamp / tickIncr ) * tickIncr );
       double majorTimestamp = timestamp;
@@ -238,14 +238,14 @@ final class TimeLineView extends JComponent
    * Determines the time base for the given absolute time (= total time
    * displayed).
    * 
-   * @param aAbsoluteTime
-   *          the absolute time displayed by this component, that is the ending
-   *          time stamp - starting time stamp.
+   * @param aZoomFactor
+   *          the current zoom factor.
    * @return a time base, as power of 10.
    */
-  private double getTimebase( final double aAbsoluteTime )
+  private double getTimebase( final double aZoomFactor )
   {
-    return Math.pow( 10, Math.round( Math.log10( aAbsoluteTime ) ) );
+    final double absoluteTime = getVisibleRect().width / aZoomFactor;
+    return Math.pow( 10, Math.round( Math.log10( absoluteTime ) ) );
   }
 
   /**
