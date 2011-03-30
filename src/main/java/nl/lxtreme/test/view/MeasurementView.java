@@ -22,6 +22,7 @@ package nl.lxtreme.test.view;
 
 
 import java.awt.*;
+
 import javax.swing.*;
 
 import nl.lxtreme.test.view.renderer.*;
@@ -36,9 +37,6 @@ final class MeasurementView extends JComponent
   // CONSTANTS
 
   private static final long serialVersionUID = 1L;
-
-  private static final int LEFT_FACING = 1;
-  private static final int RIGHT_FACING = -1;
 
   // VARIABLES
 
@@ -88,12 +86,6 @@ final class MeasurementView extends JComponent
   {
     repaintPartially();
     this.signalHover = ( aSignalHover == null ) ? null : aSignalHover.clone();
-    if ( this.signalHover != null )
-    {
-      // Copy the boundaries of the arrow rectangle...
-      this.arrowRectangle.setBounds( this.signalHover.getRectangle() );
-    }
-
     repaintPartially();
   }
 
@@ -108,9 +100,7 @@ final class MeasurementView extends JComponent
     if ( aSignalHover != null )
     {
       this.signalHover = aSignalHover.clone();
-      // Copy the boundaries of the arrow rectangle...
-      this.arrowRectangle.setBounds( this.signalHover.getRectangle() );
-      repaintPartially();
+      repaint();
     }
   }
 
@@ -125,39 +115,48 @@ final class MeasurementView extends JComponent
       return;
     }
 
+    Rectangle rect;
+
     final Graphics2D g2d = ( Graphics2D )aGraphics.create();
     try
     {
-      final Rectangle clip = g2d.getClipBounds();
+      final Rectangle hoverRect = this.signalHover.getRectangle();
+
+      int x = hoverRect.x;
+      int w = hoverRect.width;
+      int y = ( int )( hoverRect.getCenterY() );
+      int middlePos = this.signalHover.getMiddleXpos() - x;
+
       // Tell Swing how we would like to render ourselves...
       g2d.setRenderingHints( createRenderingHints() );
 
-      final int x1 = this.arrowRectangle.x + 1;
-      final int x2 = this.arrowRectangle.x + this.arrowRectangle.width - 1;
-      final int x3 = this.signalHover.getMiddleXpos();
+      // Render the arrow + arrowheads...
+      final Renderer arrowRenderer = new ArrowRenderer();
+      arrowRenderer.initialize( null, g2d.getClipBounds() );
 
-      final double yOffset = this.arrowRectangle.getCenterY();
-      final int y = ( int )( yOffset );
+      arrowRenderer.setContext( Integer.valueOf( w ), Integer.valueOf( middlePos ) );
 
-      if ( clip.contains( x1, y ) || clip.contains( x2, y ) )
-      {
-        g2d.setColor( Color.YELLOW );
-        drawDoubleHeadedArrow( g2d, x1, y, x2 );
-        // When given, show an additional arrowhead to denote the pulse
-        // itself, taking care of the "smallest" pulse we're displaying...
-        int dir = LEFT_FACING;
-        if ( ( x3 >= x1 ) && ( ( x2 - x3 ) > ( x3 - x1 ) ) )
-        {
-          dir = RIGHT_FACING;
-        }
-        drawArrowHead( g2d, x3, y, dir, 8, 8 );
-      }
+      g2d.setColor( Color.YELLOW );
 
-      final int textXpos = ( int )( ( x1 + ( ( x2 - x1 ) / 2.0f ) ) + 8 );
-      final int textYpos = ( int )( yOffset + 8 );
+      rect = arrowRenderer.render( g2d, x, y );
+
+      this.arrowRectangle.setBounds( rect );
+
+      // Render the tool tip...
       final String text = this.signalHover.toString();
+      final int textXpos = ( int )( ( x + ( w / 2.0f ) ) + 8 );
+      final int textYpos = y + 8;
 
-      drawToolTip( g2d, text, textXpos, textYpos );
+      g2d.setFont( this.textFont );
+
+      Renderer signalInfoRenderer = new SignalInfoRenderer();
+      signalInfoRenderer.initialize( null, getViewBounds() );
+
+      signalInfoRenderer.setContext( text );
+
+      rect = signalInfoRenderer.render( g2d, textXpos, textYpos );
+
+      this.textRectangle.setBounds( rect );
     }
     finally
     {
@@ -177,149 +176,6 @@ final class MeasurementView extends JComponent
     hints.put( RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED );
     hints.put( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY );
     return hints;
-  }
-
-  /**
-   * Draws a single arrow head
-   * 
-   * @param aG
-   *          the canvas to draw on;
-   * @param aXpos
-   *          the X position of the arrow head;
-   * @param aYpos
-   *          the (center) Y position of the arrow head;
-   * @param aFactor
-   *          +1 to have a left-facing arrow head, -1 to have a right-facing
-   *          arrow head;
-   * @param aArrowWidth
-   *          the total width of the arrow head;
-   * @param aArrowHeight
-   *          the total height of the arrow head.
-   */
-  private void drawArrowHead( final Graphics2D aG, final int aXpos, final int aYpos, final int aFactor,
-      final int aArrowWidth, final int aArrowHeight )
-  {
-    final double halfHeight = aArrowHeight / 2.0;
-    final int x1 = aXpos + ( aFactor * aArrowWidth );
-    final int y1 = ( int )Math.ceil( aYpos - halfHeight );
-    final int y2 = ( int )Math.floor( aYpos + halfHeight );
-
-    final Polygon arrowHead = new Polygon();
-    arrowHead.addPoint( aXpos, aYpos );
-    arrowHead.addPoint( x1, y1 );
-    arrowHead.addPoint( x1, y2 );
-
-    aG.fill( arrowHead );
-  }
-
-  /**
-   * Draws a double headed arrow of 8x8.
-   * 
-   * @param aG
-   *          the canvas to draw on;
-   * @param aX1
-   *          the starting X position of the arrow;
-   * @param aY
-   *          the starting Y position of the arrow;
-   * @param aX2
-   *          the ending X position of the arrow.
-   */
-  private void drawDoubleHeadedArrow( final Graphics aG, final int aX1, final int aY, final int aX2 )
-  {
-    drawDoubleHeadedArrow( aG, aX1, aY, aX2, aY );
-  }
-
-  /**
-   * Draws a double headed arrow of 8x8.
-   * 
-   * @param aG
-   *          the canvas to draw on;
-   * @param aX1
-   *          the starting X position of the arrow;
-   * @param aY1
-   *          the starting Y position of the arrow;
-   * @param aX2
-   *          the ending X position of the arrow;
-   * @param aY2
-   *          the ending Y position of the arrow.
-   */
-  private void drawDoubleHeadedArrow( final Graphics aG, final int aX1, final int aY1, final int aX2, final int aY2 )
-  {
-    drawDoubleHeadedArrow( aG, aX1, aY1, aX2, aY2, 8, 8 );
-  }
-
-  /**
-   * Draws a double headed arrow with arrow heads of a given width and height.
-   * 
-   * @param aG
-   *          the canvas to draw on;
-   * @param aX1
-   *          the starting X position of the arrow;
-   * @param aY1
-   *          the starting Y position of the arrow;
-   * @param aX2
-   *          the ending X position of the arrow;
-   * @param aY2
-   *          the ending Y position of the arrow;
-   * @param aArrowWidth
-   *          the total width of the arrow head;
-   * @param aArrowHeight
-   *          the total height of the arrow head.
-   */
-  private void drawDoubleHeadedArrow( final Graphics aG, final int aX1, final int aY1, final int aX2, final int aY2,
-      final int aArrowWidth, final int aArrowHeight )
-  {
-    final Graphics2D g2d = ( Graphics2D )aG.create();
-
-    final int lineWidth = Math.abs( aX2 - aX1 );
-    final int threshold = ( 2 * aArrowWidth ) + 2;
-    try
-    {
-      int x1 = aX1;
-      int x2 = aX2;
-
-      if ( lineWidth > threshold )
-      {
-        drawArrowHead( g2d, aX1, aY1, LEFT_FACING, aArrowWidth, aArrowHeight );
-        // why x2 needs to be shifted by one pixel is beyond me...
-        drawArrowHead( g2d, aX2 + 1, aY2, RIGHT_FACING, aArrowWidth, aArrowHeight );
-
-        x1 += aArrowWidth - 1;
-        x2 -= aArrowWidth + 1;
-      }
-
-      g2d.drawLine( x1, aY1, x2, aY2 );
-    }
-    finally
-    {
-      g2d.dispose();
-    }
-  }
-
-  /**
-   * Draws the tooltip text at the given X,Y position, using a simple line
-   * wrapping mechanism.
-   * 
-   * @param aCanvas
-   *          the canvas to draw on;
-   * @param aText
-   *          the tooltip text to draw;
-   * @param aXpos
-   *          the X-position to draw the tooltip text;
-   * @param aYpos
-   *          the Y-position to draw the tooltip text.
-   */
-  private void drawToolTip( final Graphics2D aCanvas, final String aText, final int aXpos, final int aYpos )
-  {
-    aCanvas.setFont( this.textFont );
-
-    Renderer signalInfoRenderer = new SignalInfoRenderer();
-    signalInfoRenderer.initialize( null, getViewBounds() );
-
-    signalInfoRenderer.setContext( aText );
-
-    Rectangle rect = signalInfoRenderer.render( aCanvas, aXpos, aYpos );
-    this.textRectangle.setBounds( rect );
   }
 
   /**
@@ -357,12 +213,17 @@ final class MeasurementView extends JComponent
    */
   private void repaintPartially()
   {
-    if ( !this.arrowRectangle.isEmpty() )
+    Rectangle rect = this.arrowRectangle;
+    if ( this.signalHover != null )
     {
-      final int x = this.arrowRectangle.x - 10;
-      final int y = this.arrowRectangle.y - 10;
-      final int w = this.arrowRectangle.width + 20;
-      final int h = this.arrowRectangle.height + 20;
+      rect = rect.union( this.signalHover.getRectangle() );
+    }
+    if ( !rect.isEmpty() )
+    {
+      final int x = rect.x - 10;
+      final int y = rect.y - 10;
+      final int w = rect.width + 20;
+      final int h = rect.height + 20;
 
       repaint( x, y, w, h );
     }
