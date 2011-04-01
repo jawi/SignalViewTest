@@ -324,7 +324,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
         return;
       }
 
-      final Component sourceComponent = aEvent.getComponent();
+      final Component sourceComponent = getSignalView( aEvent.getComponent() );
       final GhostGlassPane glassPane = getGlassPane( sourceComponent );
 
       final Point dropPoint;
@@ -377,10 +377,10 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
       final DragSourceContext dragSourceContext = aEvent.getDragSourceContext();
 
-      final Component sourceComponent = dragSourceContext.getComponent();
-      final GhostGlassPane glassPane = getGlassPane( sourceComponent );
+      final GhostGlassPane glassPane = getGlassPane( dragSourceContext.getComponent() );
+      final Component signalView = getSignalView( dragSourceContext.getComponent() );
 
-      SwingUtilities.convertPointFromScreen( coordinate, sourceComponent );
+      SwingUtilities.convertPointFromScreen( coordinate, signalView );
 
       final Point dropPoint;
       if ( dragSourceContext.getTransferable() instanceof CursorTransferable )
@@ -391,13 +391,23 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
         final long timestamp = this.controller.toUnscaledScreenCoordinate( coordinate );
         final String cursorFlag = this.controller.getCursorFlagText( cursorIdx, timestamp );
 
-        glassPane.setRenderContext( cursorFlag );
+        dropPoint = createCursorDropPoint( coordinate, signalView, glassPane );
 
-        dropPoint = createCursorDropPoint( coordinate, sourceComponent, glassPane );
+        if ( this.controller.isSnapModeEnabled() )
+        {
+          final Point cursorSnapPoint = this.controller.getCursorSnapPoint( coordinate );
+          SwingUtilities.convertPoint( signalView, cursorSnapPoint, glassPane );
+
+          glassPane.setRenderContext( cursorFlag, cursorSnapPoint );
+        }
+        else
+        {
+          glassPane.setRenderContext( cursorFlag );
+        }
       }
       else
       {
-        dropPoint = createChannelDropPoint( coordinate, sourceComponent, glassPane );
+        dropPoint = createChannelDropPoint( coordinate, signalView, glassPane );
       }
 
       glassPane.setDropPoint( dropPoint );
@@ -460,6 +470,15 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     private GhostGlassPane getGlassPane( final Component aComponent )
     {
       return ( GhostGlassPane )SwingUtilities.getRootPane( aComponent ).getGlassPane();
+    }
+
+    private SignalView getSignalView( final Component aComponent )
+    {
+      if ( aComponent instanceof SignalDiagramComponent )
+      {
+        return ( ( SignalDiagramComponent )aComponent ).getSignalView();
+      }
+      return null;
     }
 
     /**

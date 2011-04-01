@@ -122,20 +122,6 @@ final class CursorView extends JComponent
   // METHODS
 
   /**
-   * @param aPoint
-   * @param aX
-   * @return
-   */
-  private static boolean inArea( final Point aPoint, final int aX )
-  {
-    if ( aPoint == null )
-    {
-      return false;
-    }
-    return ( aX >= aPoint.x - 5 ) && ( aX <= aPoint.x + 5 );
-  }
-
-  /**
    * {@inheritDoc}
    */
   @Override
@@ -231,11 +217,6 @@ final class CursorView extends JComponent
         final int x = this.controller.toScaledScreenCoordinate( cursorTimestamp.longValue() ).x;
 
         renderer.render( canvas, x, y );
-
-        if ( this.controller.isSnapModeEnabled() && inArea( this.lastPoint, x ) )
-        {
-          canvas.drawOval( x - 4, this.lastPoint.y - 4, 8, 8 );
-        }
       }
     }
     finally

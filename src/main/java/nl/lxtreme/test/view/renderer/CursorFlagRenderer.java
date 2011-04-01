@@ -45,6 +45,7 @@ public class CursorFlagRenderer extends BaseRenderer
   // VARIABLES
 
   private String cursorFlagText;
+  private Point snapCursorPoint;
 
   // METHODS
 
@@ -59,6 +60,15 @@ public class CursorFlagRenderer extends BaseRenderer
       throw new IllegalArgumentException( "Expected a String parameter!" );
     }
     this.cursorFlagText = ( ( String )aParameters[0] );
+
+    if ( aParameters.length > 1 )
+    {
+      this.snapCursorPoint = ( Point )( ( Point )aParameters[1] ).clone();
+    }
+    else
+    {
+      this.snapCursorPoint = null;
+    }
   }
 
   /**
@@ -100,6 +110,13 @@ public class CursorFlagRenderer extends BaseRenderer
     aCanvas.setColor( flagColor );
 
     drawCursorLine( aCanvas, clip, result );
+
+    if ( this.snapCursorPoint != null )
+    {
+      aCanvas.drawOval( result.x - 4, this.snapCursorPoint.y - 4, 8, 8 );
+      // enlarge the affected area with the snap cursor point...
+      result.grow( 4, 4 );
+    }
 
     return result;
   }

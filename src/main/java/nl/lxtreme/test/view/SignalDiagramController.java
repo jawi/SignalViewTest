@@ -123,15 +123,12 @@ public final class SignalDiagramController
    */
   public Point getCursorDropPoint( final Point aCoordinate )
   {
-    final Point dropPoint = new Point( aCoordinate.x, -36 ); // XXX
+    final Point dropPoint = new Point( aCoordinate.x, 0 ); // XXX
 
     if ( isSnapModeEnabled() )
     {
-      final SignalHoverInfo signalHover = getSignalHover( aCoordinate );
-      if ( signalHover != null )
-      {
-        dropPoint.x = signalHover.getRectangle().x;
-      }
+      final Point snapPoint = getCursorSnapPoint( aCoordinate );
+      dropPoint.x = snapPoint.x;
     }
 
     return dropPoint;
@@ -173,6 +170,28 @@ public final class SignalDiagramController
     final String cursorTime = Utils.displayTime( aCursorTimestamp / sampleRate );
 
     return String.format( "%s: %s", label, cursorTime );
+  }
+
+  /**
+   * XXX
+   * 
+   * @param aCoordinate
+   * @return
+   */
+  public Point getCursorSnapPoint( final Point aCoordinate )
+  {
+    if ( isSnapModeEnabled() )
+    {
+      final SignalHoverInfo signalHover = getSignalHover( aCoordinate );
+      if ( signalHover != null )
+      {
+        final Rectangle rect = signalHover.getRectangle();
+        aCoordinate.x = rect.x;
+        aCoordinate.y = rect.y;
+      }
+    }
+
+    return aCoordinate;
   }
 
   /**

@@ -119,7 +119,10 @@ final class GhostGlassPane extends JPanel
   }
 
   /**
+   * Sets the rendering context for the renderer that should be painted.
+   * 
    * @param aParameters
+   *          the rendering context parameters, cannot be <code>null</code>.
    */
   public void setRenderContext( final Object... aParameters )
   {
@@ -135,7 +138,7 @@ final class GhostGlassPane extends JPanel
   @Override
   protected void paintComponent( final Graphics aGraphics )
   {
-    if ( ( this.dropPoint == null ) || !isVisible() )
+    if ( ( this.dropPoint == null ) || ( this.renderer == null ) || !isVisible() )
     {
       return;
     }
@@ -143,8 +146,9 @@ final class GhostGlassPane extends JPanel
     final Graphics2D g2d = ( Graphics2D )aGraphics.create();
     try
     {
+      g2d.setRenderingHints( createRenderingHints() );
+
       g2d.setComposite( AlphaComposite.getInstance( AlphaComposite.SRC_OVER, GhostGlassPane.ALPHA ) );
-      g2d.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
 
       g2d.setColor( Color.YELLOW );
 
@@ -158,4 +162,17 @@ final class GhostGlassPane extends JPanel
       g2d.dispose();
     }
   }
+
+  /**
+   * Creates the rendering hints for this view.
+   */
+  private RenderingHints createRenderingHints()
+  {
+    RenderingHints hints = new RenderingHints( RenderingHints.KEY_INTERPOLATION,
+        RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR );
+    hints.put( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
+    hints.put( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED );
+    return hints;
+  }
+
 }
