@@ -30,6 +30,7 @@ import javax.swing.*;
 
 import nl.lxtreme.test.dnd.*;
 import nl.lxtreme.test.dnd.DragAndDropTargetController.DragAndDropHandler;
+import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.view.renderer.*;
 import nl.lxtreme.test.view.renderer.Renderer;
 
@@ -159,12 +160,12 @@ final class CursorView extends JComponent
    */
   public void moveCursor( final int aCursorIdx, final Point aPoint )
   {
-    final Long[] cursors = getCursors();
+    final SampleDataModel dataModel = this.controller.getDataModel();
 
-    repaintPartially( cursors, aCursorIdx );
+    repaintPartially( dataModel.getCursor( aCursorIdx ) );
 
     final long newCursorTimestamp = this.controller.toUnscaledScreenCoordinate( aPoint );
-    this.controller.getDataModel().setCursor( aCursorIdx, Long.valueOf( newCursorTimestamp ) );
+    dataModel.setCursor( aCursorIdx, Long.valueOf( newCursorTimestamp ) );
 
     if ( this.controller.isSnapModeEnabled() )
     {
@@ -175,7 +176,7 @@ final class CursorView extends JComponent
       this.lastPoint = null;
     }
 
-    repaintPartially( cursors, aCursorIdx );
+    repaintPartially( dataModel.getCursor( aCursorIdx ) );
   }
 
   /**
@@ -212,12 +213,13 @@ final class CursorView extends JComponent
       // negative in order to ensure the flag itself is hidden
       final int y = -40;
 
+      final SampleDataModel dataModel = this.controller.getDataModel();
+
       final Renderer renderer = new CursorFlagRenderer();
 
-      final Long[] cursors = getCursors();
-      for ( int i = 0; i < cursors.length; i++ )
+      for ( int i = 0; i < SampleDataModel.MAX_CURSORS; i++ )
       {
-        final Long cursorTimestamp = cursors[i];
+        final Long cursorTimestamp = dataModel.getCursor( i );
         if ( cursorTimestamp == null )
         {
           continue;
@@ -254,27 +256,18 @@ final class CursorView extends JComponent
   }
 
   /**
-   * @return
-   */
-  private Long[] getCursors()
-  {
-    return this.controller.getDataModel().getCursors();
-  }
-
-  /**
    * Repaints the areas that were affected by the last paint() call.
    * 
    * @param aCursorIdx
    *          the cursor index of the cursor to repaint.
    */
-  private void repaintPartially( final Long[] aCursors, final int aCursorIdx )
+  private void repaintPartially( final Long aCursorTimestamp )
   {
     int x, y, w, h;
 
-    final Long cursorTimestamp = aCursors[aCursorIdx];
-    if ( cursorTimestamp != null )
+    if ( aCursorTimestamp != null )
     {
-      x = this.controller.toScaledScreenCoordinate( cursorTimestamp.longValue() ).x - 1;
+      x = this.controller.toScaledScreenCoordinate( aCursorTimestamp.longValue() ).x - 1;
       y = 0;
       w = 2;
       h = getHeight();

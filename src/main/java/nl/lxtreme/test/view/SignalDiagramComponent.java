@@ -560,8 +560,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     add( this.signalView, StackLayout.TOP );
     add( this.cursorView, StackLayout.TOP );
     add( this.measurementView, StackLayout.TOP );
-
-    this.controller.setSignalDiagram( this );
   }
 
   // METHODS
@@ -576,6 +574,8 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   {
     try
     {
+      this.controller.setSignalDiagram( this );
+
       final JRootPane rootPane = SwingUtilities.getRootPane( this );
       rootPane.setGlassPane( new GhostGlassPane() );
 

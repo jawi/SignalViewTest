@@ -46,13 +46,13 @@ final class GhostGlassPane extends JPanel
 
   private static final Stroke INDICATOR_STROKE = new BasicStroke( 1.5f );
 
+  private static final float ALPHA = 0.7f;
+
   // VARIABLES
 
   private volatile Point oldDropPoint;
   private volatile Point dropPoint;
   private volatile DragAndDropContext context;
-
-  private final float alpha = 0.7f;
 
   // CONSTRUCTORS
 
@@ -145,7 +145,7 @@ final class GhostGlassPane extends JPanel
     final Graphics2D g2d = ( Graphics2D )aGraphics.create();
     try
     {
-      g2d.setComposite( AlphaComposite.getInstance( AlphaComposite.SRC_OVER, this.alpha ) );
+      g2d.setComposite( AlphaComposite.getInstance( AlphaComposite.SRC_OVER, GhostGlassPane.ALPHA ) );
       g2d.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
 
       final Rectangle clip = g2d.getClipBounds();

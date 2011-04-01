@@ -44,6 +44,10 @@ public class SampleDataModel
     int getSampleData( final int[] aValues, final long[] aTimestamps, final int aSize );
   }
 
+  // CONSTANTS
+
+  public static final int MAX_CURSORS = 10;
+
   // VARIABLES
 
   private final int[] values;
@@ -71,7 +75,7 @@ public class SampleDataModel
     System.out.println( "Data size         : " + aSize + " samples." );
     System.out.println( "Total sample time : " + Utils.displayTime( aSize / ( double )this.sampleRate ) );
 
-    this.cursors = new Long[10];
+    this.cursors = new Long[MAX_CURSORS];
     this.cursors[0] = Long.valueOf( 100 );
     this.cursors[1] = Long.valueOf( 200 );
   }

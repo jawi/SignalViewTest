@@ -22,7 +22,6 @@ package nl.lxtreme.test.view;
 
 
 import java.awt.*;
-
 import javax.swing.*;
 
 import nl.lxtreme.test.model.*;
@@ -33,7 +32,7 @@ import nl.lxtreme.test.model.*;
  */
 public final class SignalDiagramController
 {
-  // INNER TYPES
+  // CONSTANTS
 
   /**
    * Defines the area around each cursor in which the mouse cursor should be in

@@ -131,14 +131,7 @@ final class SignalHoverInfo implements Cloneable
     {
       return false;
     }
-    if ( this.totalPulseWidth != other.totalPulseWidth )
-    {
-      return false;
-    }
-    if ( this.timestamp != other.timestamp )
-    {
-      return false;
-    }
+
     if ( this.rectangle == null )
     {
       if ( other.rectangle != null )
