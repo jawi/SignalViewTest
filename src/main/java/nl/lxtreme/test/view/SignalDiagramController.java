@@ -123,7 +123,7 @@ public final class SignalDiagramController
    */
   public Point getCursorDropPoint( final Point aCoordinate )
   {
-    final Point dropPoint = new Point( aCoordinate.x, -40 );
+    final Point dropPoint = new Point( aCoordinate.x, -36 ); // XXX
 
     if ( isSnapModeEnabled() )
     {

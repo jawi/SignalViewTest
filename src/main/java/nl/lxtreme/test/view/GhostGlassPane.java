@@ -72,42 +72,18 @@ final class GhostGlassPane extends JPanel
    */
   public void repaintPartially()
   {
-    // int x, y, width, height;
-    // if ( DragAndDropContext.CHANNEL_ROW == this.context )
-    // {
-    // width = Math.min( getWidth(), CHANNEL_ROW_MARKER_WIDTH ) + 2;
-    // height = CHANNEL_ROW_MARKER_HEIGHT + 2;
-    // }
-    // else
-    // {
-    // width = CURSOR_MARKER_WIDTH + 2;
-    // height = Math.min( getHeight(), CURSOR_MARKER_HEIGHT ) + 2;
-    // }
-    //
-    // if ( this.oldDropPoint != null )
-    // {
-    // x = Math.max( 0, this.oldDropPoint.x - 1 );
-    // y = Math.max( 0, this.oldDropPoint.y + 1 );
-    // repaint( x, y, width, height );
-    // }
-    // if ( ( this.dropPoint != null ) && !this.dropPoint.equals(
-    // this.oldDropPoint ) )
-    // {
-    // x = Math.max( 0, this.dropPoint.x - 1 );
-    // y = Math.max( 0, this.dropPoint.y + 1 );
-    // repaint( x, y, width, height );
-    // }
-    //
-    // if ( DragAndDropContext.CHANNEL_ROW == this.context )
-
     if ( this.affectedArea == null )
     {
-      System.out.println( "!!!" );
-      repaint(); // TODO fix me!
+      repaint();
     }
     else
     {
-      repaint( this.affectedArea );
+      final Rectangle repaintRect = new Rectangle( this.affectedArea );
+      // take a slighter larger area in order to ensure we've repainted
+      // everything correctly...
+      repaintRect.grow( 2, 2 );
+
+      repaint( repaintRect );
     }
   }
 
