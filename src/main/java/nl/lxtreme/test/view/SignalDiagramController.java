@@ -98,6 +98,46 @@ public final class SignalDiagramController
   }
 
   /**
+   * Calculates the drop point for the channel under the given coordinate.
+   * 
+   * @param aCoordinate
+   *          the coordinate to return the channel drop point for, cannot be
+   *          <code>null</code>.
+   * @return a drop point, never <code>null</code>.
+   */
+  public Point getChannelDropPoint( final Point aCoordinate )
+  {
+    final int dropRow = getCalculatedSignalRow( aCoordinate );
+    final int channelHeight = this.screenModel.getChannelHeight();
+
+    return new Point( 0, ( dropRow + 1 ) * channelHeight );
+  }
+
+  /**
+   * Calculates the drop point for the cursor under the given coordinate.
+   * 
+   * @param aCoordinate
+   *          the coordinate to return the channel drop point for, cannot be
+   *          <code>null</code>.
+   * @return a drop point, never <code>null</code>.
+   */
+  public Point getCursorDropPoint( final Point aCoordinate )
+  {
+    final Point dropPoint = new Point( aCoordinate.x, -40 );
+
+    if ( isSnapModeEnabled() )
+    {
+      final SignalHoverInfo signalHover = getSignalHover( aCoordinate );
+      if ( signalHover != null )
+      {
+        dropPoint.x = signalHover.getRectangle().x;
+      }
+    }
+
+    return dropPoint;
+  }
+
+  /**
    * Returns the cursor flag text for the cursor with the given index.
    * 
    * @param aCursorIdx
@@ -112,10 +152,25 @@ public final class SignalDiagramController
     {
       return "";
     }
+    return getCursorFlagText( aCursorIdx, cursorTimestamp.longValue() );
+  }
+
+  /**
+   * Returns the cursor flag text for the cursor with the given index.
+   * 
+   * @param aCursorIdx
+   *          the index of the cursor, >= 0 && < 10;
+   * @param aCursorTimestamp
+   *          the timestamp of the cursor.
+   * @return a cursor flag text, or an empty string if the cursor with the given
+   *         index is undefined.
+   */
+  public String getCursorFlagText( final int aCursorIdx, final long aCursorTimestamp )
+  {
     final double sampleRate = this.dataModel.getSampleRate();
 
     final String label = this.screenModel.getCursorLabel( aCursorIdx );
-    final String cursorTime = Utils.displayTime( cursorTimestamp / sampleRate );
+    final String cursorTime = Utils.displayTime( aCursorTimestamp / sampleRate );
 
     return String.format( "%s: %s", label, cursorTime );
   }
@@ -137,7 +192,7 @@ public final class SignalDiagramController
   }
 
   /**
-   * Determines the signal row beneath the given coordinate.
+   * Determines the real signal row beneath the given coordinate.
    * <p>
    * This method returns the <em>virtual</em> signal row, not the actual signal
    * row.
@@ -150,11 +205,8 @@ public final class SignalDiagramController
    */
   public int getSignalRow( final Point aCoordinate )
   {
-    final int signalWidth = this.dataModel.getWidth();
-    final int channelHeight = this.screenModel.getChannelHeight();
-
-    final int row = ( int )( aCoordinate.y / ( double )channelHeight );
-    if ( ( row < 0 ) || ( row >= signalWidth ) )
+    final int row = getCalculatedSignalRow( aCoordinate );
+    if ( row < 0 )
     {
       return -1;
     }
@@ -664,6 +716,32 @@ public final class SignalDiagramController
   {
     final long[] timestamps = this.dataModel.getTimestamps();
     return ( long )( ( timestamps[timestamps.length - 1] + 1 ) * this.screenModel.getZoomFactor() );
+  }
+
+  /**
+   * Determines the signal row as calculated from the given coordinate.
+   * <p>
+   * This method returns the <em>virtual</em> signal row, not the actual signal
+   * row.
+   * </p>
+   * 
+   * @param aCoordinate
+   *          the coordinate to return the signal row for, cannot be
+   *          <code>null</code>.
+   * @return a signal row, or -1 if the point is nowhere near a signal row.
+   */
+  private int getCalculatedSignalRow( final Point aCoordinate )
+  {
+    final int signalWidth = this.dataModel.getWidth();
+    final int channelHeight = this.screenModel.getChannelHeight();
+
+    final int row = ( int )( aCoordinate.y / ( double )channelHeight );
+    if ( ( row < 0 ) || ( row >= signalWidth ) )
+    {
+      return -1;
+    }
+
+    return row;
   }
 
   /**

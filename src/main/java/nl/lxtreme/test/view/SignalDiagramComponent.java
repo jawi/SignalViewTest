@@ -30,7 +30,8 @@ import javax.swing.*;
 
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.dnd.*;
-import nl.lxtreme.test.model.*;
+import nl.lxtreme.test.view.renderer.*;
+import nl.lxtreme.test.view.renderer.Renderer;
 
 
 /**
@@ -238,17 +239,15 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     // VARIABLES
 
     private final SignalDiagramController controller;
-    private final SignalView signalView;
 
     // CONSTRUCTORS
 
     /**
      * @param aController
      */
-    public DragAndDropListener( final SignalDiagramController aController, final SignalView aSignalView )
+    public DragAndDropListener( final SignalDiagramController aController )
     {
       this.controller = aController;
-      this.signalView = aSignalView;
     }
 
     // METHODS
@@ -267,7 +266,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       DragAndDropLock.setDragAndDropStarted( false );
       DragAndDropLock.setLocked( false );
 
-      GhostGlassPane glassPane = ( GhostGlassPane )SwingUtilities.getRootPane( this.signalView ).getGlassPane();
+      final GhostGlassPane glassPane = getGlassPane( aEvent.getDragSourceContext().getComponent() );
 
       glassPane.clearDropPoint();
       glassPane.repaint();
@@ -311,37 +310,52 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
       final Point coordinate = ( Point )aEvent.getDragOrigin().clone();
 
-      int row = -1;
+      int channelRow = -1;
       int cursorIdx = this.controller.findCursor( coordinate );
       if ( !this.controller.isCursorMode() || ( cursorIdx < 0 ) )
       {
-        row = this.controller.getSignalRow( coordinate );
+        channelRow = this.controller.getSignalRow( coordinate );
       }
 
       // Check whether we've got either a row or a cursor in our dragging
       // context...
-      if ( ( row < 0 ) && ( cursorIdx < 0 ) )
+      if ( ( channelRow < 0 ) && ( cursorIdx < 0 ) )
       {
         return;
       }
 
-      final GhostGlassPane glassPane = ( GhostGlassPane )SwingUtilities.getRootPane( this.signalView ).getGlassPane();
+      final Component sourceComponent = aEvent.getComponent();
+      final GhostGlassPane glassPane = getGlassPane( sourceComponent );
 
-      if ( row >= 0 )
+      final Point dropPoint;
+      final Renderer renderer;
+      final Transferable transferable;
+
+      if ( channelRow >= 0 )
       {
         // We're starting to drag a channel row...
-        glassPane.setDropPoint( createChannelDropPoint( coordinate, glassPane ), DragAndDropContext.CHANNEL_ROW );
-        aEvent.startDrag( DragSource.DefaultMoveDrop, new ChannelRowTransferable( row ) );
+        renderer = new ChannelInsertionPointRenderer();
+
+        dropPoint = createChannelDropPoint( coordinate, sourceComponent, glassPane );
+
+        transferable = new ChannelRowTransferable( channelRow );
       }
       else
       {
         // We're starting to drag a cursor...
-        glassPane.setDropPoint( createCursorDropPoint( coordinate, glassPane ), DragAndDropContext.CURSOR );
-        aEvent.startDrag( DragSource.DefaultCopyDrop, new CursorTransferable( cursorIdx ) );
+        renderer = new CursorFlagRenderer();
+        renderer.setContext( this.controller.getCursorFlagText( cursorIdx ) );
+
+        dropPoint = createCursorDropPoint( coordinate, sourceComponent, glassPane );
+
+        transferable = new CursorTransferable( cursorIdx );
       }
 
+      glassPane.setDropPoint( dropPoint, renderer );
       glassPane.setVisible( true );
       glassPane.repaintPartially();
+
+      aEvent.startDrag( DragSource.DefaultMoveDrop, transferable );
     }
 
     /**
@@ -355,26 +369,38 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
         return;
       }
 
-      this.controller.setSnapModeEnabled( isSnapModeKeyEvent( aEvent ) );
-
-      final Point coordinate = ( Point )aEvent.getLocation().clone();
-      SwingUtilities.convertPointFromScreen( coordinate, this.signalView );
-
-      Point dropPoint;
-
-      final GhostGlassPane glassPane = ( GhostGlassPane )SwingUtilities.getRootPane( this.signalView ).getGlassPane();
-
-      DragAndDropContext context = getContext( aEvent );
-      if ( DragAndDropContext.CHANNEL_ROW == context )
+      final Point coordinate = aEvent.getLocation();
+      if ( coordinate == null )
       {
-        dropPoint = createChannelDropPoint( coordinate, glassPane );
+        return;
+      }
+
+      final DragSourceContext dragSourceContext = aEvent.getDragSourceContext();
+
+      final Component sourceComponent = dragSourceContext.getComponent();
+      final GhostGlassPane glassPane = getGlassPane( sourceComponent );
+
+      SwingUtilities.convertPointFromScreen( coordinate, sourceComponent );
+
+      final Point dropPoint;
+      if ( dragSourceContext.getTransferable() instanceof CursorTransferable )
+      {
+        this.controller.setSnapModeEnabled( isSnapModeKeyEvent( aEvent ) );
+
+        final Integer cursorIdx = ( ( CursorTransferable )dragSourceContext.getTransferable() ).getCursorIdx();
+        final long timestamp = this.controller.toUnscaledScreenCoordinate( coordinate );
+        final String cursorFlag = this.controller.getCursorFlagText( cursorIdx, timestamp );
+
+        glassPane.setRenderContext( cursorFlag );
+
+        dropPoint = createCursorDropPoint( coordinate, sourceComponent, glassPane );
       }
       else
       {
-        dropPoint = createCursorDropPoint( coordinate, glassPane );
+        dropPoint = createChannelDropPoint( coordinate, sourceComponent, glassPane );
       }
 
-      glassPane.setDropPoint( dropPoint, context );
+      glassPane.setDropPoint( dropPoint );
       glassPane.repaintPartially();
     }
 
@@ -400,19 +426,12 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
      * @param aDropRow
      * @return
      */
-    private Point createChannelDropPoint( final Point aPoint, final JComponent aTargetComponent )
+    private Point createChannelDropPoint( final Point aPoint, final Component aSourceComponent,
+        final Component aTargetComponent )
     {
-      final ScreenModel screenModel = this.controller.getScreenModel();
-      final SampleDataModel dataModel = this.controller.getDataModel();
+      final Point dropPoint = this.controller.getChannelDropPoint( aPoint );
 
-      final int signalWidth = dataModel.getWidth();
-      final int channelHeight = screenModel.getChannelHeight();
-
-      final int dropRow = Math.max( 0, Math.min( signalWidth, ( int )( aPoint.y / ( double )channelHeight ) ) );
-
-      final Point dropPoint = new Point( 0, ( dropRow + 1 ) * channelHeight );
-
-      SwingUtilities.convertPointToScreen( dropPoint, this.signalView );
+      SwingUtilities.convertPointToScreen( dropPoint, aSourceComponent );
       SwingUtilities.convertPointFromScreen( dropPoint, aTargetComponent );
 
       return dropPoint;
@@ -423,37 +442,24 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
      * @param aTargetComponent
      * @return
      */
-    private Point createCursorDropPoint( final Point aPoint, final JComponent aTargetComponent )
+    private Point createCursorDropPoint( final Point aPoint, final Component aSourceComponent,
+        final Component aTargetComponent )
     {
-      final Point dropPoint = new Point( aPoint.x, 0 );
+      final Point dropPoint = this.controller.getCursorDropPoint( aPoint );
 
-      if ( this.controller.isSnapModeEnabled() )
-      {
-        final SignalHoverInfo signalHover = this.controller.getSignalHover( aPoint );
-        if ( signalHover != null )
-        {
-          dropPoint.x = signalHover.getRectangle().x;
-        }
-      }
-
-      SwingUtilities.convertPointToScreen( dropPoint, this.signalView );
+      SwingUtilities.convertPointToScreen( dropPoint, aSourceComponent );
       SwingUtilities.convertPointFromScreen( dropPoint, aTargetComponent );
 
       return dropPoint;
     }
 
     /**
-     * @param aEvent
+     * @param aComponent
      * @return
      */
-    private DragAndDropContext getContext( final DragSourceEvent aEvent )
+    private GhostGlassPane getGlassPane( final Component aComponent )
     {
-      final Transferable transferable = aEvent.getDragSourceContext().getTransferable();
-      if ( transferable instanceof CursorTransferable )
-      {
-        return DragAndDropContext.CURSOR;
-      }
-      return DragAndDropContext.CHANNEL_ROW;
+      return ( GhostGlassPane )SwingUtilities.getRootPane( aComponent ).getGlassPane();
     }
 
     /**
@@ -591,7 +597,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       addMouseListener( this.cursorMouseListener );
       addMouseMotionListener( this.cursorMouseListener );
 
-      this.dndListener = new DragAndDropListener( this.controller, this.signalView );
+      this.dndListener = new DragAndDropListener( this.controller );
 
       final DragSource dragSource = DragSource.getDefaultDragSource();
       dragSource.createDefaultDragGestureRecognizer( this, DnDConstants.ACTION_MOVE, this.dndListener );

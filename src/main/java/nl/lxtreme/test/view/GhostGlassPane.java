@@ -25,8 +25,6 @@ import java.awt.*;
 
 import javax.swing.*;
 
-import nl.lxtreme.test.dnd.*;
-
 
 /**
  * Provides a glass pane for use while dragging channels around. This glass pane
@@ -38,21 +36,13 @@ final class GhostGlassPane extends JPanel
 
   private static final long serialVersionUID = 1L;
 
-  private static final int CHANNEL_ROW_MARKER_WIDTH = 100;
-  private static final int CHANNEL_ROW_MARKER_HEIGHT = 2;
-
-  private static final int CURSOR_MARKER_WIDTH = 2;
-  private static final int CURSOR_MARKER_HEIGHT = Integer.MAX_VALUE;
-
-  private static final Stroke INDICATOR_STROKE = new BasicStroke( 1.5f );
-
   private static final float ALPHA = 0.7f;
 
   // VARIABLES
 
-  private volatile Point oldDropPoint;
+  private volatile Rectangle affectedArea;
   private volatile Point dropPoint;
-  private volatile DragAndDropContext context;
+  private volatile nl.lxtreme.test.view.renderer.Renderer renderer;
 
   // CONSTRUCTORS
 
@@ -72,7 +62,6 @@ final class GhostGlassPane extends JPanel
    */
   public void clearDropPoint()
   {
-    this.oldDropPoint = null;
     this.dropPoint = null;
   }
 
@@ -83,34 +72,42 @@ final class GhostGlassPane extends JPanel
    */
   public void repaintPartially()
   {
-    int x, y, width, height;
-    if ( DragAndDropContext.CHANNEL_ROW == this.context )
+    // int x, y, width, height;
+    // if ( DragAndDropContext.CHANNEL_ROW == this.context )
+    // {
+    // width = Math.min( getWidth(), CHANNEL_ROW_MARKER_WIDTH ) + 2;
+    // height = CHANNEL_ROW_MARKER_HEIGHT + 2;
+    // }
+    // else
+    // {
+    // width = CURSOR_MARKER_WIDTH + 2;
+    // height = Math.min( getHeight(), CURSOR_MARKER_HEIGHT ) + 2;
+    // }
+    //
+    // if ( this.oldDropPoint != null )
+    // {
+    // x = Math.max( 0, this.oldDropPoint.x - 1 );
+    // y = Math.max( 0, this.oldDropPoint.y + 1 );
+    // repaint( x, y, width, height );
+    // }
+    // if ( ( this.dropPoint != null ) && !this.dropPoint.equals(
+    // this.oldDropPoint ) )
+    // {
+    // x = Math.max( 0, this.dropPoint.x - 1 );
+    // y = Math.max( 0, this.dropPoint.y + 1 );
+    // repaint( x, y, width, height );
+    // }
+    //
+    // if ( DragAndDropContext.CHANNEL_ROW == this.context )
+
+    if ( this.affectedArea == null )
     {
-      width = Math.min( getWidth(), CHANNEL_ROW_MARKER_WIDTH ) + 2;
-      height = CHANNEL_ROW_MARKER_HEIGHT + 2;
+      System.out.println( "!!!" );
+      repaint(); // TODO fix me!
     }
     else
     {
-      width = CURSOR_MARKER_WIDTH + 2;
-      height = Math.min( getHeight(), CURSOR_MARKER_HEIGHT ) + 2;
-    }
-
-    if ( this.oldDropPoint != null )
-    {
-      x = Math.max( 0, this.oldDropPoint.x - 1 );
-      y = Math.max( 0, this.oldDropPoint.y + 1 );
-      repaint( x, y, width, height );
-    }
-    if ( ( this.dropPoint != null ) && !this.dropPoint.equals( this.oldDropPoint ) )
-    {
-      x = Math.max( 0, this.dropPoint.x - 1 );
-      y = Math.max( 0, this.dropPoint.y + 1 );
-      repaint( x, y, width, height );
-    }
-
-    if ( DragAndDropContext.CHANNEL_ROW == this.context )
-    {
-      repaint(); // TODO fix me!
+      repaint( this.affectedArea );
     }
   }
 
@@ -124,11 +121,36 @@ final class GhostGlassPane extends JPanel
    * @param aContext
    *          the drag and drop context, cannot be <code>null</code>.
    */
-  public void setDropPoint( final Point aLocation, final DragAndDropContext aContext )
+  public void setDropPoint( final Point aLocation )
   {
-    this.oldDropPoint = this.dropPoint;
+    setDropPoint( aLocation, this.renderer );
+  }
+
+  /**
+   * Sets the location where the channel/cursor might be dropped. This location
+   * is used to draw a marker indicating the drop point.
+   * 
+   * @param aLocation
+   *          the location where the channel/cursor might be dropped, cannot be
+   *          <code>null</code>;
+   * @param aContext
+   *          the drag and drop context, cannot be <code>null</code>.
+   */
+  public void setDropPoint( final Point aLocation, final nl.lxtreme.test.view.renderer.Renderer aRenderer )
+  {
     this.dropPoint = aLocation;
-    this.context = aContext;
+    this.renderer = aRenderer;
+  }
+
+  /**
+   * @param aParameters
+   */
+  public void setRenderContext( final Object... aParameters )
+  {
+    if ( this.renderer != null )
+    {
+      this.renderer.setContext( aParameters );
+    }
   }
 
   /**
@@ -148,23 +170,12 @@ final class GhostGlassPane extends JPanel
       g2d.setComposite( AlphaComposite.getInstance( AlphaComposite.SRC_OVER, GhostGlassPane.ALPHA ) );
       g2d.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
 
-      final Rectangle clip = g2d.getClipBounds();
+      g2d.setColor( Color.YELLOW );
 
       int x = this.dropPoint.x;
       int y = this.dropPoint.y;
 
-      if ( DragAndDropContext.CHANNEL_ROW == this.context )
-      {
-        g2d.setColor( Color.YELLOW );
-        g2d.setStroke( INDICATOR_STROKE );
-        g2d.drawLine( x, y, x + CHANNEL_ROW_MARKER_WIDTH, y );
-      }
-      else
-      {
-        g2d.setColor( Color.LIGHT_GRAY );
-        g2d.setStroke( INDICATOR_STROKE );
-        g2d.drawLine( x, y, x, clip.height );
-      }
+      this.affectedArea = this.renderer.render( g2d, x, y );
     }
     finally
     {

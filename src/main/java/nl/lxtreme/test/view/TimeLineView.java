@@ -258,8 +258,6 @@ final class TimeLineView extends JComponent
    */
   private void paintCursorFlags( final Graphics2D aCanvas, final Rectangle aClip )
   {
-    aCanvas.setFont( this.minorTickFont );
-
     final Renderer renderer = new CursorFlagRenderer();
 
     final SampleDataModel dataModel = this.controller.getDataModel();

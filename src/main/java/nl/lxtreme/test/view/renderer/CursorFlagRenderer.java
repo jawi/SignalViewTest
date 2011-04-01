@@ -23,6 +23,8 @@ package nl.lxtreme.test.view.renderer;
 
 import java.awt.*;
 
+import javax.swing.*;
+
 import nl.lxtreme.test.*;
 
 
@@ -66,6 +68,11 @@ public class CursorFlagRenderer extends BaseRenderer
   protected Rectangle render( final Graphics2D aCanvas )
   {
     final Rectangle clip = aCanvas.getClipBounds();
+
+    final Font baseFont = ( Font )UIManager.get( "Label.font" );
+    Font textFont = baseFont.deriveFont( baseFont.getSize() * 0.8f );
+
+    aCanvas.setFont( textFont );
 
     final FontMetrics fm = aCanvas.getFontMetrics();
     final int flagWidth = fm.stringWidth( this.cursorFlagText ) + PADDING_WIDTH;
