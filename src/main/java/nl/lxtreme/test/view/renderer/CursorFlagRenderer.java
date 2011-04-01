@@ -24,8 +24,6 @@ package nl.lxtreme.test.view.renderer;
 import java.awt.*;
 
 import nl.lxtreme.test.*;
-import nl.lxtreme.test.model.*;
-import nl.lxtreme.test.view.*;
 
 
 /**
@@ -44,9 +42,7 @@ public class CursorFlagRenderer extends BaseRenderer
 
   // VARIABLES
 
-  private int cursorIdx;
-  private long cursorTimestamp;
-  private SignalDiagramController controller;
+  private String cursorFlagText;
 
   // METHODS
 
@@ -54,28 +50,19 @@ public class CursorFlagRenderer extends BaseRenderer
    * {@inheritDoc}
    */
   @Override
-  public Rectangle render( final Graphics2D aCanvas, final Rectangle aClip1 )
+  public Rectangle render( final Graphics2D aCanvas )
   {
     final Rectangle clip = aCanvas.getClipBounds();
 
-    final SampleDataModel dataModel = this.controller.getDataModel();
-    final ScreenModel screenModel = this.controller.getScreenModel();
-
-    final Color flagColor = screenModel.getCursorColor( this.cursorIdx );
-    final double sampleRate = dataModel.getSampleRate();
-
-    final String timeStr = String.format( "%s: %s", screenModel.getCursorLabel( this.cursorIdx ),
-        Utils.displayTime( this.cursorTimestamp / sampleRate ) );
-
     final FontMetrics fm = aCanvas.getFontMetrics();
-    final int flagWidth = fm.stringWidth( timeStr ) + PADDING_WIDTH;
+    final int flagWidth = fm.stringWidth( this.cursorFlagText ) + PADDING_WIDTH;
     final int flagHeight = fm.getHeight() + PADDING_HEIGHT;
 
     final Rectangle result = new Rectangle();
     result.width = flagWidth;
     result.height = clip.height;
 
-    aCanvas.setColor( flagColor );
+    final Color flagColor = aCanvas.getColor();
 
     if ( clip.contains( result.x, result.y, result.width, flagHeight - 1 ) )
     {
@@ -87,7 +74,7 @@ public class CursorFlagRenderer extends BaseRenderer
       final Color textColor = Utils.getContrastColor( flagColor );
       aCanvas.setColor( textColor );
 
-      aCanvas.drawString( timeStr, textXpos, textYpos );
+      aCanvas.drawString( this.cursorFlagText, textXpos, textYpos );
     }
 
     aCanvas.setColor( flagColor );
@@ -103,27 +90,38 @@ public class CursorFlagRenderer extends BaseRenderer
   @Override
   public void setContext( final Object... aParameters )
   {
-    if ( ( aParameters == null ) || ( aParameters.length < 3 ) )
+    if ( ( aParameters == null ) || ( aParameters.length < 1 ) )
     {
-      throw new IllegalArgumentException( "Expected a Controller, Integer & Long parameter!" );
+      throw new IllegalArgumentException( "Expected a String parameter!" );
     }
-    this.controller = ( ( SignalDiagramController )aParameters[0] );
-    this.cursorIdx = ( ( Integer )aParameters[1] ).intValue();
-    this.cursorTimestamp = ( ( Long )aParameters[2] ).longValue();
+    this.cursorFlagText = ( ( String )aParameters[0] );
   }
 
   /**
    * Draws the cursor line itself.
    * 
    * @param aCanvas
+   *          the canvas to draw on;
    * @param aClip
-   * @param aResult
+   *          the clip boundaries;
+   * @param aFlagArea
+   *          the outer rectangle denoting the cursor boundaries (+ flag).
    */
-  private void drawCursorLine( final Graphics2D aCanvas, final Rectangle aClip, final Rectangle aResult )
+  private void drawCursorLine( final Graphics2D aCanvas, final Rectangle aClip, final Rectangle aFlagArea )
   {
-    int x = Math.max( aResult.x, aClip.x );
-    int y1 = Math.max( aResult.y, aClip.y );
-    int y2 = Math.max( aResult.y + aResult.height, aClip.y + aClip.height );
+    int x = aFlagArea.x;
+
+    int y1 = aFlagArea.y;
+    if ( y1 < aClip.y )
+    {
+      y1 = aClip.y;
+    }
+    int y2 = aFlagArea.y + aFlagArea.height;
+    if ( y2 > aClip.y + aClip.height )
+    {
+      y2 = aClip.y + aClip.height;
+    }
+
     aCanvas.drawLine( x, y1, x, y2 );
   }
 }

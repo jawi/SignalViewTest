@@ -132,13 +132,12 @@ final class MeasurementView extends JComponent
 
       // Render the arrow + arrowheads...
       final Renderer arrowRenderer = new ArrowRenderer();
-      final Rectangle clip = g2d.getClipBounds();
 
       arrowRenderer.setContext( Integer.valueOf( w ), Integer.valueOf( middlePos ) );
 
       g2d.setColor( Color.YELLOW );
 
-      rect = arrowRenderer.render( g2d, clip, x, y );
+      rect = arrowRenderer.render( g2d, x, y );
 
       this.arrowRectangle.setBounds( rect );
 
@@ -154,7 +153,7 @@ final class MeasurementView extends JComponent
       signalInfoRenderer.setContext( text );
 
       // TODO: is the #getViewBounds() not solvable by .clip?
-      rect = signalInfoRenderer.render( g2d, getViewBounds(), textXpos, textYpos );
+      rect = signalInfoRenderer.render( g2d, textXpos, textYpos );
 
       this.textRectangle.setBounds( rect );
     }

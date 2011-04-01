@@ -35,14 +35,14 @@ abstract class BaseRenderer implements Renderer
    * {@inheritDoc}
    */
   @Override
-  public final Rectangle render( final Graphics2D aCanvas, final Rectangle aClip, final int aXpos, final int aYpos )
+  public final Rectangle render( final Graphics2D aCanvas, final int aXpos, final int aYpos )
   {
     // Move the canvas to the requested position...
     aCanvas.translate( aXpos, aYpos );
 
     try
     {
-      final Rectangle result = render( aCanvas, aClip );
+      final Rectangle result = render( aCanvas );
       // the resulting rectangle is in the (0, 0) coordinate space, while we're
       // actually at the (aXpos, aYpos) coordinate space...
       result.translate( aXpos, aYpos );
@@ -61,18 +61,15 @@ abstract class BaseRenderer implements Renderer
    * UI-part.
    * <p>
    * This method is a convenience for
-   * <code>{@link #render(Graphics2D, int, int, Object...)}</code> with the
+   * <code>{@link #render(Graphics2D, int, Object...)}</code> with the
    * coordinates (0, 0).
    * </p>
    * 
    * @param aCanvas
-   *          the canvas to use to render, never <code>null</code>;
-   * @param aClip
-   *          the clip rectangle to use while rendering, never <code>null</code>
-   *          .
+   *          the canvas to use to render, never <code>null</code>.
    * @return the rectangle with the coordinates of the affected area on the
    *         given canvas, or <code>null</code> if the entire canvas is
    *         affected.
    */
-  protected abstract Rectangle render( final Graphics2D aCanvas, final Rectangle aClip );
+  protected abstract Rectangle render( final Graphics2D aCanvas );
 }

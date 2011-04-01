@@ -202,18 +202,18 @@ final class CursorView extends JComponent
       return;
     }
 
-    final Graphics2D g2d = ( Graphics2D )aGraphics.create();
+    final Graphics2D canvas = ( Graphics2D )aGraphics.create();
 
     try
     {
-      final Rectangle clip = aGraphics.getClipBounds();
       // Tell Swing how we would like to render ourselves...
-      g2d.setRenderingHints( createRenderingHints() );
+      canvas.setRenderingHints( createRenderingHints() );
 
       // negative in order to ensure the flag itself is hidden
       final int y = -40;
 
       final SampleDataModel dataModel = this.controller.getDataModel();
+      final ScreenModel screenModel = this.controller.getScreenModel();
 
       final Renderer renderer = new CursorFlagRenderer();
 
@@ -225,21 +225,23 @@ final class CursorView extends JComponent
           continue;
         }
 
+        canvas.setColor( screenModel.getCursorColor( i ) );
+
+        renderer.setContext( this.controller.getCursorFlagText( i ) );
+
         final int x = this.controller.toScaledScreenCoordinate( cursorTimestamp.longValue() ).x;
 
-        renderer.setContext( this.controller, Integer.valueOf( i ), cursorTimestamp );
-
-        renderer.render( g2d, clip, x, y );
+        renderer.render( canvas, x, y );
 
         if ( this.controller.isSnapModeEnabled() && inArea( this.lastPoint, x ) )
         {
-          g2d.drawOval( x - 4, this.lastPoint.y - 4, 8, 8 );
+          canvas.drawOval( x - 4, this.lastPoint.y - 4, 8, 8 );
         }
       }
     }
     finally
     {
-      g2d.dispose();
+      canvas.dispose();
     }
   }
 

@@ -98,7 +98,7 @@ public class SignalInfoRenderer extends BaseRenderer
    * {@inheritDoc}
    */
   @Override
-  public Rectangle render( final Graphics2D aCanvas, final Rectangle aClip1 )
+  public Rectangle render( final Graphics2D aCanvas )
   {
     float linePos = 0;
     float width = 0;

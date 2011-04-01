@@ -40,9 +40,6 @@ public interface Renderer
    * 
    * @param aCanvas
    *          the canvas to use to render, never <code>null</code>;
-   * @param aClip
-   *          the clip rectangle to use while rendering, never <code>null</code>
-   *          ;
    * @param aXpos
    *          the X-position, >= 0;
    * @param aYpos
@@ -51,7 +48,7 @@ public interface Renderer
    *         given canvas, or <code>null</code> if the entire canvas is
    *         affected.
    */
-  Rectangle render( final Graphics2D aCanvas, final Rectangle aClip, final int aXpos, final int aYpos );
+  Rectangle render( final Graphics2D aCanvas, final int aXpos, final int aYpos );
 
   /**
    * Sets the rendering context, allowing this renderer to be parameterized.

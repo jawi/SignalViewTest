@@ -22,8 +22,10 @@ package nl.lxtreme.test.view;
 
 
 import java.awt.*;
+
 import javax.swing.*;
 
+import nl.lxtreme.test.*;
 import nl.lxtreme.test.model.*;
 
 
@@ -93,6 +95,26 @@ public final class SignalDiagramController
     }
 
     return -1;
+  }
+
+  /**
+   * Returns the cursor flag text for the cursor with the given index.
+   * 
+   * @param aCursorIdx
+   *          the index of the cursor, >= 0 && < 10.
+   * @return a cursor flag text, or an empty string if the cursor with the given
+   *         index is undefined.
+   */
+  public String getCursorFlagText( final int aCursorIdx )
+  {
+    final Long cursorTimestamp = this.dataModel.getCursor( aCursorIdx );
+    if ( cursorTimestamp == null )
+    {
+      return "";
+    }
+    final double sampleRate = this.dataModel.getSampleRate();
+    return String.format( "%s: %s", this.screenModel.getCursorLabel( aCursorIdx ),
+        Utils.displayTime( cursorTimestamp / sampleRate ) );
   }
 
   /**

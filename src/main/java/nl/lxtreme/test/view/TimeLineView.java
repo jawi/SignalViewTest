@@ -262,21 +262,25 @@ final class TimeLineView extends JComponent
 
     final Renderer renderer = new CursorFlagRenderer();
 
-    final Long[] cursors = this.controller.getDataModel().getCursors();
-    for ( int i = 0; i < cursors.length; i++ )
+    final SampleDataModel dataModel = this.controller.getDataModel();
+    final ScreenModel screenModel = this.controller.getScreenModel();
+
+    for ( int i = 0; i < SampleDataModel.MAX_CURSORS; i++ )
     {
-      final Long cursorTimestamp = cursors[i];
+      final Long cursorTimestamp = dataModel.getCursor( i );
       if ( cursorTimestamp == null )
       {
         continue;
       }
 
-      renderer.setContext( this.controller, Integer.valueOf( i ), cursorTimestamp );
+      aCanvas.setColor( screenModel.getCursorColor( i ) );
+
+      renderer.setContext( this.controller.getCursorFlagText( i ) );
 
       int x = this.controller.toScaledScreenCoordinate( cursorTimestamp.longValue() ).x;
       int y = 4;
 
-      renderer.render( aCanvas, aClip, x, y );
+      renderer.render( aCanvas, x, y );
     }
   }
 }
