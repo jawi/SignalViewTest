@@ -209,8 +209,7 @@ final class CursorView extends JComponent
       // Tell Swing how we would like to render ourselves...
       canvas.setRenderingHints( createRenderingHints() );
 
-      // negative in order to ensure the flag itself is hidden
-      final int y = -40;
+      final int y = getYposition();
 
       final SampleDataModel dataModel = this.controller.getDataModel();
       final ScreenModel screenModel = this.controller.getScreenModel();
@@ -255,6 +254,22 @@ final class CursorView extends JComponent
     hints.put( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
     hints.put( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED );
     return hints;
+  }
+
+  /**
+   * Returns the Y-position where the cursor (+ flag) should be drawn.
+   * 
+   * @return a Y-position, in the coordinate space of this component.
+   */
+  private int getYposition()
+  {
+    int result = 0;
+    if ( SwingUtilities.getAncestorOfClass( JViewport.class, this ) != null )
+    {
+      // negative in order to ensure the flag itself is hidden
+      result = -40;
+    }
+    return result;
   }
 
   /**

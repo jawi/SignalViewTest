@@ -113,8 +113,11 @@ public final class SignalDiagramController
       return "";
     }
     final double sampleRate = this.dataModel.getSampleRate();
-    return String.format( "%s: %s", this.screenModel.getCursorLabel( aCursorIdx ),
-        Utils.displayTime( cursorTimestamp / sampleRate ) );
+
+    final String label = this.screenModel.getCursorLabel( aCursorIdx );
+    final String cursorTime = Utils.displayTime( cursorTimestamp / sampleRate );
+
+    return String.format( "%s: %s", label, cursorTime );
   }
 
   /**

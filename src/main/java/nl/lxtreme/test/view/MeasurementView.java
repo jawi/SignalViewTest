@@ -152,7 +152,6 @@ final class MeasurementView extends JComponent
 
       signalInfoRenderer.setContext( text );
 
-      // TODO: is the #getViewBounds() not solvable by .clip?
       rect = signalInfoRenderer.render( g2d, textXpos, textYpos );
 
       this.textRectangle.setBounds( rect );
@@ -175,36 +174,6 @@ final class MeasurementView extends JComponent
     hints.put( RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED );
     hints.put( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY );
     return hints;
-  }
-
-  /**
-   * Returns the view boundaries.
-   * 
-   * @return a view boundaries, never <code>null</code>.
-   */
-  private Rectangle getViewBounds()
-  {
-    Rectangle result = getBounds();
-    JViewport viewPort = ( JViewport )SwingUtilities.getAncestorOfClass( JViewport.class, this );
-    if ( viewPort != null )
-    {
-      result = viewPort.getViewRect();
-    }
-
-    final Toolkit toolkit = Toolkit.getDefaultToolkit();
-    final Insets screenInsets = toolkit.getScreenInsets( getGraphicsConfiguration() );
-
-    // Take into account screen insets, decrease viewport
-    result.x += screenInsets.left;
-    result.y += screenInsets.top;
-    result.width -= ( screenInsets.left + screenInsets.right );
-    result.height -= ( screenInsets.top + screenInsets.bottom );
-    // Make sure the width of this component is taken into account...
-    result.width = Math.min( getWidth(), result.width );
-    // Make sure the height of this component is taken into account...
-    result.height = Math.min( getHeight(), result.height );
-
-    return result;
   }
 
   /**

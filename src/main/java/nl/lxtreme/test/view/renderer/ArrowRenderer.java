@@ -48,7 +48,21 @@ public class ArrowRenderer extends BaseRenderer
    * {@inheritDoc}
    */
   @Override
-  public Rectangle render( final Graphics2D aCanvas )
+  public void setContext( final Object... aParameters )
+  {
+    if ( ( aParameters == null ) || ( aParameters.length < 2 ) )
+    {
+      throw new IllegalArgumentException( "Expected two Integer parameters!" );
+    }
+    this.width = ( ( Integer )aParameters[0] ).intValue();
+    this.middlePos = ( ( Integer )aParameters[1] ).intValue();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  protected Rectangle render( final Graphics2D aCanvas )
   {
     // When given, show an additional arrowhead to denote the pulse
     // itself, taking care of the "smallest" pulse we're displaying...
@@ -66,20 +80,6 @@ public class ArrowRenderer extends BaseRenderer
     drawDoubleHeadedArrow( aCanvas, 0, 0, this.width, 0, 8, 8 );
 
     return new Rectangle( 0, 0, this.width, HEAD_HEIGHT );
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public void setContext( final Object... aParameters )
-  {
-    if ( ( aParameters == null ) || ( aParameters.length < 2 ) )
-    {
-      throw new IllegalArgumentException( "Expected two Integer parameters!" );
-    }
-    this.width = ( ( Integer )aParameters[0] ).intValue();
-    this.middlePos = ( ( Integer )aParameters[1] ).intValue();
   }
 
   /**

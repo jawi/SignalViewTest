@@ -27,6 +27,7 @@ import javax.swing.*;
 
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.model.*;
+import nl.lxtreme.test.view.renderer.*;
 
 
 /**
@@ -42,7 +43,6 @@ class ChannelLabelsView extends JComponent
 
   private final SignalDiagramController controller;
   private final Font labelFont;
-  private final Font indexFont;
 
   // CONSTRUCTORS
 
@@ -57,7 +57,6 @@ class ChannelLabelsView extends JComponent
 
     Font font = ( Font )UIManager.get( "Label.font" );
     this.labelFont = font.deriveFont( Font.BOLD );
-    this.indexFont = font.deriveFont( font.getSize() * 0.75f );
   }
 
   // METHODS
@@ -113,9 +112,6 @@ class ChannelLabelsView extends JComponent
       canvas.setColor( getBackground() );
       canvas.fillRect( clip.x, clip.y, clip.width, clip.height );
 
-      final FontMetrics fm = canvas.getFontMetrics( this.labelFont );
-      final FontMetrics indexFm = canvas.getFontMetrics( this.indexFont );
-
       final SampleDataModel dataModel = this.controller.getDataModel();
       final ScreenModel screenModel = this.controller.getScreenModel();
 
@@ -126,37 +122,23 @@ class ChannelLabelsView extends JComponent
       final int width = getWidth();
 
       final Color labelBackground = Utils.parseColor( "#2E323B" );
+      ChannelLabelRenderer renderer = new ChannelLabelRenderer();
 
       final int dataWidth = dataModel.getWidth();
       for ( int b = 0; b < dataWidth; b++ )
       {
         final int yOffset = channelHeight * screenModel.toVirtualRow( b );
-
-        canvas.setColor( labelBackground );
-        canvas.fillRoundRect( clip.x - 10, yOffset + 2, clip.width + 8, channelHeight - 2, 12, 12 );
-
         final int textYoffset = signalOffset + yOffset;
 
-        String indexStr = Integer.toString( b );
-        String label = screenModel.getChannelLabel( b );
-        if ( ( label == null ) || label.trim().isEmpty() )
-        {
-          label = indexStr;
-        }
+        final String label = screenModel.getChannelLabel( b );
 
         canvas.setFont( this.labelFont );
-        final int labelYpos = textYoffset + ( int )( fm.getHeight() - ( 1.0 * fm.getHeight() / 3.0 ) );
-        final int labelXpos = ( width - fm.stringWidth( label ) - 6 );
+        canvas.setColor( labelBackground );
 
-        canvas.setColor( Utils.getContrastColor( labelBackground ) );
-        canvas.drawString( label, labelXpos, labelYpos );
+        canvas.fillRoundRect( clip.x - 10, yOffset + 2, clip.width + 8, channelHeight - 2, 12, 12 );
 
-        // paint the channel number below the label
-        canvas.setFont( this.indexFont );
-        final int indexYpos = textYoffset + ( int )( indexFm.getHeight() + ( 2.0 * fm.getHeight() / 3.0 ) );
-        final int indexXpos = ( width - indexFm.stringWidth( indexStr ) - 6 );
-
-        canvas.drawString( indexStr, indexXpos, indexYpos );
+        renderer.setContext( b, width, label );
+        renderer.render( canvas, 0, textYoffset );
       }
     }
     finally

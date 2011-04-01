@@ -30,6 +30,12 @@ import java.awt.*;
  * A renderer implementation should <em>not</em> be considered thread-safe, as
  * it can have mutable state (see {@link #setContext(Object...)}).
  * </p>
+ * <p>
+ * A renderer also should depend on its "context" set by its caller. This means
+ * that things like font, color and so on should be set a priori to calling the
+ * {@link #render(Graphics2D, int, int)} method. Renders are allowed to make
+ * local settings based on obtained context information.
+ * </p>
  */
 public interface Renderer
 {

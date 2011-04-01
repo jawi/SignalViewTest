@@ -50,7 +50,20 @@ public class CursorFlagRenderer extends BaseRenderer
    * {@inheritDoc}
    */
   @Override
-  public Rectangle render( final Graphics2D aCanvas )
+  public void setContext( final Object... aParameters )
+  {
+    if ( ( aParameters == null ) || ( aParameters.length < 1 ) )
+    {
+      throw new IllegalArgumentException( "Expected a String parameter!" );
+    }
+    this.cursorFlagText = ( ( String )aParameters[0] );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  protected Rectangle render( final Graphics2D aCanvas )
   {
     final Rectangle clip = aCanvas.getClipBounds();
 
@@ -82,19 +95,6 @@ public class CursorFlagRenderer extends BaseRenderer
     drawCursorLine( aCanvas, clip, result );
 
     return result;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public void setContext( final Object... aParameters )
-  {
-    if ( ( aParameters == null ) || ( aParameters.length < 1 ) )
-    {
-      throw new IllegalArgumentException( "Expected a String parameter!" );
-    }
-    this.cursorFlagText = ( ( String )aParameters[0] );
   }
 
   /**

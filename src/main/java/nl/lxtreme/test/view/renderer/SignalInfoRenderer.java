@@ -98,7 +98,20 @@ public class SignalInfoRenderer extends BaseRenderer
    * {@inheritDoc}
    */
   @Override
-  public Rectangle render( final Graphics2D aCanvas )
+  public void setContext( final Object... aParameters )
+  {
+    if ( ( aParameters == null ) || ( aParameters.length < 1 ) )
+    {
+      throw new IllegalArgumentException( "Expected a String parameter!" );
+    }
+    this.text = ( String )aParameters[0];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  protected Rectangle render( final Graphics2D aCanvas )
   {
     float linePos = 0;
     float width = 0;
@@ -147,18 +160,5 @@ public class SignalInfoRenderer extends BaseRenderer
     }
 
     return rect;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public void setContext( final Object... aParameters )
-  {
-    if ( ( aParameters == null ) || ( aParameters.length < 1 ) )
-    {
-      throw new IllegalArgumentException( "Expected a String parameter!" );
-    }
-    this.text = ( String )aParameters[0];
   }
 }

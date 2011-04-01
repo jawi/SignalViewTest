@@ -43,9 +43,12 @@ abstract class BaseRenderer implements Renderer
     try
     {
       final Rectangle result = render( aCanvas );
-      // the resulting rectangle is in the (0, 0) coordinate space, while we're
-      // actually at the (aXpos, aYpos) coordinate space...
-      result.translate( aXpos, aYpos );
+      if ( result != null )
+      {
+        // the resulting rectangle is in the (0, 0) coordinate space, while
+        // we're actually at the (aXpos, aYpos) coordinate space...
+        result.translate( aXpos, aYpos );
+      }
       return result;
     }
     finally
