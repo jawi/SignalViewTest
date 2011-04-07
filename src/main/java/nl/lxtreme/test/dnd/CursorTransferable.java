@@ -69,11 +69,11 @@ public class CursorTransferable implements Transferable
   /**
    * Returns the index of the cursor denoted by this transferable.
    * 
-   * @return the cursor index, as object, never <code>null</code>.
+   * @return the cursor index, >= 0.
    */
-  public Integer getCursorIdx()
+  public int getCursorIdx()
   {
-    return this.cursorIdx;
+    return this.cursorIdx.intValue();
   }
 
   /**

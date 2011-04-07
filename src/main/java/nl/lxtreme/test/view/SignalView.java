@@ -185,16 +185,24 @@ final class SignalView extends JPanel
       final int width = dataModel.getWidth();
 
       // Determine which bits of the actual signal should be drawn...
-      final int startBit = ( int )Math.max( 0, Math.floor( clip.y / ( double )channelHeight ) );
-      final int endBit = ( int )Math.min( width, Math.ceil( ( clip.y + clip.height ) / ( double )channelHeight ) );
+      int startBit = ( int )Math.max( 0, Math.floor( clip.y / ( double )channelHeight ) );
+      int endBit = ( int )Math.min( width, Math.ceil( ( clip.y + clip.height ) / ( double )channelHeight ) );
 
-      for ( int b = startBit; b < endBit; b++ )
+      for ( int b = 0; b < width; b++ )
       {
+        final int virtualRow = screenModel.toVirtualRow( b );
+        if ( ( virtualRow < startBit ) || ( virtualRow > endBit ) )
+        {
+          // Trivial reject: we don't have to paint this row, as it is not asked
+          // from us (due to clip boundaries)!
+          continue;
+        }
+
         canvas.setColor( screenModel.getChannelColor( b ) );
 
         final int mask = ( 1 << b );
         // determine where we really should draw the signal...
-        final int dy = signalOffset + ( channelHeight * screenModel.toVirtualRow( b ) );
+        final int dy = signalOffset + ( channelHeight * virtualRow );
 
         long timestamp = timestamps[startIdx];
         int prevSampleValue = ( ( values[startIdx] & mask ) == 0 ) ? 1 : 0;

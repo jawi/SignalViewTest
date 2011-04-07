@@ -387,7 +387,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       {
         this.controller.setSnapModeEnabled( isSnapModeKeyEvent( aEvent ) );
 
-        final Integer cursorIdx = ( ( CursorTransferable )dragSourceContext.getTransferable() ).getCursorIdx();
+        final int cursorIdx = ( ( CursorTransferable )dragSourceContext.getTransferable() ).getCursorIdx();
         final long timestamp = this.controller.toUnscaledScreenCoordinate( coordinate );
         final String cursorFlag = this.controller.getCursorFlagText( cursorIdx, timestamp );
 

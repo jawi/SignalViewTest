@@ -137,7 +137,7 @@ class ChannelLabelsView extends JComponent
 
         canvas.fillRoundRect( clip.x - 10, yOffset + 2, clip.width + 8, channelHeight - 2, 12, 12 );
 
-        renderer.setContext( b, width, label );
+        renderer.setContext( Integer.valueOf( b ), Integer.valueOf( width ), label );
         renderer.render( canvas, 0, textYoffset );
       }
     }
