@@ -22,6 +22,7 @@ package nl.lxtreme.test.view;
 
 
 import java.awt.*;
+import java.util.logging.*;
 
 import javax.swing.*;
 
@@ -41,6 +42,8 @@ public final class SignalDiagramController
    * before the cursor can be moved.
    */
   private static final int CURSOR_SENSITIVITY_AREA = 4;
+
+  private static final Logger LOG = Logger.getLogger( SignalDiagramController.class.getName() );
 
   // VARIABLES
 
@@ -73,7 +76,7 @@ public final class SignalDiagramController
   public int findCursor( final Point aPoint )
   {
     final Point point = convertToPointOf( getCursorView(), aPoint );
-    final long refIdx = toUnscaledScreenCoordinate( point );
+    final long refIdx = locationToTimestamp( point );
 
     final double snapArea = CURSOR_SENSITIVITY_AREA / this.screenModel.getZoomFactor();
 
@@ -147,7 +150,7 @@ public final class SignalDiagramController
    */
   public Point getCursorDropPoint( final Point aCoordinate )
   {
-    final Point dropPoint = new Point( aCoordinate.x, 0 ); // XXX
+    final Point dropPoint = new Point( aCoordinate.x, -36 ); // XXX
 
     if ( isSnapModeEnabled() )
     {
@@ -194,6 +197,25 @@ public final class SignalDiagramController
     final String cursorTime = Utils.displayTime( aCursorTimestamp / sampleRate );
 
     return String.format( "%s: %s", label, cursorTime );
+  }
+
+  /**
+   * Returns the X-position of the cursor with the given index, for displaying
+   * purposes on screen.
+   * 
+   * @param aCursorIdx
+   *          the index of the cursor to retrieve the X-position for, >= 0.
+   * @return the screen X-position of the cursor with the given index, or -1 if
+   *         the cursor is not defined.
+   */
+  public int getCursorScreenCoordinate( final int aCursorIdx )
+  {
+    Long cursorTimestamp = this.dataModel.getCursor( aCursorIdx );
+    if ( cursorTimestamp == null )
+    {
+      return -1;
+    }
+    return ( int )Math.min( Integer.MAX_VALUE, this.screenModel.getZoomFactor() * cursorTimestamp.longValue() );
   }
 
   /**
@@ -287,12 +309,32 @@ public final class SignalDiagramController
    */
   public int locationToSampleIndex( final Point aCoordinate )
   {
-    final int idx = toTimestampIndex( aCoordinate );
+    final long timestamp = locationToTimestamp( aCoordinate );
+    final int idx = this.dataModel.getTimestampIndex( timestamp );
     if ( idx < 0 )
     {
       return -1;
     }
     return Math.max( 0, Math.min( idx, this.dataModel.getSize() - 1 ) );
+  }
+
+  /**
+   * Converts the given coordinate to the corresponding sample index.
+   * 
+   * @param aCoordinate
+   *          the coordinate to convert to a sample index, cannot be
+   *          <code>null</code>.
+   * @return a sample index, >= 0, or -1 if no corresponding sample index could
+   *         be found.
+   */
+  public long locationToTimestamp( final Point aCoordinate )
+  {
+    final long timestamp = ( long )Math.ceil( Math.abs( aCoordinate.x / this.screenModel.getZoomFactor() ) );
+    if ( timestamp < 0 )
+    {
+      return -1;
+    }
+    return timestamp;
   }
 
   /**
@@ -379,6 +421,7 @@ public final class SignalDiagramController
     }
 
     final CursorView cursorView = getCursorView();
+
     final Point point = convertToPointOf( cursorView, aPoint );
 
     if ( isSnapModeEnabled() )
@@ -392,9 +435,12 @@ public final class SignalDiagramController
       }
     }
 
-    cursorView.moveCursor( aCursorIdx, point );
+    final long newCursorTimestamp = locationToTimestamp( point );
 
-    repaintLater( cursorView, getTimeLineView() );
+    if ( this.dataModel.setCursor( aCursorIdx, Long.valueOf( newCursorTimestamp ) ) == null )
+    {
+      repaintLater( cursorView, getTimeLineView() );
+    }
   }
 
   /**
@@ -531,49 +577,6 @@ public final class SignalDiagramController
   }
 
   /**
-   * Converts a given time stamp value to a screen coordinate.
-   * 
-   * @param aTimestamp
-   *          the time stamp <em>value</em> to convert, >= 0.
-   * @return a coordinate whose X-position denotes the given time stamp, and a
-   *         Y-position of 0, never <code>null</code>.
-   */
-  public Point toScaledScreenCoordinate( final long aTimestamp )
-  {
-    final int xPos = ( int )( this.screenModel.getZoomFactor() * aTimestamp );
-    final int yPos = 0;
-    return new Point( xPos, yPos );
-  }
-
-  /**
-   * Finds the time stamp that corresponds to the X-position of the given
-   * coordinate.
-   * 
-   * @param aPoint
-   *          the screen coordinate to find a corresponding time stamp for,
-   *          cannot be <code>null</code>.
-   * @return a time stamp corresponding to the given coordinate, or -1 if no
-   *         such time stamp could be found.
-   */
-  public int toTimestampIndex( final Point aPoint )
-  {
-    return this.dataModel.getTimestampIndex( toUnscaledScreenCoordinate( aPoint ) );
-  }
-
-  /**
-   * Converts a given screen coordinate to an unscaled value (regardless zoom
-   * factor).
-   * 
-   * @param aPoint
-   *          the screen coordinate to convert, cannot be <code>null</code>.
-   * @return an unscaled version of the given coordinate's X-position, >= 0.
-   */
-  public long toUnscaledScreenCoordinate( final Point aPoint )
-  {
-    return ( long )Math.ceil( Math.abs( aPoint.x / this.screenModel.getZoomFactor() ) );
-  }
-
-  /**
    * Zooms to make all data visible in one screen.
    */
   public void zoomAll()
@@ -655,7 +658,7 @@ public final class SignalDiagramController
 
     // find the reference time value; which is the "timestamp" under the
     // cursor...
-    final int refIdx = toTimestampIndex( aPoint );
+    final int refIdx = locationToSampleIndex( aPoint );
     final int[] values = this.dataModel.getValues();
     if ( ( refIdx >= 0 ) && ( refIdx < values.length ) )
     {
@@ -892,7 +895,8 @@ public final class SignalDiagramController
     {
       this.screenModel.setZoomAll( false );
     }
-    System.out.println( "Zoom factor = " + this.screenModel.getZoomFactor() );
+
+    LOG.log( Level.INFO, "Setting zoom factor to {0}...", this.screenModel.getZoomFactor() );
   }
 
   /**

@@ -257,7 +257,8 @@ final class SignalView extends JPanel
   private int getEndIndex( final Rectangle aClip, final int aLength )
   {
     final Point location = new Point( aClip.x + aClip.width, 0 );
-    return Math.min( this.controller.toTimestampIndex( location ) + 1, aLength - 1 );
+    int index = this.controller.locationToSampleIndex( location );
+    return Math.min( index + 1, aLength - 1 );
   }
 
   /**
@@ -267,6 +268,7 @@ final class SignalView extends JPanel
   private int getStartIndex( final Rectangle aClip )
   {
     final Point location = aClip.getLocation();
-    return Math.max( this.controller.toTimestampIndex( location ) - 1, 0 );
+    int index = this.controller.locationToSampleIndex( location );
+    return Math.max( index - 1, 0 );
   }
 }

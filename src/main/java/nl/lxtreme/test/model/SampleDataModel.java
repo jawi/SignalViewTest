@@ -208,14 +208,16 @@ public class SampleDataModel
 
   /**
    * @param aCursorIdx
-   * @return
+   * @return the old cursor value, can be <code>null</code>.
    */
-  public void setCursor( final int aCursorIdx, final Long aTimestamp )
+  public Long setCursor( final int aCursorIdx, final Long aTimestamp )
   {
     if ( ( aCursorIdx < 0 ) || ( aCursorIdx > this.cursors.length ) )
     {
       throw new IllegalArgumentException();
     }
+    final Long oldValue = this.cursors[aCursorIdx];
     this.cursors[aCursorIdx] = aTimestamp;
+    return oldValue;
   }
 }

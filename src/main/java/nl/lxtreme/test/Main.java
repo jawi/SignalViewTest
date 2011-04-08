@@ -256,7 +256,7 @@ public class Main
     } );
     diagramMenu.add( diagramEnableMeasureModeItem );
 
-    final SampleDataModel model = new SampleDataModel( 1024 * 64 /* * 1024 */, new AlternatingDataProvider() );
+    final SampleDataModel model = new SampleDataModel( 1024 * 64 /* * 1024 */, new CounterDataProvider() );
 
     this.controller = new SignalDiagramController( model );
 

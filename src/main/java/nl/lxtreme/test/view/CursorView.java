@@ -103,8 +103,6 @@ final class CursorView extends JComponent
   private final DropHandler dropHandler;
   private final Renderer cursorRenderer;
 
-  private Point lastPoint;
-
   // CONSTRUCTORS
 
   /**
@@ -135,38 +133,6 @@ final class CursorView extends JComponent
 
     final SignalDiagramComponent parent = ( SignalDiagramComponent )getParent();
     parent.getDndTargetController().addHandler( this.dropHandler );
-  }
-
-  /**
-   * Moves the cursor with the given index to the given coordinate.
-   * 
-   * @param aCursorIdx
-   *          the index of the cursor to move;
-   * @param aPoint
-   *          the coordinate to move the cursor to, cannot be <code>null</code>;
-   * @param aSnap
-   *          if <code>true</code> snaps to the signal value, <code>false</code>
-   *          otherwise.
-   */
-  public void moveCursor( final int aCursorIdx, final Point aPoint )
-  {
-    final SampleDataModel dataModel = this.controller.getDataModel();
-
-    repaintPartially( dataModel.getCursor( aCursorIdx ) );
-
-    final long newCursorTimestamp = this.controller.toUnscaledScreenCoordinate( aPoint );
-    dataModel.setCursor( aCursorIdx, Long.valueOf( newCursorTimestamp ) );
-
-    if ( this.controller.isSnapModeEnabled() )
-    {
-      this.lastPoint = aPoint;
-    }
-    else
-    {
-      this.lastPoint = null;
-    }
-
-    repaintPartially( dataModel.getCursor( aCursorIdx ) );
   }
 
   /**
@@ -202,23 +168,16 @@ final class CursorView extends JComponent
 
       final int y = getYposition();
 
-      final SampleDataModel dataModel = this.controller.getDataModel();
       final ScreenModel screenModel = this.controller.getScreenModel();
 
       for ( int i = 0; i < SampleDataModel.MAX_CURSORS; i++ )
       {
-        final Long cursorTimestamp = dataModel.getCursor( i );
-        if ( cursorTimestamp == null )
-        {
-          // Don't paint unset cursors...
-          continue;
-        }
+        final int x = this.controller.getCursorScreenCoordinate( i );
 
-        final int x = this.controller.toScaledScreenCoordinate( cursorTimestamp.longValue() ).x;
-
-        if ( !clip.contains( x, 0 ) )
+        if ( ( x < 0 ) || !clip.contains( x, 0 ) )
         {
-          // Trivial reject: don't paint cursors outside the clip boundaries...
+          // Trivial reject: don't paint undefined cursors, or cursors outside
+          // the clip boundaries...
           continue;
         }
 
@@ -261,36 +220,5 @@ final class CursorView extends JComponent
       result = -40;
     }
     return result;
-  }
-
-  /**
-   * Repaints the areas that were affected by the last paint() call.
-   * 
-   * @param aCursorIdx
-   *          the cursor index of the cursor to repaint.
-   */
-  private void repaintPartially( final Long aCursorTimestamp )
-  {
-    int x, y, w, h;
-
-    if ( aCursorTimestamp != null )
-    {
-      x = this.controller.toScaledScreenCoordinate( aCursorTimestamp.longValue() ).x - 1;
-      y = 0;
-      w = 2;
-      h = getHeight();
-
-      repaint( x, y, w, h );
-    }
-
-    if ( this.lastPoint != null )
-    {
-      x = this.lastPoint.x - 5;
-      y = this.lastPoint.y - 5;
-      w = 10;
-      h = 10;
-
-      repaint( x, y, w, h );
-    }
   }
 }

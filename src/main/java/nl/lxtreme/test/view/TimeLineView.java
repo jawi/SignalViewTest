@@ -115,8 +115,10 @@ final class TimeLineView extends JComponent
       double tickIncr = Math.max( 1.0, timebase / TIMELINE_INCREMENT );
       double timeIncr = Math.max( 1.0, timebase / ( 10.0 * TIMELINE_INCREMENT ) );
 
-      final long startTimeStamp = getStartTimestamp( clip );
-      final long endTimeStamp = getEndTimestamp( clip );
+      final Rectangle visibleRect = getVisibleRect();
+
+      final long startTimeStamp = getStartTimestamp( visibleRect );
+      final long endTimeStamp = getEndTimestamp( visibleRect );
 
       double timestamp = ( Math.ceil( startTimeStamp / tickIncr ) * tickIncr );
       double majorTimestamp = timestamp;
@@ -124,6 +126,12 @@ final class TimeLineView extends JComponent
       for ( ; timestamp <= endTimeStamp; timestamp += timeIncr )
       {
         int relXpos = ( int )( zoomFactor * timestamp );
+
+        // XXX where does the 16 come from???
+        if ( ( relXpos < ( clip.x - 16 ) ) || ( relXpos > ( 16 + clip.x + clip.width ) ) )
+        {
+          continue;
+        }
 
         if ( ( timestamp % tickIncr ) == 0 )
         {
@@ -208,11 +216,15 @@ final class TimeLineView extends JComponent
   private long getEndTimestamp( final Rectangle aClip )
   {
     final Point location = new Point( aClip.x + aClip.width, 0 );
+    final int idx = this.controller.locationToSampleIndex( location );
+    if ( idx < 0 )
+    {
+      return 0L;
+    }
 
     final SampleDataModel dataModel = this.controller.getDataModel();
     final long[] timestamps = dataModel.getTimestamps();
 
-    final int idx = Math.min( this.controller.toTimestampIndex( location ) + 1, timestamps.length - 1 );
     return timestamps[idx] + 1;
   }
 
@@ -228,11 +240,15 @@ final class TimeLineView extends JComponent
   private long getStartTimestamp( final Rectangle aClip )
   {
     final Point location = aClip.getLocation();
+    final int idx = this.controller.locationToSampleIndex( location );
+    if ( idx < 0 )
+    {
+      return 0L;
+    }
 
     final SampleDataModel dataModel = this.controller.getDataModel();
     final long[] timestamps = dataModel.getTimestamps();
 
-    final int idx = Math.max( this.controller.toTimestampIndex( location ) - 1, 0 );
     return timestamps[idx];
   }
 
@@ -260,24 +276,17 @@ final class TimeLineView extends JComponent
    */
   private void paintCursorFlags( final Graphics2D aCanvas, final Rectangle aClip )
   {
-    final SampleDataModel dataModel = this.controller.getDataModel();
     final ScreenModel screenModel = this.controller.getScreenModel();
 
     for ( int i = 0; i < SampleDataModel.MAX_CURSORS; i++ )
     {
-      final Long cursorTimestamp = dataModel.getCursor( i );
-      if ( cursorTimestamp == null )
-      {
-        // Don't paint unset cursors...
-        continue;
-      }
-
-      int x = this.controller.toScaledScreenCoordinate( cursorTimestamp.longValue() ).x;
+      int x = this.controller.getCursorScreenCoordinate( i );
       int y = 4;
 
-      if ( !aClip.contains( x, y ) )
+      if ( ( x < 0 ) || !aClip.contains( x, y ) )
       {
-        // Trivial reject: don't paint cursors outside the clip boundaries...
+        // Trivial reject: don't paint undefined cursors, or cursors outside the
+        // clip boundaries...
         continue;
       }
 
