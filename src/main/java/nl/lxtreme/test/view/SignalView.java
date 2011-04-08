@@ -35,7 +35,7 @@ import nl.lxtreme.test.model.*;
 
 
 /**
- * @author jajans
+ * Provides a view for the signal data as individual channels.
  */
 final class SignalView extends JPanel
 {
@@ -182,13 +182,13 @@ final class SignalView extends JPanel
       final int signalOffset = screenModel.getSignalOffset();
       final double zoomFactor = screenModel.getZoomFactor();
 
-      final int width = dataModel.getWidth();
+      final int dataWidth = dataModel.getWidth();
 
       // Determine which bits of the actual signal should be drawn...
       int startBit = ( int )Math.max( 0, Math.floor( clip.y / ( double )channelHeight ) );
-      int endBit = ( int )Math.min( width, Math.ceil( ( clip.y + clip.height ) / ( double )channelHeight ) );
+      int endBit = ( int )Math.min( dataWidth, Math.ceil( ( clip.y + clip.height ) / ( double )channelHeight ) );
 
-      for ( int b = 0; b < width; b++ )
+      for ( int b = 0; b < dataWidth; b++ )
       {
         final int virtualRow = screenModel.toVirtualRow( b );
         if ( ( virtualRow < startBit ) || ( virtualRow > endBit ) )

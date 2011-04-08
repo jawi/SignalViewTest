@@ -71,17 +71,18 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       final Component component = aEvent.getComponent();
       SwingUtilities.invokeLater( new Runnable()
       {
+        private final SignalDiagramController ctrl = ComponentSizeListener.this.controller;
+
         @Override
         public void run()
         {
+          component.setCursor( Cursor.getPredefinedCursor( Cursor.WAIT_CURSOR ) );
+
           try
           {
-            component.setCursor( Cursor.getPredefinedCursor( Cursor.WAIT_CURSOR ) );
-
-            final SignalDiagramController ctrl = ComponentSizeListener.this.controller;
-            if ( ctrl.isZoomAll() )
+            if ( this.ctrl.isZoomAll() )
             {
-              ctrl.zoomAll();
+              this.ctrl.zoomAll();
             }
           }
           finally
@@ -104,10 +105,10 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
         @Override
         public void run()
         {
+          component.setCursor( Cursor.getPredefinedCursor( Cursor.WAIT_CURSOR ) );
+
           try
           {
-            component.setCursor( Cursor.getPredefinedCursor( Cursor.WAIT_CURSOR ) );
-
             // Ask the controller to redimension all contained components...
             ComponentSizeListener.this.controller.zoomAll();
           }

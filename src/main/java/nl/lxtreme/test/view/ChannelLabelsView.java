@@ -28,10 +28,11 @@ import javax.swing.*;
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.view.renderer.*;
+import nl.lxtreme.test.view.renderer.Renderer;
 
 
 /**
- * @author jawi
+ * Provides a view for the channel labels.
  */
 class ChannelLabelsView extends JComponent
 {
@@ -42,6 +43,7 @@ class ChannelLabelsView extends JComponent
   // VARIABLES
 
   private final SignalDiagramController controller;
+  private final Renderer renderer;
   private final Font labelFont;
 
   // CONSTRUCTORS
@@ -57,6 +59,8 @@ class ChannelLabelsView extends JComponent
 
     Font font = ( Font )UIManager.get( "Label.font" );
     this.labelFont = font.deriveFont( Font.BOLD );
+
+    this.renderer = new ChannelLabelRenderer();
   }
 
   // METHODS
@@ -119,15 +123,25 @@ class ChannelLabelsView extends JComponent
       // Where is the signal to be drawn?
       final int signalOffset = screenModel.getSignalOffset();
 
-      final int width = getWidth();
+      final int compWidth = getWidth();
+      final int dataWidth = dataModel.getWidth();
+
+      // Determine which bits of the actual signal should be drawn...
+      int startBit = ( int )Math.max( 0, Math.floor( clip.y / ( double )channelHeight ) );
+      int endBit = ( int )Math.min( dataWidth, Math.ceil( ( clip.y + clip.height ) / ( double )channelHeight ) );
 
       final Color labelBackground = Utils.parseColor( "#2E323B" );
-      ChannelLabelRenderer renderer = new ChannelLabelRenderer();
-
-      final int dataWidth = dataModel.getWidth();
       for ( int b = 0; b < dataWidth; b++ )
       {
-        final int yOffset = channelHeight * screenModel.toVirtualRow( b );
+        final int virtualRow = screenModel.toVirtualRow( b );
+        if ( ( virtualRow < startBit ) || ( virtualRow > endBit ) )
+        {
+          // Trivial reject: we don't have to paint this row, as it is not asked
+          // from us (due to clip boundaries)!
+          continue;
+        }
+
+        final int yOffset = channelHeight * virtualRow;
         final int textYoffset = signalOffset + yOffset;
 
         final String label = screenModel.getChannelLabel( b );
@@ -137,8 +151,9 @@ class ChannelLabelsView extends JComponent
 
         canvas.fillRoundRect( clip.x - 10, yOffset + 2, clip.width + 8, channelHeight - 2, 12, 12 );
 
-        renderer.setContext( Integer.valueOf( b ), Integer.valueOf( width ), label );
-        renderer.render( canvas, 0, textYoffset );
+        this.renderer.setContext( Integer.valueOf( b ), Integer.valueOf( compWidth ), label );
+
+        this.renderer.render( canvas, 0, textYoffset );
       }
     }
     finally
@@ -161,5 +176,4 @@ class ChannelLabelsView extends JComponent
     hints.put( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED );
     return hints;
   }
-
 }

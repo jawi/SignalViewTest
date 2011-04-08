@@ -44,10 +44,13 @@ final class MeasurementView extends JComponent
   // VARIABLES
 
   private final Font textFont;
+  private final Renderer signalInfoRenderer;
+  private final Renderer arrowRenderer;
 
-  private volatile Rectangle textRectangle;
-  private volatile Rectangle arrowRectangle;
   private volatile SignalHoverInfo signalHover;
+
+  private Rectangle textRectangle;
+  private Rectangle arrowRectangle;
 
   // CONSTRUCTORS
 
@@ -63,6 +66,9 @@ final class MeasurementView extends JComponent
 
     final Font baseFont = ( Font )UIManager.get( "Label.font" );
     this.textFont = baseFont.deriveFont( baseFont.getSize2D() * 0.9f );
+
+    this.signalInfoRenderer = new SignalInfoRenderer();
+    this.arrowRenderer = new ArrowRenderer();
   }
 
   // METHODS
@@ -72,6 +78,8 @@ final class MeasurementView extends JComponent
    */
   public void hideHover()
   {
+    LOG.fine( "Hiding measurement hover..." );
+
     repaintPartially();
     this.signalHover = null;
   }
@@ -84,6 +92,8 @@ final class MeasurementView extends JComponent
    */
   public void moveHover( final SignalHoverInfo aSignalHover )
   {
+    LOG.fine( "Moving measurement hover..." );
+
     repaintPartially();
     this.signalHover = ( aSignalHover == null ) ? null : aSignalHover.clone();
     repaintPartially();
@@ -97,6 +107,8 @@ final class MeasurementView extends JComponent
    */
   public void showHover( final SignalHoverInfo aSignalHover )
   {
+    LOG.fine( "Showing measurement hover..." );
+
     if ( aSignalHover != null )
     {
       this.signalHover = aSignalHover.clone();
@@ -118,24 +130,21 @@ final class MeasurementView extends JComponent
     final Graphics2D g2d = ( Graphics2D )aGraphics.create();
     try
     {
-      this.arrowRectangle = this.signalHover.getRectangle();
+      Rectangle rect = this.signalHover.getRectangle();
 
-      int x = this.arrowRectangle.x;
-      int w = this.arrowRectangle.width;
-      int y = ( int )( this.arrowRectangle.getCenterY() );
+      int x = rect.x;
+      int w = rect.width;
+      int y = ( int )( rect.getCenterY() );
       int middlePos = this.signalHover.getMiddleXpos() - x;
 
       // Tell Swing how we would like to render ourselves...
       g2d.setRenderingHints( createRenderingHints() );
 
-      // Render the arrow + arrowheads...
-      final Renderer arrowRenderer = new ArrowRenderer();
-
-      arrowRenderer.setContext( Integer.valueOf( w ), Integer.valueOf( middlePos ) );
-
       g2d.setColor( Color.YELLOW );
 
-      arrowRenderer.render( g2d, x, y );
+      this.arrowRenderer.setContext( Integer.valueOf( w ), Integer.valueOf( middlePos ) );
+
+      this.arrowRectangle = this.arrowRenderer.render( g2d, x, y );
 
       // Render the tool tip...
       final String text = this.signalHover.toString();
@@ -144,11 +153,9 @@ final class MeasurementView extends JComponent
 
       g2d.setFont( this.textFont );
 
-      Renderer signalInfoRenderer = new SignalInfoRenderer();
+      this.signalInfoRenderer.setContext( text );
 
-      signalInfoRenderer.setContext( text );
-
-      this.textRectangle = signalInfoRenderer.render( g2d, textXpos, textYpos );
+      this.textRectangle = this.signalInfoRenderer.render( g2d, textXpos, textYpos );
     }
     finally
     {
@@ -175,15 +182,15 @@ final class MeasurementView extends JComponent
    */
   private void repaintPartially()
   {
-    this.arrowRectangle.grow( 5, 5 );
     if ( !this.arrowRectangle.isEmpty() )
     {
+      this.arrowRectangle.grow( 2, 2 );
       repaint( this.arrowRectangle );
     }
 
-    this.textRectangle.grow( 5, 5 );
     if ( !this.textRectangle.isEmpty() )
     {
+      this.textRectangle.grow( 2, 2 );
       repaint( this.textRectangle );
     }
   }

@@ -57,6 +57,7 @@ final class TimeLineView extends JComponent
 
   private final SignalDiagramController controller;
 
+  private final Renderer cursorRenderer;
   private final Font majorTickFont;
   private final Font minorTickFont;
 
@@ -77,6 +78,7 @@ final class TimeLineView extends JComponent
     final Font baseFont = ( Font )UIManager.get( "Label.font" );
     this.minorTickFont = baseFont.deriveFont( baseFont.getSize() * 0.8f );
     this.majorTickFont = baseFont.deriveFont( baseFont.getSize() * 0.9f );
+    this.cursorRenderer = new CursorFlagRenderer();
   }
 
   // METHODS
@@ -258,8 +260,6 @@ final class TimeLineView extends JComponent
    */
   private void paintCursorFlags( final Graphics2D aCanvas, final Rectangle aClip )
   {
-    final Renderer renderer = new CursorFlagRenderer();
-
     final SampleDataModel dataModel = this.controller.getDataModel();
     final ScreenModel screenModel = this.controller.getScreenModel();
 
@@ -268,17 +268,24 @@ final class TimeLineView extends JComponent
       final Long cursorTimestamp = dataModel.getCursor( i );
       if ( cursorTimestamp == null )
       {
+        // Don't paint unset cursors...
+        continue;
+      }
+
+      int x = this.controller.toScaledScreenCoordinate( cursorTimestamp.longValue() ).x;
+      int y = 4;
+
+      if ( !aClip.contains( x, y ) )
+      {
+        // Trivial reject: don't paint cursors outside the clip boundaries...
         continue;
       }
 
       aCanvas.setColor( screenModel.getCursorColor( i ) );
 
-      renderer.setContext( this.controller.getCursorFlagText( i ) );
+      this.cursorRenderer.setContext( this.controller.getCursorFlagText( i ) );
 
-      int x = this.controller.toScaledScreenCoordinate( cursorTimestamp.longValue() ).x;
-      int y = 4;
-
-      renderer.render( aCanvas, x, y );
+      this.cursorRenderer.render( aCanvas, x, y );
     }
   }
 }

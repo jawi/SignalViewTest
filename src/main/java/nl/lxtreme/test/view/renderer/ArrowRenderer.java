@@ -66,7 +66,7 @@ public class ArrowRenderer extends BaseRenderer
   {
     // When given, show an additional arrowhead to denote the pulse
     // itself, taking care of the "smallest" pulse we're displaying...
-    if ( this.middlePos >= 0 )
+    if ( ( this.width > 0 ) && ( this.middlePos >= 0 ) )
     {
       int dir = LEFT_FACING;
       if ( ( this.width - this.middlePos ) > this.middlePos )
@@ -136,17 +136,17 @@ public class ArrowRenderer extends BaseRenderer
   private void drawDoubleHeadedArrow( final Graphics2D aCanvas, final int aX1, final int aY1, final int aX2,
       final int aY2, final int aArrowWidth, final int aArrowHeight )
   {
-    final int lineWidth = Math.abs( aX2 - aX1 );
-    final int threshold = ( 2 * aArrowWidth ) + 2;
-
     int x1 = aX1;
     int x2 = aX2;
 
+    final int lineWidth = Math.abs( x2 - x1 );
+    final int threshold = ( 2 * aArrowWidth ) + 2;
+
     if ( lineWidth > threshold )
     {
-      drawArrowHead( aCanvas, aX1, aY1, LEFT_FACING, aArrowWidth, aArrowHeight );
+      drawArrowHead( aCanvas, x1, aY1, LEFT_FACING, aArrowWidth, aArrowHeight );
       // why x2 needs to be shifted by one pixel is beyond me...
-      drawArrowHead( aCanvas, aX2 + 1, aY2, RIGHT_FACING, aArrowWidth, aArrowHeight );
+      drawArrowHead( aCanvas, x2 + 1, aY2, RIGHT_FACING, aArrowWidth, aArrowHeight );
 
       x1 += aArrowWidth - 1;
       x2 -= aArrowWidth + 1;

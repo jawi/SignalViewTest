@@ -36,7 +36,7 @@ import nl.lxtreme.test.view.renderer.Renderer;
 
 
 /**
- * @author jajans
+ * Provides a component for displaying cursors + their timing information.
  */
 final class CursorView extends JComponent
 {
@@ -101,6 +101,8 @@ final class CursorView extends JComponent
 
   private final SignalDiagramController controller;
   private final DropHandler dropHandler;
+  private final Renderer cursorRenderer;
+
   private Point lastPoint;
 
   // CONSTRUCTORS
@@ -115,6 +117,8 @@ final class CursorView extends JComponent
   {
     this.controller = aController;
     this.dropHandler = new DropHandler();
+
+    this.cursorRenderer = new CursorFlagRenderer();
 
     setOpaque( false );
   }
@@ -192,6 +196,7 @@ final class CursorView extends JComponent
 
     try
     {
+      final Rectangle clip = canvas.getClipBounds();
       // Tell Swing how we would like to render ourselves...
       canvas.setRenderingHints( createRenderingHints() );
 
@@ -200,23 +205,28 @@ final class CursorView extends JComponent
       final SampleDataModel dataModel = this.controller.getDataModel();
       final ScreenModel screenModel = this.controller.getScreenModel();
 
-      final Renderer renderer = new CursorFlagRenderer();
-
       for ( int i = 0; i < SampleDataModel.MAX_CURSORS; i++ )
       {
         final Long cursorTimestamp = dataModel.getCursor( i );
         if ( cursorTimestamp == null )
         {
+          // Don't paint unset cursors...
+          continue;
+        }
+
+        final int x = this.controller.toScaledScreenCoordinate( cursorTimestamp.longValue() ).x;
+
+        if ( !clip.contains( x, 0 ) )
+        {
+          // Trivial reject: don't paint cursors outside the clip boundaries...
           continue;
         }
 
         canvas.setColor( screenModel.getCursorColor( i ) );
 
-        renderer.setContext( this.controller.getCursorFlagText( i ) );
+        this.cursorRenderer.setContext( this.controller.getCursorFlagText( i ) );
 
-        final int x = this.controller.toScaledScreenCoordinate( cursorTimestamp.longValue() ).x;
-
-        renderer.render( canvas, x, y );
+        this.cursorRenderer.render( canvas, x, y );
       }
     }
     finally
