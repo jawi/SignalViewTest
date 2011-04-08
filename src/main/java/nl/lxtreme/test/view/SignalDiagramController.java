@@ -107,10 +107,34 @@ public final class SignalDiagramController
    */
   public Point getChannelDropPoint( final Point aCoordinate )
   {
-    final int dropRow = getCalculatedSignalRow( aCoordinate );
+    final int dropRow = getCalculatedChannelRow( aCoordinate );
     final int channelHeight = this.screenModel.getChannelHeight();
 
     return new Point( 0, ( dropRow + 1 ) * channelHeight );
+  }
+
+  /**
+   * Determines the channel row corresponding to the given X,Y-coordinate.
+   * <p>
+   * This method returns the <em>virtual</em> channel row, not the actual
+   * channel row.
+   * </p>
+   * 
+   * @param aCoordinate
+   *          the coordinate to return the channel row for, cannot be
+   *          <code>null</code>.
+   * @return a channel row index (>= 0), or -1 if the point is nowhere near a
+   *         channel row.
+   */
+  public int getChannelRow( final Point aCoordinate )
+  {
+    final int row = getCalculatedChannelRow( aCoordinate );
+    if ( row < 0 )
+    {
+      return -1;
+    }
+
+    return this.screenModel.toVirtualRow( row );
   }
 
   /**
@@ -211,29 +235,6 @@ public final class SignalDiagramController
   }
 
   /**
-   * Determines the real signal row beneath the given coordinate.
-   * <p>
-   * This method returns the <em>virtual</em> signal row, not the actual signal
-   * row.
-   * </p>
-   * 
-   * @param aCoordinate
-   *          the coordinate to return the signal row for, cannot be
-   *          <code>null</code>.
-   * @return a signal row, or -1 if the point is nowhere near a signal row.
-   */
-  public int getSignalRow( final Point aCoordinate )
-  {
-    final int row = getCalculatedSignalRow( aCoordinate );
-    if ( row < 0 )
-    {
-      return -1;
-    }
-
-    return this.screenModel.toVirtualRow( row );
-  }
-
-  /**
    * @param aPoint
    * @return
    */
@@ -273,6 +274,25 @@ public final class SignalDiagramController
   public boolean isZoomAll()
   {
     return this.screenModel.isZoomAll();
+  }
+
+  /**
+   * Converts the given coordinate to the corresponding sample index.
+   * 
+   * @param aCoordinate
+   *          the coordinate to convert to a sample index, cannot be
+   *          <code>null</code>.
+   * @return a sample index, >= 0, or -1 if no corresponding sample index could
+   *         be found.
+   */
+  public int locationToSampleIndex( final Point aCoordinate )
+  {
+    final int idx = toTimestampIndex( aCoordinate );
+    if ( idx < 0 )
+    {
+      return -1;
+    }
+    return Math.max( 0, Math.min( idx, this.dataModel.getSize() - 1 ) );
   }
 
   /**
@@ -749,7 +769,7 @@ public final class SignalDiagramController
    *          <code>null</code>.
    * @return a signal row, or -1 if the point is nowhere near a signal row.
    */
-  private int getCalculatedSignalRow( final Point aCoordinate )
+  private int getCalculatedChannelRow( final Point aCoordinate )
   {
     final int signalWidth = this.dataModel.getWidth();
     final int channelHeight = this.screenModel.getChannelHeight();

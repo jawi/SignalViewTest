@@ -62,7 +62,7 @@ final class SignalView extends JPanel
         if ( realRowValue != null )
         {
           final int oldRealRow = realRowValue.intValue();
-          final int newRealRow = aController.getSignalRow( aEvent.getLocation() );
+          final int newRealRow = aController.getChannelRow( aEvent.getLocation() );
 
           if ( ( oldRealRow >= 0 ) && ( newRealRow >= 0 ) )
           {

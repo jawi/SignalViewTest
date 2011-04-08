@@ -30,6 +30,7 @@ import javax.swing.*;
 
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.dnd.*;
+import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.view.renderer.*;
 import nl.lxtreme.test.view.renderer.Renderer;
 
@@ -315,7 +316,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       int cursorIdx = this.controller.findCursor( coordinate );
       if ( !this.controller.isCursorMode() || ( cursorIdx < 0 ) )
       {
-        channelRow = this.controller.getSignalRow( coordinate );
+        channelRow = this.controller.getChannelRow( coordinate );
       }
 
       // Check whether we've got either a row or a cursor in our dragging
@@ -548,7 +549,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
   private static final long serialVersionUID = 1L;
 
-  private static final boolean DEBUG = false;
+  private static final boolean DEBUG = true;
 
   // VARIABLES
 
@@ -561,9 +562,9 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   private DragAndDropTargetController dndTargetController;
 
   private ComponentSizeListener componentSizeListener;
+  private KeyboardControlListener keyboardListener;
   private CursorMouseListener cursorMouseListener;
   private DragAndDropListener dndListener;
-  private KeyboardControlListener keyboardListener;
 
   // CONSTRUCTORS
 
@@ -650,14 +651,25 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   @Override
   public int getScrollableBlockIncrement( final Rectangle aVisibleRect, final int aOrientation, final int aDirection )
   {
-    if ( aOrientation == SwingConstants.HORIZONTAL )
+    final SampleDataModel dataModel = this.controller.getDataModel();
+    final ScreenModel screenModel = this.controller.getScreenModel();
+
+    final int channelHeight = screenModel.getChannelHeight();
+    final int channelCount = dataModel.getWidth();
+    final int lastSampleIdx = dataModel.getSize();
+
+    final int inc;
+    if ( aOrientation == SwingConstants.VERTICAL )
     {
-      return 50;
+      inc = getVerticalBlockIncrement( aVisibleRect, aDirection, channelHeight, channelCount );
     }
     else
+    /* if ( aOrientation == SwingConstants.HORIZONTAL ) */
     {
-      return aVisibleRect.height - this.controller.getScreenModel().getChannelHeight();
+      inc = getHorizontalBlockIncrement( aVisibleRect, aDirection, lastSampleIdx );
     }
+
+    return inc;
   }
 
   /**
@@ -666,7 +678,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   @Override
   public boolean getScrollableTracksViewportHeight()
   {
-    return true;
+    return false;
   }
 
   /**
@@ -684,30 +696,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   @Override
   public int getScrollableUnitIncrement( final Rectangle aVisibleRect, final int aOrientation, final int aDirection )
   {
-    int currentPosition = 0;
-    final int maxUnitIncrement;
-    if ( aOrientation == SwingConstants.HORIZONTAL )
-    {
-      currentPosition = aVisibleRect.x;
-      maxUnitIncrement = 50;
-    }
-    else
-    {
-      currentPosition = aVisibleRect.y;
-      maxUnitIncrement = this.controller.getScreenModel().getChannelHeight();
-    }
-
-    // Return the number of pixels between currentPosition
-    // and the nearest tick mark in the indicated direction.
-    if ( aDirection < 0 )
-    {
-      final int newPosition = currentPosition - ( currentPosition / maxUnitIncrement ) * maxUnitIncrement;
-      return ( newPosition == 0 ) ? maxUnitIncrement : newPosition;
-    }
-    else
-    {
-      return ( ( currentPosition / maxUnitIncrement ) + 1 ) * maxUnitIncrement - currentPosition;
-    }
+    return getScrollableBlockIncrement( aVisibleRect, aOrientation, aDirection );
   }
 
   /**
@@ -851,6 +840,131 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
         scrollPane.setCorner( ScrollPaneConstants.UPPER_LEADING_CORNER, new JPanel() );
       }
     }
+  }
+
+  /**
+   * Calculates the horizontal block increment.
+   * <p>
+   * The following rules are adhered for scrolling horizontally:
+   * </p>
+   * <ol>
+   * <li>unless the first or last sample is not shown, scroll a full block;
+   * otherwise</li>
+   * <li>do not scroll.</li>
+   * </ol>
+   * 
+   * @param aVisibleRect
+   *          the visible rectangle of the component, never <code>null</code>;
+   * @param aDirection
+   *          the direction in which to scroll (&gt; 0 to scroll left, &lt; 0 to
+   *          scroll right);
+   * @param aLastSampleIdx
+   *          the index of the last available sample in the data model.
+   * @return a horizontal block increment, determined according to the rules
+   *         described.
+   */
+  private int getHorizontalBlockIncrement( final Rectangle aVisibleRect, final int aDirection, final int aLastSampleIdx )
+  {
+    final int blockIncr = 50;
+
+    final int firstVisibleSample = this.controller.locationToSampleIndex( aVisibleRect.getLocation() );
+    final int lastVisibleSample = this.controller.locationToSampleIndex( new Point(
+        aVisibleRect.x + aVisibleRect.width, 0 ) );
+
+    int inc = 0;
+    if ( aDirection < 0 )
+    {
+      // Scroll left
+      if ( firstVisibleSample > 0 )
+      {
+        inc = blockIncr;
+      }
+    }
+    else if ( aDirection > 0 )
+    {
+      // Scroll right
+      if ( lastVisibleSample < aLastSampleIdx )
+      {
+        inc = blockIncr;
+      }
+    }
+
+    return inc;
+  }
+
+  /**
+   * Calculates the vertical block increment.
+   * <p>
+   * The following rules are adhered for scrolling vertically:
+   * </p>
+   * <ol>
+   * <li>if the first shown channel is not completely visible, it will be made
+   * fully visible; otherwise</li>
+   * <li>scroll down to show the succeeding channel fully;</li>
+   * <li>if the last channel is fully shown, and there is some room left at the
+   * bottom, show the remaining space.</li>
+   * </ol>
+   * 
+   * @param aVisibleRect
+   *          the visible rectangle of the component, never <code>null</code>;
+   * @param aDirection
+   *          the direction in which to scroll (&gt; 0 to scroll down, &lt; 0 to
+   *          scroll up);
+   * @param aChannelHeight
+   *          the height of a single channel row (> 0);
+   * @param aChannelCount
+   *          the number of channels shown in this component (> 0).
+   * @return a vertical block increment, determined according to the rules
+   *         described.
+   */
+  private int getVerticalBlockIncrement( final Rectangle aVisibleRect, final int aDirection, final int aChannelHeight,
+      final int aChannelCount )
+  {
+    int inc;
+    int firstVisibleRow = ( int )( aVisibleRect.y / ( double )aChannelHeight );
+    int lastVisibleRow = ( int )( ( aVisibleRect.y + aVisibleRect.height ) / ( double )aChannelHeight );
+
+    inc = 0;
+    if ( aDirection < 0 )
+    {
+      // Scroll up...
+      if ( ( firstVisibleRow > 0 ) && ( lastVisibleRow <= aChannelCount ) )
+      {
+        // Scroll to the first fully visible channel row...
+        inc = aVisibleRect.y % aChannelHeight;
+      }
+      if ( inc == 0 )
+      {
+        // All rows are fully visible, scroll an entire row up...
+        inc = aChannelHeight;
+      }
+      if ( ( aVisibleRect.y - inc ) < 0 )
+      {
+        // Make sure that we do not scroll beyond the first row...
+        inc = aVisibleRect.y;
+      }
+    }
+    else if ( aDirection > 0 )
+    {
+      // Scroll down...
+      if ( ( firstVisibleRow >= 0 ) && ( lastVisibleRow < aChannelCount ) )
+      {
+        // Scroll to the first fully visible channel row...
+        inc = aVisibleRect.y % aChannelHeight;
+      }
+      if ( inc == 0 )
+      {
+        // All rows are fully visible, scroll an entire row up...
+        inc = aChannelHeight;
+      }
+      int height = getHeight();
+      if ( ( aVisibleRect.y + aVisibleRect.height + inc ) > height )
+      {
+        // Make sure that we do not scroll beyond the last row...
+        inc = height - aVisibleRect.y - aVisibleRect.height;
+      }
+    }
+    return inc;
   }
 
   /**
