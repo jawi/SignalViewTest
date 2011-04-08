@@ -78,15 +78,23 @@ final class SignalHoverInfo implements Cloneable
     this.middleXpos = aMiddleXpos;
 
     this.totalPulseWidth = ( aEndTimestamp - aStartTimestamp ) / ( double )aSampleRate;
+
     // Determine the smallest pulse width we're going to display...
-    if ( ( aEndTimestamp - aMiddleTimestamp ) < ( aMiddleTimestamp - aStartTimestamp ) )
+    double pw = this.totalPulseWidth;
+    if ( aMiddleTimestamp > 0 )
     {
-      this.pulseWidth = ( aEndTimestamp - aMiddleTimestamp ) / ( double )aSampleRate;
+      if ( ( aEndTimestamp - aMiddleTimestamp ) < ( aMiddleTimestamp - aStartTimestamp ) )
+      {
+        pw = ( aEndTimestamp - aMiddleTimestamp ) / ( double )aSampleRate;
+      }
+      else
+      {
+        pw = ( aMiddleTimestamp - aStartTimestamp ) / ( double )aSampleRate;
+      }
     }
-    else
-    {
-      this.pulseWidth = ( aMiddleTimestamp - aStartTimestamp ) / ( double )aSampleRate;
-    }
+
+    this.pulseWidth = pw;
+
     this.timestamp = aTimestamp / ( TIMESTAMP_FACTOR * aSampleRate );
     this.channelIdx = Integer.valueOf( aChannelIdx );
 

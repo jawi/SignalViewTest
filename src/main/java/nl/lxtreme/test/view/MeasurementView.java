@@ -31,7 +31,7 @@ import nl.lxtreme.test.view.renderer.Renderer;
 
 
 /**
- * @author jajans
+ * Presents a view/layer that shows the measurement information.
  */
 final class MeasurementView extends JComponent
 {
@@ -130,11 +130,11 @@ final class MeasurementView extends JComponent
     final Graphics2D g2d = ( Graphics2D )aGraphics.create();
     try
     {
-      Rectangle rect = this.signalHover.getRectangle();
+      Rectangle signalHoverRect = this.signalHover.getRectangle();
 
-      int x = rect.x;
-      int w = rect.width;
-      int y = ( int )( rect.getCenterY() );
+      int x = signalHoverRect.x;
+      int y = ( int )signalHoverRect.getCenterY();
+      int w = signalHoverRect.width;
       int middlePos = this.signalHover.getMiddleXpos() - x;
 
       // Tell Swing how we would like to render ourselves...
@@ -148,14 +148,15 @@ final class MeasurementView extends JComponent
 
       // Render the tool tip...
       final String text = this.signalHover.toString();
-      final int textXpos = ( int )( ( x + ( w / 2.0f ) ) + 8 );
-      final int textYpos = y + 8;
+      final int textXpos = ( int )( this.arrowRectangle.getCenterX() + 8 );
+      final int textYpos = this.arrowRectangle.y + 8;
 
       g2d.setFont( this.textFont );
 
       this.signalInfoRenderer.setContext( text );
 
       this.textRectangle = this.signalInfoRenderer.render( g2d, textXpos, textYpos );
+
     }
     finally
     {
@@ -182,16 +183,23 @@ final class MeasurementView extends JComponent
    */
   private void repaintPartially()
   {
-    if ( !this.arrowRectangle.isEmpty() )
+    if ( ( this.arrowRectangle != null ) && !this.arrowRectangle.isEmpty() )
     {
       this.arrowRectangle.grow( 2, 2 );
       repaint( this.arrowRectangle );
     }
 
-    if ( !this.textRectangle.isEmpty() )
+    if ( ( this.textRectangle != null ) && !this.textRectangle.isEmpty() )
     {
-      this.textRectangle.grow( 2, 2 );
+      // NOTE: grow with a larger value to ensure the text rectangle "floats"
+      // along with the mouse cursor...
+      this.textRectangle.grow( 5, 5 );
       repaint( this.textRectangle );
+    }
+
+    if ( ( this.arrowRectangle == null ) && ( this.textRectangle == null ) )
+    {
+      repaint();
     }
   }
 }
