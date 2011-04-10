@@ -489,7 +489,7 @@ public final class SignalDiagramController
       view.revalidate();
 
       view = ( JComponent )scrollPane.getRowHeader().getView();
-      view.setMinimumSize( new Dimension( -1 /* will be calculated */, height ) );
+      view.setMinimumSize( view.getMinimumSize() );
       view.setPreferredSize( view.getMinimumSize() );
       view.revalidate();
 

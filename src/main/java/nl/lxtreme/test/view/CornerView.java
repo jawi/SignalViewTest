@@ -15,8 +15,8 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St, Fifth Floor, Boston, MA 02110, USA
  *
- * 
- * Copyright (C) 2010-2011 - J.W. Janssen, http://www.lxtreme.nl
+ * Copyright (C) 2006-2010 Michael Poppitz, www.sump.org
+ * Copyright (C) 2010 J.W. Janssen, www.lxtreme.nl
  */
 package nl.lxtreme.test.view;
 
@@ -25,10 +25,9 @@ import nl.lxtreme.test.view.laf.*;
 
 
 /**
- * Provides a time line view, displaying ticks at regular intervals along with
- * timing information.
+ * 
  */
-public class TimeLineView extends AbstractViewLayer
+public class CornerView extends AbstractViewLayer
 {
   // CONSTANTS
 
@@ -37,12 +36,11 @@ public class TimeLineView extends AbstractViewLayer
   // CONSTRUCTORS
 
   /**
-   * Creates a new {@link TimeLineView} instance.
+   * Creates a new CornerView instance.
    * 
    * @param aController
-   *          the controller to use, cannot be <code>null</code>.
    */
-  public TimeLineView( final SignalDiagramController aController )
+  public CornerView( final SignalDiagramController aController )
   {
     super( aController );
 
@@ -61,6 +59,6 @@ public class TimeLineView extends AbstractViewLayer
   @Override
   public final void updateUI()
   {
-    setUI( new TimeLineUI() );
+    setUI( new CornerUI() );
   }
 }

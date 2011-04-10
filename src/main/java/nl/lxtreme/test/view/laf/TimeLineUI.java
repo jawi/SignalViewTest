@@ -72,7 +72,7 @@ public class TimeLineUI extends ComponentUI
   @Override
   public void installUI( final JComponent aComponent )
   {
-    final ChannelLabelsView view = ( ChannelLabelsView )aComponent;
+    final TimeLineView view = ( TimeLineView )aComponent;
 
     final IUserInterfaceSettingsProvider settingsProvider = view.getSettingsProvider();
 

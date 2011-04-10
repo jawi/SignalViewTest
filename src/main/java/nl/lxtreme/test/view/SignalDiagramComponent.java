@@ -566,8 +566,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   private CursorMouseListener cursorMouseListener;
   private DragAndDropListener dndListener;
 
-  private JComponent cornerView;
-
   // CONSTRUCTORS
 
   /**
@@ -631,6 +629,8 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       setDropTarget( new DropTarget( this, this.dndTargetController ) );
 
       configureEnclosingScrollPane();
+
+      this.controller.recalculateDimensions();
     }
     finally
     {
@@ -839,10 +839,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
         scrollPane.setColumnHeaderView( timelineView );
         scrollPane.setRowHeaderView( new ChannelLabelsView( this.controller ) );
 
-        this.cornerView = new JPanel();
-        this.cornerView.setBackground( timelineView.getBackground() );
-
-        scrollPane.setCorner( ScrollPaneConstants.UPPER_LEADING_CORNER, this.cornerView );
+        scrollPane.setCorner( ScrollPaneConstants.UPPER_LEADING_CORNER, new CornerView( this.controller ) );
       }
     }
   }

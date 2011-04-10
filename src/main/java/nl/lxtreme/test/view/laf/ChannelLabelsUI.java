@@ -60,37 +60,18 @@ public class ChannelLabelsUI extends ComponentUI
    * {@inheritDoc}
    */
   @Override
+  public Dimension getMaximumSize( final JComponent aComponent )
+  {
+    return determineSize( aComponent );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   public Dimension getMinimumSize( final JComponent aComponent )
   {
-    final ChannelLabelsView view = ( ChannelLabelsView )aComponent;
-
-    final SignalDiagramController controller = view.getController();
-
-    final Dimension result = super.getMinimumSize( aComponent );
-
-    final SampleDataModel dataModel = controller.getDataModel();
-    final ScreenModel screenModel = controller.getScreenModel();
-
-    int minWidth = -1;
-
-    final FontMetrics fm = view.getFontMetrics( this.labelFont );
-    for ( int i = 0; i < dataModel.getWidth(); i++ )
-    {
-      String label = screenModel.getChannelLabel( i );
-      if ( ( label == null ) || label.trim().isEmpty() )
-      {
-        label = "W88";
-      }
-      minWidth = Math.max( minWidth, fm.stringWidth( label ) );
-    }
-
-    // And always ensure we've got at least a minimal width...
-    minWidth = Math.min( minWidth + 12, this.minimalWidth );
-
-    // Overwrite the preferred width with the one calculated...
-    result.width = minWidth;
-
-    return result;
+    return determineSize( aComponent );
   }
 
   /**
@@ -207,5 +188,46 @@ public class ChannelLabelsUI extends ComponentUI
     hints.put( RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED );
     hints.put( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED );
     return hints;
+  }
+
+  /**
+   * @param aComponent
+   * @return
+   */
+  private Dimension determineSize( final JComponent aComponent )
+  {
+    final ChannelLabelsView view = ( ChannelLabelsView )aComponent;
+
+    final SignalDiagramController controller = view.getController();
+
+    Dimension result = super.getMinimumSize( aComponent );
+    if ( result == null )
+    {
+      result = new Dimension();
+    }
+
+    final SampleDataModel dataModel = controller.getDataModel();
+    final ScreenModel screenModel = controller.getScreenModel();
+
+    int minWidth = -1;
+
+    final FontMetrics fm = view.getFontMetrics( this.labelFont );
+    for ( int i = 0; i < dataModel.getWidth(); i++ )
+    {
+      String label = screenModel.getChannelLabel( i );
+      if ( ( label == null ) || label.trim().isEmpty() )
+      {
+        label = "W88";
+      }
+      minWidth = Math.max( minWidth, fm.stringWidth( label ) );
+    }
+
+    // And always ensure we've got at least a minimal width...
+    minWidth = Math.max( minWidth + 12, this.minimalWidth );
+
+    // Overwrite the preferred width with the one calculated...
+    result.width = minWidth;
+
+    return result;
   }
 }
