@@ -15,48 +15,54 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St, Fifth Floor, Boston, MA 02110, USA
  *
- * 
- * Copyright (C) 2010-2011 - J.W. Janssen, http://www.lxtreme.nl
+ * Copyright (C) 2006-2010 Michael Poppitz, www.sump.org
+ * Copyright (C) 2010 J.W. Janssen, www.lxtreme.nl
  */
-package nl.lxtreme.test.view;
+package nl.lxtreme.test;
 
 
-import nl.lxtreme.test.view.laf.*;
+import java.awt.*;
+import java.util.logging.*;
 
 
 /**
- * Provides a view for the channel labels.
+ * 
  */
-public class ChannelLabelsView extends AbstractViewLayer
+public class SettingsProvider implements IUserInterfaceSettingsProvider
 {
   // CONSTANTS
 
-  private static final long serialVersionUID = 1L;
-
-  // CONSTRUCTORS
-
-  /**
-   * Creates a new {@link ChannelLabelsView} instance.
-   */
-  public ChannelLabelsView( final SignalDiagramController aController )
-  {
-    super( aController );
-
-    updateUI();
-  }
+  private static final Logger LOG = Logger.getLogger( SettingsProvider.class.getName() );
 
   // METHODS
 
   /**
-   * Overridden in order to set a custom UI, which not only paints this diagram,
-   * but also can be used to manage the various settings, such as colors,
-   * height, and so on.
-   * 
-   * @see javax.swing.JComponent#updateUI()
+   * {@inheritDoc}
    */
   @Override
-  public final void updateUI()
+  public Color getColor( final String aName )
   {
-    setUI( new ChannelLabelsUI() );
+    LOG.log( Level.INFO, "getColor({0}) called...", aName );
+    return null;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public Font getFont( final String aName )
+  {
+    LOG.log( Level.INFO, "getFont({0}) called...", aName );
+    return null;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public int getInteger( final String aName )
+  {
+    LOG.log( Level.INFO, "getInteger({0}) called...", aName );
+    return -1;
   }
 }

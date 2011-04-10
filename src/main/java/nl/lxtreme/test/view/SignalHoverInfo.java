@@ -29,7 +29,7 @@ import java.awt.*;
 /**
  * Provides a small DTO for keeping signal hover information together.
  */
-final class SignalHoverInfo implements Cloneable
+public class SignalHoverInfo implements Cloneable
 {
   // CONSTANTS
 

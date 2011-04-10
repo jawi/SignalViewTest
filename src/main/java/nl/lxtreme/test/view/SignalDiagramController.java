@@ -28,6 +28,7 @@ import javax.swing.*;
 
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.model.*;
+import nl.lxtreme.test.view.laf.*;
 
 
 /**
@@ -49,8 +50,9 @@ public final class SignalDiagramController
 
   private SampleDataModel dataModel;
   private ScreenModel screenModel;
-
   private SignalDiagramComponent signalDiagram;
+
+  private final SettingsProvider settingsProvider;
 
   // CONSTRUCTORS
 
@@ -61,6 +63,7 @@ public final class SignalDiagramController
   {
     this.dataModel = aModel;
     this.screenModel = new ScreenModel( aModel.getWidth() );
+    this.settingsProvider = new SettingsProvider();
   }
 
   // METHODS
@@ -254,6 +257,16 @@ public final class SignalDiagramController
   public ScreenModel getScreenModel()
   {
     return this.screenModel;
+  }
+
+  /**
+   * Returns the settings provider.
+   * 
+   * @return a settings provider, never <code>null</code>.
+   */
+  public IUserInterfaceSettingsProvider getSettingsProvider()
+  {
+    return this.settingsProvider;
   }
 
   /**
@@ -471,13 +484,13 @@ public final class SignalDiagramController
       view.revalidate();
 
       view = ( JComponent )scrollPane.getColumnHeader().getView();
-      view.setPreferredSize( new Dimension( width, TimeLineView.TIMELINE_HEIGHT ) );
+      view.setPreferredSize( new Dimension( width, TimeLineUI.TIMELINE_HEIGHT ) );
       view.setMinimumSize( view.getPreferredSize() );
       view.revalidate();
 
       view = ( JComponent )scrollPane.getRowHeader().getView();
-      view.setPreferredSize( new Dimension( ( ( ChannelLabelsView )view ).getMinimalWidth(), height ) );
-      view.setMinimumSize( view.getPreferredSize() );
+      view.setMinimumSize( new Dimension( -1 /* will be calculated */, height ) );
+      view.setPreferredSize( view.getMinimumSize() );
       view.revalidate();
 
       scrollPane.repaint();
@@ -896,7 +909,7 @@ public final class SignalDiagramController
       this.screenModel.setZoomAll( false );
     }
 
-    LOG.log( Level.INFO, "Setting zoom factor to {0}...", this.screenModel.getZoomFactor() );
+    LOG.log( Level.INFO, "Setting zoom factor to {0}...", Double.valueOf( this.screenModel.getZoomFactor() ) );
   }
 
   /**

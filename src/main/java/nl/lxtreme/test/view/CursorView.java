@@ -26,19 +26,15 @@ import java.awt.datatransfer.*;
 import java.awt.dnd.*;
 import java.util.logging.*;
 
-import javax.swing.*;
-
 import nl.lxtreme.test.dnd.*;
 import nl.lxtreme.test.dnd.DragAndDropTargetController.DragAndDropHandler;
-import nl.lxtreme.test.model.*;
-import nl.lxtreme.test.view.renderer.*;
-import nl.lxtreme.test.view.renderer.Renderer;
+import nl.lxtreme.test.view.laf.*;
 
 
 /**
  * Provides a component for displaying cursors + their timing information.
  */
-final class CursorView extends JComponent
+public class CursorView extends AbstractViewLayer
 {
   // INNER TYPES
 
@@ -99,9 +95,7 @@ final class CursorView extends JComponent
 
   // VARIABLES
 
-  private final SignalDiagramController controller;
   private final DropHandler dropHandler;
-  private final Renderer cursorRenderer;
 
   // CONSTRUCTORS
 
@@ -113,12 +107,12 @@ final class CursorView extends JComponent
    */
   public CursorView( final SignalDiagramController aController )
   {
-    this.controller = aController;
+    super( aController );
+    setOpaque( false );
+
     this.dropHandler = new DropHandler();
 
-    this.cursorRenderer = new CursorFlagRenderer();
-
-    setOpaque( false );
+    updateUI();
   }
 
   // METHODS
@@ -148,77 +142,15 @@ final class CursorView extends JComponent
   }
 
   /**
-   * {@inheritDoc}
+   * Overridden in order to set a custom UI, which not only paints this diagram,
+   * but also can be used to manage the various settings, such as colors,
+   * height, and so on.
+   * 
+   * @see javax.swing.JComponent#updateUI()
    */
   @Override
-  protected void paintComponent( final Graphics aGraphics )
+  public final void updateUI()
   {
-    if ( !this.controller.isCursorMode() )
-    {
-      return;
-    }
-
-    final Graphics2D canvas = ( Graphics2D )aGraphics.create();
-
-    try
-    {
-      final Rectangle clip = canvas.getClipBounds();
-      // Tell Swing how we would like to render ourselves...
-      canvas.setRenderingHints( createRenderingHints() );
-
-      final int y = getYposition();
-
-      final ScreenModel screenModel = this.controller.getScreenModel();
-
-      for ( int i = 0; i < SampleDataModel.MAX_CURSORS; i++ )
-      {
-        final int x = this.controller.getCursorScreenCoordinate( i );
-
-        if ( ( x < 0 ) || !clip.contains( x, 0 ) )
-        {
-          // Trivial reject: don't paint undefined cursors, or cursors outside
-          // the clip boundaries...
-          continue;
-        }
-
-        canvas.setColor( screenModel.getCursorColor( i ) );
-
-        this.cursorRenderer.setContext( this.controller.getCursorFlagText( i ) );
-
-        this.cursorRenderer.render( canvas, x, y );
-      }
-    }
-    finally
-    {
-      canvas.dispose();
-    }
-  }
-
-  /**
-   * Creates the rendering hints for this view.
-   */
-  private RenderingHints createRenderingHints()
-  {
-    RenderingHints hints = new RenderingHints( RenderingHints.KEY_INTERPOLATION,
-        RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR );
-    hints.put( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
-    hints.put( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED );
-    return hints;
-  }
-
-  /**
-   * Returns the Y-position where the cursor (+ flag) should be drawn.
-   * 
-   * @return a Y-position, in the coordinate space of this component.
-   */
-  private int getYposition()
-  {
-    int result = 0;
-    if ( SwingUtilities.getAncestorOfClass( JViewport.class, this ) != null )
-    {
-      // negative in order to ensure the flag itself is hidden
-      result = -40;
-    }
-    return result;
+    setUI( new CursorUI() );
   }
 }

@@ -191,7 +191,7 @@ public class Main
 
     final Dimension dims = new Dimension( 800, 600 );
 
-    this.mainFrame = new JFrame( "JLayeredPane test" );
+    this.mainFrame = new JFrame( "OLS Signal View Component - v2" );
     this.mainFrame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
     this.mainFrame.setPreferredSize( dims );
     this.mainFrame.setSize( dims );
@@ -256,7 +256,7 @@ public class Main
     } );
     diagramMenu.add( diagramEnableMeasureModeItem );
 
-    final SampleDataModel model = new SampleDataModel( 1024 * 64 /* * 1024 */, new CounterDataProvider() );
+    final SampleDataModel model = new SampleDataModel( 1024 * 64 /* * 1024 */, new RandomDataProvider() );
 
     this.controller = new SignalDiagramController( model );
 

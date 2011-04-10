@@ -15,34 +15,59 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St, Fifth Floor, Boston, MA 02110, USA
  *
- * 
- * Copyright (C) 2010-2011 - J.W. Janssen, http://www.lxtreme.nl
+ * Copyright (C) 2006-2010 Michael Poppitz, www.sump.org
+ * Copyright (C) 2010 J.W. Janssen, www.lxtreme.nl
  */
 package nl.lxtreme.test.view;
 
 
+import javax.swing.*;
+
+import nl.lxtreme.test.*;
+
+
 /**
- * Provides a time line view, displaying ticks at regular intervals along with
- * timing information.
+ * 
  */
-public class TimeLineView extends AbstractViewLayer
+public abstract class AbstractViewLayer extends JComponent
 {
   // CONSTANTS
 
   private static final long serialVersionUID = 1L;
 
+  // VARIABLES
+
+  private final SignalDiagramController controller;
+
   // CONSTRUCTORS
 
   /**
-   * Creates a new {@link TimeLineView} instance.
-   * 
-   * @param aController
-   *          the controller to use, cannot be <code>null</code>.
+   * Creates a new AbstractViewLayer instance.
    */
-  public TimeLineView( final SignalDiagramController aController )
+  public AbstractViewLayer( final SignalDiagramController aController )
   {
-    super( aController );
+    this.controller = aController;
   }
 
   // METHODS
+
+  /**
+   * Returns the current component controller.
+   * 
+   * @return the controller, never <code>null</code>.
+   */
+  public final SignalDiagramController getController()
+  {
+    return this.controller;
+  }
+
+  /**
+   * Returns the current settings provider.
+   * 
+   * @return the settings provider, never <code>null</code>.
+   */
+  public final IUserInterfaceSettingsProvider getSettingsProvider()
+  {
+    return this.controller.getSettingsProvider();
+  }
 }

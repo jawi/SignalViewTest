@@ -21,23 +21,19 @@
 package nl.lxtreme.test.view;
 
 
-import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.dnd.*;
 import java.util.logging.*;
 
-import javax.swing.*;
-
-import nl.lxtreme.test.*;
 import nl.lxtreme.test.dnd.*;
 import nl.lxtreme.test.dnd.DragAndDropTargetController.DragAndDropHandler;
-import nl.lxtreme.test.model.*;
+import nl.lxtreme.test.view.laf.*;
 
 
 /**
  * Provides a view for the signal data as individual channels.
  */
-final class SignalView extends JPanel
+public class SignalView extends AbstractViewLayer
 {
   // INNER TYPES
 
@@ -100,7 +96,6 @@ final class SignalView extends JPanel
 
   // VARIABLES
 
-  private final SignalDiagramController controller;
   private final DropHandler dropHandler;
 
   // CONSTRUCTORS
@@ -113,13 +108,11 @@ final class SignalView extends JPanel
    */
   public SignalView( final SignalDiagramController aController )
   {
-    this.controller = aController;
+    super( aController );
+
     this.dropHandler = new DropHandler();
 
-    setBackground( Utils.parseColor( "#1E2126" ) );
-
-    // setDebugGraphicsOptions( DebugGraphics.LOG_OPTION );
-    // DebugGraphics.setLogStream( System.err );
+    updateUI();
   }
 
   // METHODS
@@ -149,126 +142,15 @@ final class SignalView extends JPanel
   }
 
   /**
-   * {@inheritDoc}
+   * Overridden in order to set a custom UI, which not only paints this diagram,
+   * but also can be used to manage the various settings, such as colors,
+   * height, and so on.
+   * 
+   * @see javax.swing.JComponent#updateUI()
    */
   @Override
-  protected void paintComponent( final Graphics aGraphics )
+  public final void updateUI()
   {
-    super.paintComponent( aGraphics );
-
-    Graphics2D canvas = ( Graphics2D )aGraphics.create();
-
-    try
-    {
-      final Rectangle clip = canvas.getClipBounds();
-      // Tell Swing how we would like to render ourselves...
-      canvas.setRenderingHints( createRenderingHints() );
-
-      final SampleDataModel dataModel = this.controller.getDataModel();
-      final ScreenModel screenModel = this.controller.getScreenModel();
-      final int[] values = dataModel.getValues();
-      final long[] timestamps = dataModel.getTimestamps();
-
-      final int startIdx = getStartIndex( clip );
-      final int endIdx = getEndIndex( clip, values.length );
-      final int size = Math.min( values.length - 1, ( endIdx - startIdx ) + 1 );
-
-      final int[] x = new int[2 * size];
-      final int[] y = new int[2 * size];
-
-      final int signalHeight = screenModel.getSignalHeight();
-      final int channelHeight = screenModel.getChannelHeight();
-      // Where is the signal to be drawn?
-      final int signalOffset = screenModel.getSignalOffset();
-      final double zoomFactor = screenModel.getZoomFactor();
-
-      final int dataWidth = dataModel.getWidth();
-
-      // Determine which bits of the actual signal should be drawn...
-      int startBit = ( int )Math.max( 0, Math.floor( clip.y / ( double )channelHeight ) );
-      int endBit = ( int )Math.min( dataWidth, Math.ceil( ( clip.y + clip.height ) / ( double )channelHeight ) );
-
-      for ( int b = 0; b < dataWidth; b++ )
-      {
-        final int virtualRow = screenModel.toVirtualRow( b );
-        if ( ( virtualRow < startBit ) || ( virtualRow > endBit ) )
-        {
-          // Trivial reject: we don't have to paint this row, as it is not asked
-          // from us (due to clip boundaries)!
-          continue;
-        }
-
-        canvas.setColor( screenModel.getChannelColor( b ) );
-
-        final int mask = ( 1 << b );
-        // determine where we really should draw the signal...
-        final int dy = signalOffset + ( channelHeight * virtualRow );
-
-        long timestamp = timestamps[startIdx];
-        int prevSampleValue = ( ( values[startIdx] & mask ) == 0 ) ? 1 : 0;
-
-        x[0] = ( int )( zoomFactor * timestamp );
-        y[0] = dy + ( signalHeight * prevSampleValue );
-        int p = 1;
-
-        for ( int i = 1; i < size; i++ )
-        {
-          final int sampleIdx = ( i + startIdx );
-
-          int sampleValue = ( ( values[sampleIdx] & mask ) == 0 ) ? 1 : 0;
-          timestamp = timestamps[sampleIdx];
-
-          if ( prevSampleValue != sampleValue )
-          {
-            x[p] = ( int )( zoomFactor * timestamp );
-            y[p] = dy + ( signalHeight * prevSampleValue );
-            p++;
-          }
-
-          x[p] = ( int )( zoomFactor * timestamp );
-          y[p] = dy + ( signalHeight * sampleValue );
-          p++;
-
-          prevSampleValue = sampleValue;
-        }
-
-        canvas.drawPolyline( x, y, p );
-      }
-    }
-    finally
-    {
-      canvas.dispose();
-      canvas = null;
-    }
-  }
-
-  /**
-   * Creates the rendering hints for this view.
-   */
-  private RenderingHints createRenderingHints()
-  {
-    return new RenderingHints( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF );
-  }
-
-  /**
-   * @param aClip
-   * @return
-   */
-  private int getEndIndex( final Rectangle aClip, final int aLength )
-  {
-    final Point location = new Point( aClip.x + aClip.width, 0 );
-    int index = this.controller.locationToSampleIndex( location );
-    return Math.min( index + 1, aLength - 1 );
-  }
-
-  /**
-   * @param aClip
-   * @return
-   */
-  private int getStartIndex( final Rectangle aClip )
-  {
-    final Point location = aClip.getLocation();
-    int index = this.controller.locationToSampleIndex( location );
-    return Math.max( index - 1, 0 );
+    setUI( new SignalUI() );
   }
 }

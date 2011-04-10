@@ -21,19 +21,15 @@
 package nl.lxtreme.test.view;
 
 
-import java.awt.*;
 import java.util.logging.*;
 
-import javax.swing.*;
-
-import nl.lxtreme.test.view.renderer.*;
-import nl.lxtreme.test.view.renderer.Renderer;
+import nl.lxtreme.test.view.laf.*;
 
 
 /**
  * Presents a view/layer that shows the measurement information.
  */
-final class MeasurementView extends JComponent
+public class MeasurementView extends AbstractViewLayer
 {
   // CONSTANTS
 
@@ -41,34 +37,17 @@ final class MeasurementView extends JComponent
 
   private static final Logger LOG = Logger.getLogger( MeasurementView.class.getName() );
 
-  // VARIABLES
-
-  private final Font textFont;
-  private final Renderer signalInfoRenderer;
-  private final Renderer arrowRenderer;
-
-  private volatile SignalHoverInfo signalHover;
-
-  private Rectangle textRectangle;
-  private Rectangle arrowRectangle;
-
   // CONSTRUCTORS
 
   /**
-   * Creates a new ArrowView instance.
-   * 
-   * @param aController
-   *          the controller to use, cannot be <code>null</code>.
+   * Creates a new MeasurementView instance.
    */
   public MeasurementView( final SignalDiagramController aController )
   {
+    super( aController );
     setOpaque( false );
 
-    final Font baseFont = ( Font )UIManager.get( "Label.font" );
-    this.textFont = baseFont.deriveFont( baseFont.getSize2D() * 0.9f );
-
-    this.signalInfoRenderer = new SignalInfoRenderer();
-    this.arrowRenderer = new ArrowRenderer();
+    updateUI();
   }
 
   // METHODS
@@ -80,8 +59,7 @@ final class MeasurementView extends JComponent
   {
     LOG.fine( "Hiding measurement hover..." );
 
-    repaintPartially();
-    this.signalHover = null;
+    ( ( MeasurementUI )this.ui ).hideHover( this );
   }
 
   /**
@@ -94,9 +72,7 @@ final class MeasurementView extends JComponent
   {
     LOG.fine( "Moving measurement hover..." );
 
-    repaintPartially();
-    this.signalHover = ( aSignalHover == null ) ? null : aSignalHover.clone();
-    repaintPartially();
+    ( ( MeasurementUI )this.ui ).moveHover( aSignalHover, this );
   }
 
   /**
@@ -109,97 +85,19 @@ final class MeasurementView extends JComponent
   {
     LOG.fine( "Showing measurement hover..." );
 
-    if ( aSignalHover != null )
-    {
-      this.signalHover = aSignalHover.clone();
-      repaint();
-    }
+    ( ( MeasurementUI )this.ui ).showHover( aSignalHover, this );
   }
 
   /**
-   * {@inheritDoc}
+   * Overridden in order to set a custom UI, which not only paints this diagram,
+   * but also can be used to manage the various settings, such as colors,
+   * height, and so on.
+   * 
+   * @see javax.swing.JComponent#updateUI()
    */
   @Override
-  protected void paintComponent( final Graphics aGraphics )
+  public final void updateUI()
   {
-    if ( this.signalHover == null )
-    {
-      return;
-    }
-
-    final Graphics2D g2d = ( Graphics2D )aGraphics.create();
-    try
-    {
-      Rectangle signalHoverRect = this.signalHover.getRectangle();
-
-      int x = signalHoverRect.x;
-      int y = ( int )signalHoverRect.getCenterY();
-      int w = signalHoverRect.width;
-      int middlePos = this.signalHover.getMiddleXpos() - x;
-
-      // Tell Swing how we would like to render ourselves...
-      g2d.setRenderingHints( createRenderingHints() );
-
-      g2d.setColor( Color.YELLOW );
-
-      this.arrowRenderer.setContext( Integer.valueOf( w ), Integer.valueOf( middlePos ) );
-
-      this.arrowRectangle = this.arrowRenderer.render( g2d, x, y );
-
-      // Render the tool tip...
-      final String text = this.signalHover.toString();
-      final int textXpos = ( int )( this.arrowRectangle.getCenterX() + 8 );
-      final int textYpos = this.arrowRectangle.y + 8;
-
-      g2d.setFont( this.textFont );
-
-      this.signalInfoRenderer.setContext( text );
-
-      this.textRectangle = this.signalInfoRenderer.render( g2d, textXpos, textYpos );
-
-    }
-    finally
-    {
-      g2d.dispose();
-    }
-  }
-
-  /**
-   * Creates the rendering hints for this view.
-   */
-  private RenderingHints createRenderingHints()
-  {
-    RenderingHints hints = new RenderingHints( RenderingHints.KEY_INTERPOLATION,
-        RenderingHints.VALUE_INTERPOLATION_BICUBIC );
-    hints.put( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
-    hints.put( RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED );
-    hints.put( RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED );
-    hints.put( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY );
-    return hints;
-  }
-
-  /**
-   * Repaints the areas that were affected by the last paint() call.
-   */
-  private void repaintPartially()
-  {
-    if ( ( this.arrowRectangle != null ) && !this.arrowRectangle.isEmpty() )
-    {
-      this.arrowRectangle.grow( 2, 2 );
-      repaint( this.arrowRectangle );
-    }
-
-    if ( ( this.textRectangle != null ) && !this.textRectangle.isEmpty() )
-    {
-      // NOTE: grow with a larger value to ensure the text rectangle "floats"
-      // along with the mouse cursor...
-      this.textRectangle.grow( 5, 5 );
-      repaint( this.textRectangle );
-    }
-
-    if ( ( this.arrowRectangle == null ) && ( this.textRectangle == null ) )
-    {
-      repaint();
-    }
+    setUI( new MeasurementUI() );
   }
 }
