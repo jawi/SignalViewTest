@@ -475,22 +475,37 @@ public final class SignalDiagramController
         getMeasurementView() );
     if ( scrollPane != null )
     {
-      final int width = ( int )Math.min( Integer.MAX_VALUE, getAbsoluteLength() );
-      final int height = ( this.screenModel.getChannelHeight() * this.dataModel.getWidth() )
-          + this.screenModel.getSignalHeight();
+      final Rectangle viewPortSize = scrollPane.getViewport().getVisibleRect();
+
+      int width = ( int )Math.min( Integer.MAX_VALUE, getAbsoluteLength() );
+      if ( width < viewPortSize.width )
+      {
+        width = viewPortSize.width;
+      }
+
+      int height = ( this.screenModel.getChannelHeight() * this.dataModel.getWidth() );
+      if ( height < viewPortSize.height )
+      {
+        height = viewPortSize.height;
+      }
 
       JComponent view = ( JComponent )scrollPane.getViewport().getView();
       view.setPreferredSize( new Dimension( width, height ) );
       view.revalidate();
 
       view = ( JComponent )scrollPane.getColumnHeader().getView();
+      // the timeline component always follows the width of the signal view, but
+      // with a fixed height...
       view.setPreferredSize( new Dimension( width, TimeLineUI.TIMELINE_HEIGHT ) );
       view.setMinimumSize( view.getPreferredSize() );
       view.revalidate();
 
       view = ( JComponent )scrollPane.getRowHeader().getView();
-      view.setMinimumSize( view.getMinimumSize() );
-      view.setPreferredSize( view.getMinimumSize() );
+      // the channel label component calculates its own 'optimal' width, but
+      // doesn't know squat about the correct height...
+      final Dimension minimumSize = view.getMinimumSize();
+      view.setMinimumSize( new Dimension( minimumSize.width, height ) );
+      view.setPreferredSize( new Dimension( minimumSize.width, height ) );
       view.revalidate();
 
       scrollPane.repaint();
