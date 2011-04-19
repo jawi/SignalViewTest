@@ -157,45 +157,37 @@ public class CursorView extends AbstractViewLayer
         return;
       }
 
+      final DragSourceContext dragSourceContext = aEvent.getDragSourceContext();
       final Point coordinate = aEvent.getLocation();
-      if ( coordinate == null )
+
+      if ( ( coordinate == null ) || !( dragSourceContext.getTransferable() instanceof CursorTransferable ) )
       {
         return;
       }
-
-      final DragSourceContext dragSourceContext = aEvent.getDragSourceContext();
 
       final Component sourceComponent = dragSourceContext.getComponent();
       final GhostGlassPane glassPane = getGlassPane( sourceComponent );
 
       SwingUtilities.convertPointFromScreen( coordinate, sourceComponent );
 
-      final Point dropPoint;
-      if ( dragSourceContext.getTransferable() instanceof CursorTransferable )
+      this.controller.setSnapModeEnabled( isSnapModeKeyEvent( aEvent ) );
+
+      final int cursorIdx = ( ( CursorTransferable )dragSourceContext.getTransferable() ).getCursorIdx();
+      final long timestamp = this.controller.locationToTimestamp( coordinate );
+      final String cursorFlag = this.controller.getCursorFlagText( cursorIdx, timestamp );
+
+      final Point dropPoint = createCursorDropPoint( coordinate, sourceComponent, glassPane );
+
+      if ( this.controller.isSnapModeEnabled() )
       {
-        this.controller.setSnapModeEnabled( isSnapModeKeyEvent( aEvent ) );
+        final Point cursorSnapPoint = this.controller.getCursorSnapPoint( coordinate );
+        SwingUtilities.convertPoint( sourceComponent, cursorSnapPoint, glassPane );
 
-        final int cursorIdx = ( ( CursorTransferable )dragSourceContext.getTransferable() ).getCursorIdx();
-        final long timestamp = this.controller.locationToTimestamp( coordinate );
-        final String cursorFlag = this.controller.getCursorFlagText( cursorIdx, timestamp );
-
-        dropPoint = createCursorDropPoint( coordinate, sourceComponent, glassPane );
-
-        if ( this.controller.isSnapModeEnabled() )
-        {
-          final Point cursorSnapPoint = this.controller.getCursorSnapPoint( coordinate );
-          SwingUtilities.convertPoint( sourceComponent, cursorSnapPoint, glassPane );
-
-          glassPane.setRenderContext( cursorFlag, cursorSnapPoint );
-        }
-        else
-        {
-          glassPane.setRenderContext( cursorFlag );
-        }
+        glassPane.setRenderContext( cursorFlag, cursorSnapPoint );
       }
       else
       {
-        dropPoint = createChannelDropPoint( coordinate, sourceComponent, glassPane );
+        glassPane.setRenderContext( cursorFlag );
       }
 
       glassPane.setDropPoint( dropPoint );
@@ -218,21 +210,6 @@ public class CursorView extends AbstractViewLayer
     public void dropActionChanged( final DragSourceDragEvent aEvent )
     {
       // NO-op
-    }
-
-    /**
-     * @param aDropRow
-     * @return
-     */
-    private Point createChannelDropPoint( final Point aPoint, final Component aSourceComponent,
-        final Component aTargetComponent )
-    {
-      final Point dropPoint = this.controller.getChannelDropPoint( aPoint );
-
-      SwingUtilities.convertPointToScreen( dropPoint, aSourceComponent );
-      SwingUtilities.convertPointFromScreen( dropPoint, aTargetComponent );
-
-      return dropPoint;
     }
 
     /**

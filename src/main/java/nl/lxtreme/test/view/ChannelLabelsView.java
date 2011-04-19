@@ -158,13 +158,13 @@ public class ChannelLabelsView extends AbstractViewLayer
         return;
       }
 
+      final DragSourceContext dragSourceContext = aEvent.getDragSourceContext();
       final Point coordinate = aEvent.getLocation();
-      if ( coordinate == null )
+
+      if ( ( coordinate == null ) || !( dragSourceContext.getTransferable() instanceof ChannelRowTransferable ) )
       {
         return;
       }
-
-      final DragSourceContext dragSourceContext = aEvent.getDragSourceContext();
 
       final GhostGlassPane glassPane = getGlassPane( dragSourceContext.getComponent() );
       final Component signalView = getSignalView( dragSourceContext.getComponent() );
