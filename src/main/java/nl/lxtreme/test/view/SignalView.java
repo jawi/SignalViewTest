@@ -21,12 +21,6 @@
 package nl.lxtreme.test.view;
 
 
-import java.awt.datatransfer.*;
-import java.awt.dnd.*;
-import java.util.logging.*;
-
-import nl.lxtreme.test.dnd.*;
-import nl.lxtreme.test.dnd.DragAndDropTargetController.DragAndDropHandler;
 import nl.lxtreme.test.view.laf.*;
 
 
@@ -35,68 +29,9 @@ import nl.lxtreme.test.view.laf.*;
  */
 public class SignalView extends AbstractViewLayer
 {
-  // INNER TYPES
-
-  /**
-   * Provides the D&D drop handler for accepting dropped channels.
-   */
-  static class DropHandler implements DragAndDropHandler
-  {
-    // METHODS
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean acceptDrop( final SignalDiagramController aController, final DropTargetDropEvent aEvent )
-    {
-      try
-      {
-        final Transferable transferable = aEvent.getTransferable();
-
-        Integer realRowValue = ( Integer )transferable.getTransferData( ChannelRowTransferable.FLAVOR );
-        if ( realRowValue != null )
-        {
-          final int oldRealRow = realRowValue.intValue();
-          final int newRealRow = aController.getChannelRow( aEvent.getLocation() );
-
-          if ( ( oldRealRow >= 0 ) && ( newRealRow >= 0 ) )
-          {
-            aEvent.acceptDrop( DnDConstants.ACTION_MOVE );
-
-            // Move the channel rows...
-            aController.moveChannelRows( oldRealRow, newRealRow );
-
-            return true;
-          }
-        }
-      }
-      catch ( Exception exception )
-      {
-        LOG.log( Level.WARNING, "Getting transfer data failed!", exception );
-      }
-
-      return false;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public DataFlavor getFlavor()
-    {
-      return ChannelRowTransferable.FLAVOR;
-    }
-  }
-
   // CONSTANTS
 
   private static final long serialVersionUID = 1L;
-
-  private static final Logger LOG = Logger.getLogger( SignalView.class.getName() );
-
-  // VARIABLES
-
-  private final DropHandler dropHandler;
 
   // CONSTRUCTORS
 
@@ -110,36 +45,10 @@ public class SignalView extends AbstractViewLayer
   {
     super( aController );
 
-    this.dropHandler = new DropHandler();
-
     updateUI();
   }
 
   // METHODS
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public void addNotify()
-  {
-    super.addNotify();
-
-    final SignalDiagramComponent parent = ( SignalDiagramComponent )getParent();
-    parent.getDndTargetController().addHandler( this.dropHandler );
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public void removeNotify()
-  {
-    final SignalDiagramComponent parent = ( SignalDiagramComponent )getParent();
-    parent.getDndTargetController().removeHandler( this.dropHandler );
-
-    super.removeNotify();
-  }
 
   /**
    * Overridden in order to set a custom UI, which not only paints this diagram,

@@ -24,11 +24,16 @@ package nl.lxtreme.test.view;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.dnd.*;
+import java.awt.event.*;
 import java.util.logging.*;
+
+import javax.swing.*;
 
 import nl.lxtreme.test.dnd.*;
 import nl.lxtreme.test.dnd.DragAndDropTargetController.DragAndDropHandler;
 import nl.lxtreme.test.view.laf.*;
+import nl.lxtreme.test.view.renderer.*;
+import nl.lxtreme.test.view.renderer.Renderer;
 
 
 /**
@@ -37,6 +42,233 @@ import nl.lxtreme.test.view.laf.*;
 public class CursorView extends AbstractViewLayer
 {
   // INNER TYPES
+
+  /**
+   * Provides an mouse event listener to allow some of the functionality (such
+   * as DnD and cursor dragging) of this component to be controlled with the
+   * mouse.
+   */
+  static final class DragAndDropListener implements DragGestureListener, DragSourceMotionListener, DragSourceListener
+  {
+    // VARIABLES
+
+    private final SignalDiagramController controller;
+
+    // CONSTRUCTORS
+
+    /**
+     * @param aController
+     */
+    public DragAndDropListener( final SignalDiagramController aController )
+    {
+      this.controller = aController;
+    }
+
+    // METHODS
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void dragDropEnd( final DragSourceDropEvent aEvent )
+    {
+      if ( !DragAndDropLock.isDragAndDropStarted() )
+      {
+        return;
+      }
+
+      DragAndDropLock.setDragAndDropStarted( false );
+      DragAndDropLock.setLocked( false );
+
+      final GhostGlassPane glassPane = getGlassPane( aEvent.getDragSourceContext().getComponent() );
+
+      glassPane.clearDropPoint();
+      glassPane.repaint();
+
+      glassPane.setVisible( false );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void dragEnter( final DragSourceDragEvent aEvent )
+    {
+      // NO-op
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void dragExit( final DragSourceEvent aEvent )
+    {
+      // NO-op
+      DragAndDropLock.setLocked( false );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void dragGestureRecognized( final DragGestureEvent aEvent )
+    {
+      if ( DragAndDropLock.isLocked() )
+      {
+        return;
+      }
+
+      final Point coordinate = ( Point )aEvent.getDragOrigin().clone();
+
+      int cursorIdx = this.controller.findCursor( coordinate );
+      if ( !this.controller.isCursorMode() || ( cursorIdx < 0 ) )
+      {
+        return;
+      }
+
+      final Component sourceComponent = aEvent.getComponent();
+      final GhostGlassPane glassPane = getGlassPane( sourceComponent );
+
+      final Point dropPoint = createCursorDropPoint( coordinate, sourceComponent, glassPane );
+
+      // We're starting to drag a cursor...
+      final Renderer renderer = new CursorFlagRenderer();
+      renderer.setContext( this.controller.getCursorFlagText( cursorIdx ) );
+
+      glassPane.setDropPoint( dropPoint, renderer );
+      glassPane.setVisible( true );
+      glassPane.repaintPartially();
+
+      // We're having the exclusive right to start moving a channel around...
+      DragAndDropLock.setLocked( true );
+      DragAndDropLock.setDragAndDropStarted( true );
+
+      aEvent.startDrag( DragSource.DefaultMoveDrop, new CursorTransferable( cursorIdx ) );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void dragMouseMoved( final DragSourceDragEvent aEvent )
+    {
+      if ( !DragAndDropLock.isDragAndDropStarted() )
+      {
+        return;
+      }
+
+      final Point coordinate = aEvent.getLocation();
+      if ( coordinate == null )
+      {
+        return;
+      }
+
+      final DragSourceContext dragSourceContext = aEvent.getDragSourceContext();
+
+      final Component sourceComponent = dragSourceContext.getComponent();
+      final GhostGlassPane glassPane = getGlassPane( sourceComponent );
+
+      SwingUtilities.convertPointFromScreen( coordinate, sourceComponent );
+
+      final Point dropPoint;
+      if ( dragSourceContext.getTransferable() instanceof CursorTransferable )
+      {
+        this.controller.setSnapModeEnabled( isSnapModeKeyEvent( aEvent ) );
+
+        final int cursorIdx = ( ( CursorTransferable )dragSourceContext.getTransferable() ).getCursorIdx();
+        final long timestamp = this.controller.locationToTimestamp( coordinate );
+        final String cursorFlag = this.controller.getCursorFlagText( cursorIdx, timestamp );
+
+        dropPoint = createCursorDropPoint( coordinate, sourceComponent, glassPane );
+
+        if ( this.controller.isSnapModeEnabled() )
+        {
+          final Point cursorSnapPoint = this.controller.getCursorSnapPoint( coordinate );
+          SwingUtilities.convertPoint( sourceComponent, cursorSnapPoint, glassPane );
+
+          glassPane.setRenderContext( cursorFlag, cursorSnapPoint );
+        }
+        else
+        {
+          glassPane.setRenderContext( cursorFlag );
+        }
+      }
+      else
+      {
+        dropPoint = createChannelDropPoint( coordinate, sourceComponent, glassPane );
+      }
+
+      glassPane.setDropPoint( dropPoint );
+      glassPane.repaintPartially();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void dragOver( final DragSourceDragEvent aEvent )
+    {
+      // NO-op
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void dropActionChanged( final DragSourceDragEvent aEvent )
+    {
+      // NO-op
+    }
+
+    /**
+     * @param aDropRow
+     * @return
+     */
+    private Point createChannelDropPoint( final Point aPoint, final Component aSourceComponent,
+        final Component aTargetComponent )
+    {
+      final Point dropPoint = this.controller.getChannelDropPoint( aPoint );
+
+      SwingUtilities.convertPointToScreen( dropPoint, aSourceComponent );
+      SwingUtilities.convertPointFromScreen( dropPoint, aTargetComponent );
+
+      return dropPoint;
+    }
+
+    /**
+     * @param aPoint
+     * @param aTargetComponent
+     * @return
+     */
+    private Point createCursorDropPoint( final Point aPoint, final Component aSourceComponent,
+        final Component aTargetComponent )
+    {
+      final Point dropPoint = this.controller.getCursorDropPoint( aPoint );
+
+      SwingUtilities.convertPointToScreen( dropPoint, aSourceComponent );
+      SwingUtilities.convertPointFromScreen( dropPoint, aTargetComponent );
+
+      return dropPoint;
+    }
+
+    /**
+     * @param aComponent
+     * @return
+     */
+    private GhostGlassPane getGlassPane( final Component aComponent )
+    {
+      return ( GhostGlassPane )SwingUtilities.getRootPane( aComponent ).getGlassPane();
+    }
+
+    /**
+     * @param aEvent
+     * @return
+     */
+    private boolean isSnapModeKeyEvent( final DragSourceDragEvent aEvent )
+    {
+      return ( aEvent.getGestureModifiersEx() & InputEvent.SHIFT_DOWN_MASK ) == InputEvent.SHIFT_DOWN_MASK;
+    }
+  }
 
   /**
    * Provides the D&D drop controller for accepting dropped cursors.
@@ -97,6 +329,8 @@ public class CursorView extends AbstractViewLayer
 
   private final DropHandler dropHandler;
 
+  private DragAndDropListener dndListener;
+
   // CONSTRUCTORS
 
   /**
@@ -126,7 +360,18 @@ public class CursorView extends AbstractViewLayer
     super.addNotify();
 
     final SignalDiagramComponent parent = ( SignalDiagramComponent )getParent();
-    parent.getDndTargetController().addHandler( this.dropHandler );
+    final DragAndDropTargetController dndTargetController = parent.getDndTargetController();
+
+    this.dndListener = new DragAndDropListener( getController() );
+
+    final DragSource dragSource = DragSource.getDefaultDragSource();
+    dragSource.createDefaultDragGestureRecognizer( this, DnDConstants.ACTION_MOVE, this.dndListener );
+    dragSource.addDragSourceMotionListener( this.dndListener );
+    dragSource.addDragSourceListener( this.dndListener );
+
+    dndTargetController.addHandler( this.dropHandler );
+
+    setDropTarget( new DropTarget( this, dndTargetController ) );
   }
 
   /**
@@ -137,6 +382,14 @@ public class CursorView extends AbstractViewLayer
   {
     final SignalDiagramComponent parent = ( SignalDiagramComponent )getParent();
     parent.getDndTargetController().removeHandler( this.dropHandler );
+
+    if ( this.dndListener != null )
+    {
+      final DragSource dragSource = DragSource.getDefaultDragSource();
+      dragSource.removeDragSourceListener( this.dndListener );
+      dragSource.removeDragSourceMotionListener( this.dndListener );
+      this.dndListener = null;
+    }
 
     super.removeNotify();
   }
