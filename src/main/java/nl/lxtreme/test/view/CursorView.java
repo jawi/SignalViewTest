@@ -72,13 +72,10 @@ public class CursorView extends AbstractViewLayer
     @Override
     public void dragDropEnd( final DragSourceDropEvent aEvent )
     {
-      if ( !DragAndDropLock.isDragAndDropStarted() )
+      if ( !DragAndDropLock.releaseLock( this ) )
       {
         return;
       }
-
-      DragAndDropLock.setDragAndDropStarted( false );
-      DragAndDropLock.setLocked( false );
 
       final GhostGlassPane glassPane = getGlassPane( aEvent.getDragSourceContext().getComponent() );
 
@@ -104,7 +101,6 @@ public class CursorView extends AbstractViewLayer
     public void dragExit( final DragSourceEvent aEvent )
     {
       // NO-op
-      DragAndDropLock.setLocked( false );
     }
 
     /**
@@ -113,7 +109,7 @@ public class CursorView extends AbstractViewLayer
     @Override
     public void dragGestureRecognized( final DragGestureEvent aEvent )
     {
-      if ( DragAndDropLock.isLocked() )
+      if ( DragAndDropLock.isLocked( this ) || !DragAndDropLock.obtainLock( this ) )
       {
         return;
       }
@@ -139,10 +135,6 @@ public class CursorView extends AbstractViewLayer
       glassPane.setVisible( true );
       glassPane.repaintPartially();
 
-      // We're having the exclusive right to start moving a channel around...
-      DragAndDropLock.setLocked( true );
-      DragAndDropLock.setDragAndDropStarted( true );
-
       aEvent.startDrag( DragSource.DefaultMoveDrop, new CursorTransferable( cursorIdx ) );
     }
 
@@ -152,18 +144,14 @@ public class CursorView extends AbstractViewLayer
     @Override
     public void dragMouseMoved( final DragSourceDragEvent aEvent )
     {
-      if ( !DragAndDropLock.isDragAndDropStarted() )
+      final Point coordinate = aEvent.getLocation();
+
+      if ( !DragAndDropLock.isLocked( this ) || ( coordinate == null ) )
       {
         return;
       }
 
       final DragSourceContext dragSourceContext = aEvent.getDragSourceContext();
-      final Point coordinate = aEvent.getLocation();
-
-      if ( ( coordinate == null ) || !( dragSourceContext.getTransferable() instanceof CursorTransferable ) )
-      {
-        return;
-      }
 
       final Component sourceComponent = dragSourceContext.getComponent();
       final GhostGlassPane glassPane = getGlassPane( sourceComponent );
@@ -210,6 +198,7 @@ public class CursorView extends AbstractViewLayer
     public void dropActionChanged( final DragSourceDragEvent aEvent )
     {
       // NO-op
+      System.out.println( "dropActionChanged!" );
     }
 
     /**
@@ -336,8 +325,7 @@ public class CursorView extends AbstractViewLayer
   {
     super.addNotify();
 
-    final SignalDiagramComponent parent = ( SignalDiagramComponent )getParent();
-    final DragAndDropTargetController dndTargetController = parent.getDndTargetController();
+    final DragAndDropTargetController dndTargetController = getDnDTargetController();
 
     this.dndListener = new DragAndDropListener( getController() );
 
@@ -357,8 +345,9 @@ public class CursorView extends AbstractViewLayer
   @Override
   public void removeNotify()
   {
-    final SignalDiagramComponent parent = ( SignalDiagramComponent )getParent();
-    parent.getDndTargetController().removeHandler( this.dropHandler );
+    final DragAndDropTargetController dndTargetController = getDnDTargetController();
+
+    dndTargetController.removeHandler( this.dropHandler );
 
     if ( this.dndListener != null )
     {

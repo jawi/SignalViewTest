@@ -29,7 +29,7 @@ import java.util.logging.*;
 import javax.swing.*;
 
 import nl.lxtreme.test.dnd.*;
-import nl.lxtreme.test.dnd.DragAndDropTargetController.*;
+import nl.lxtreme.test.dnd.DragAndDropTargetController.DragAndDropHandler;
 import nl.lxtreme.test.view.laf.*;
 import nl.lxtreme.test.view.renderer.*;
 
@@ -70,13 +70,10 @@ public class ChannelLabelsView extends AbstractViewLayer
     @Override
     public void dragDropEnd( final DragSourceDropEvent aEvent )
     {
-      if ( !DragAndDropLock.isDragAndDropStarted() )
+      if ( !DragAndDropLock.releaseLock( this ) )
       {
         return;
       }
-
-      DragAndDropLock.setDragAndDropStarted( false );
-      DragAndDropLock.setLocked( false );
 
       final GhostGlassPane glassPane = getGlassPane( aEvent.getDragSourceContext().getComponent() );
 
@@ -102,7 +99,6 @@ public class ChannelLabelsView extends AbstractViewLayer
     public void dragExit( final DragSourceEvent aEvent )
     {
       // NO-op
-      DragAndDropLock.setLocked( false );
     }
 
     /**
@@ -111,40 +107,29 @@ public class ChannelLabelsView extends AbstractViewLayer
     @Override
     public void dragGestureRecognized( final DragGestureEvent aEvent )
     {
-      if ( DragAndDropLock.isLocked() )
+      if ( DragAndDropLock.isLocked( this ) || !DragAndDropLock.obtainLock( this ) )
       {
         return;
       }
 
       final Point coordinate = ( Point )aEvent.getDragOrigin().clone();
 
-      int channelRow = this.controller.getChannelRow( coordinate );
-
-      // Check whether we've got either a row or a cursor in our dragging
-      // context...
+      final int channelRow = this.controller.getChannelRow( coordinate );
       if ( channelRow < 0 )
       {
         return;
       }
 
-      final Component sourceComponent = getSignalView( aEvent.getComponent() );
-      if ( sourceComponent != null )
-      {
-        final GhostGlassPane glassPane = getGlassPane( aEvent.getComponent() );
+      final ChannelLabelsView sourceComponent = ( ChannelLabelsView )aEvent.getComponent();
+      final GhostGlassPane glassPane = getGlassPane( sourceComponent );
 
-        final Point dropPoint = createChannelDropPoint( coordinate, sourceComponent, glassPane );
+      final Point dropPoint = createChannelDropPoint( coordinate, sourceComponent, glassPane );
 
-        glassPane.setDropPoint( dropPoint, new ChannelInsertionPointRenderer() );
-        glassPane.setVisible( true );
-        glassPane.repaintPartially();
+      glassPane.setDropPoint( dropPoint, new ChannelInsertionPointRenderer() );
+      glassPane.setVisible( true );
+      glassPane.repaintPartially();
 
-        // Ensure we're having the exclusive right to start moving a channel
-        // around...
-        DragAndDropLock.setLocked( true );
-        DragAndDropLock.setDragAndDropStarted( true );
-
-        aEvent.startDrag( DragSource.DefaultMoveDrop, new ChannelRowTransferable( channelRow ) );
-      }
+      aEvent.startDrag( DragSource.DefaultMoveDrop, new ChannelRowTransferable( channelRow ) );
     }
 
     /**
@@ -153,25 +138,20 @@ public class ChannelLabelsView extends AbstractViewLayer
     @Override
     public void dragMouseMoved( final DragSourceDragEvent aEvent )
     {
-      if ( !DragAndDropLock.isDragAndDropStarted() )
+      final Point coordinate = aEvent.getLocation();
+      if ( !DragAndDropLock.isLocked( this ) || ( coordinate == null ) )
       {
         return;
       }
 
       final DragSourceContext dragSourceContext = aEvent.getDragSourceContext();
-      final Point coordinate = aEvent.getLocation();
 
-      if ( ( coordinate == null ) || !( dragSourceContext.getTransferable() instanceof ChannelRowTransferable ) )
-      {
-        return;
-      }
+      final Component sourceComponent = dragSourceContext.getComponent();
+      final GhostGlassPane glassPane = getGlassPane( sourceComponent );
 
-      final GhostGlassPane glassPane = getGlassPane( dragSourceContext.getComponent() );
-      final Component signalView = getSignalView( dragSourceContext.getComponent() );
+      SwingUtilities.convertPointFromScreen( coordinate, sourceComponent );
 
-      SwingUtilities.convertPointFromScreen( coordinate, signalView );
-
-      final Point dropPoint = createChannelDropPoint( coordinate, signalView, glassPane );
+      final Point dropPoint = createChannelDropPoint( coordinate, sourceComponent, glassPane );
 
       glassPane.setDropPoint( dropPoint );
       glassPane.repaintPartially();
@@ -203,10 +183,11 @@ public class ChannelLabelsView extends AbstractViewLayer
         final Component aTargetComponent )
     {
       final Point dropPoint = this.controller.getChannelDropPoint( aPoint );
-
-      SwingUtilities.convertPointToScreen( dropPoint, aSourceComponent );
-      SwingUtilities.convertPointFromScreen( dropPoint, aTargetComponent );
-
+      if ( dropPoint != null )
+      {
+        SwingUtilities.convertPointToScreen( dropPoint, aSourceComponent );
+        SwingUtilities.convertPointFromScreen( dropPoint, aTargetComponent );
+      }
       return dropPoint;
     }
 
@@ -217,21 +198,6 @@ public class ChannelLabelsView extends AbstractViewLayer
     private GhostGlassPane getGlassPane( final Component aComponent )
     {
       return ( GhostGlassPane )SwingUtilities.getRootPane( aComponent ).getGlassPane();
-    }
-
-    /**
-     * @param aComponent
-     * @return
-     */
-    private SignalView getSignalView( final Component aComponent )
-    {
-      SignalDiagramComponent signalDiagram = getSignalDiagramComponent( aComponent );
-      if ( signalDiagram == null )
-      {
-        return null;
-      }
-
-      return signalDiagram.getSignalView();
     }
   }
 
@@ -297,6 +263,8 @@ public class ChannelLabelsView extends AbstractViewLayer
   private DragAndDropListener dndListener;
   private final DropHandler dropHandler;
 
+  private DragGestureRecognizer dragGestureRecognizer;
+
   // CONSTRUCTORS
 
   /**
@@ -314,26 +282,6 @@ public class ChannelLabelsView extends AbstractViewLayer
   // METHODS
 
   /**
-   * @param aComponent
-   * @return
-   */
-  static SignalDiagramComponent getSignalDiagramComponent( final Component aComponent )
-  {
-    JScrollPane scrollPane = ( JScrollPane )SwingUtilities.getAncestorOfClass( JScrollPane.class, aComponent );
-    if ( scrollPane == null )
-    {
-      return null;
-    }
-
-    JComponent mainViewComponent = ( JComponent )scrollPane.getViewport().getView();
-    if ( mainViewComponent instanceof SignalDiagramComponent )
-    {
-      return ( SignalDiagramComponent )mainViewComponent;
-    }
-    return null;
-  }
-
-  /**
    * Installs all listeners and the support for DnD.
    * 
    * @see javax.swing.JComponent#addNotify()
@@ -341,29 +289,14 @@ public class ChannelLabelsView extends AbstractViewLayer
   @Override
   public void addNotify()
   {
-    try
-    {
-      this.dndListener = new DragAndDropListener( getController() );
+    this.dndListener = createDnDListener();
 
-      final DragSource dragSource = DragSource.getDefaultDragSource();
-      dragSource.createDefaultDragGestureRecognizer( this, DnDConstants.ACTION_MOVE, this.dndListener );
-      dragSource.addDragSourceMotionListener( this.dndListener );
-      dragSource.addDragSourceListener( this.dndListener );
+    final DragAndDropTargetController dndTargetController = getDnDTargetController();
+    dndTargetController.addHandler( this.dropHandler );
 
-      final SignalDiagramComponent parent = getSignalDiagramComponent( getParent() );
-      if ( parent != null )
-      {
-        final DragAndDropTargetController dndTargetController = parent.getDndTargetController();
+    setDropTarget( new DropTarget( this, dndTargetController ) );
 
-        dndTargetController.addHandler( this.dropHandler );
-
-        setDropTarget( new DropTarget( this, dndTargetController ) );
-      }
-    }
-    finally
-    {
-      super.addNotify();
-    }
+    super.addNotify();
   }
 
   /**
@@ -372,18 +305,24 @@ public class ChannelLabelsView extends AbstractViewLayer
   @Override
   public void removeNotify()
   {
-    try
+    getDnDTargetController().removeHandler( this.dropHandler );
+
+    if ( this.dndListener != null )
     {
-      final SignalDiagramComponent parent = getSignalDiagramComponent( getParent() );
-      if ( parent != null )
+      DragSource dragSource = null;
+      if ( this.dragGestureRecognizer != null )
       {
-        parent.getDndTargetController().removeHandler( this.dropHandler );
+        dragSource = this.dragGestureRecognizer.getDragSource();
       }
+      if ( dragSource == null )
+      {
+        dragSource = DragSource.getDefaultDragSource();
+      }
+      dragSource.removeDragSourceListener( this.dndListener );
+      dragSource.removeDragSourceMotionListener( this.dndListener );
     }
-    finally
-    {
-      super.removeNotify();
-    }
+
+    super.removeNotify();
   }
 
   /**
@@ -397,5 +336,25 @@ public class ChannelLabelsView extends AbstractViewLayer
   public final void updateUI()
   {
     setUI( new ChannelLabelsUI() );
+  }
+
+  /**
+   * Returns the Drag-And-Drop listener that listens for events made by the DnD
+   * framework.
+   * 
+   * @param a
+   *          {@link DragAndDropListener} instance, never <code>null</code>.
+   */
+  private DragAndDropListener createDnDListener()
+  {
+    DragAndDropListener result = new DragAndDropListener( getController() );
+
+    final DragSource dragSource = DragSource.getDefaultDragSource();
+    dragSource.addDragSourceMotionListener( result );
+    dragSource.addDragSourceListener( result );
+
+    this.dragGestureRecognizer = dragSource.createDefaultDragGestureRecognizer( this, DnDConstants.ACTION_MOVE, result );
+
+    return result;
   }
 }

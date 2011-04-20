@@ -27,7 +27,6 @@ import java.awt.event.*;
 import javax.swing.*;
 
 import nl.lxtreme.test.*;
-import nl.lxtreme.test.dnd.*;
 import nl.lxtreme.test.model.*;
 
 
@@ -293,8 +292,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   private final CursorView cursorView;
   private final MeasurementView measurementView;
 
-  private DragAndDropTargetController dndTargetController;
-
   private ComponentSizeListener componentSizeListener;
   private KeyboardControlListener keyboardListener;
   private CursorMouseListener cursorMouseListener;
@@ -350,9 +347,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
       addMouseListener( this.cursorMouseListener );
       addMouseMotionListener( this.cursorMouseListener );
-
-      // TODO remove this member from this class...
-      this.dndTargetController = new DragAndDropTargetController( this.controller );
 
       configureEnclosingScrollPane();
 
@@ -496,14 +490,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   final CursorView getCursorView()
   {
     return this.cursorView;
-  }
-
-  /**
-   * @return the dndTargetController
-   */
-  final DragAndDropTargetController getDndTargetController()
-  {
-    return this.dndTargetController;
   }
 
   /**

@@ -32,41 +32,44 @@ public final class DragAndDropLock
 {
   // CONSTANTS
 
-  private static AtomicBoolean locked = new AtomicBoolean( false );
-  private static AtomicBoolean startedDnD = new AtomicBoolean( false );
+  private static AtomicReference<Object> lockedMonitor = new AtomicReference<Object>( null );
 
   // METHODS
 
   /**
-   * @return
+   * Returns whether the given monitor has the exclusive DnD-lock.
+   * 
+   * @return <code>true</code> if the given monitor has the exclusive DnD-lock,
+   *         <code>false</code> otherwise.
    */
-  public static boolean isDragAndDropStarted()
+  public static boolean isLocked( final Object aMonitor )
   {
-    return startedDnD.get();
+    return lockedMonitor.compareAndSet( aMonitor, aMonitor );
   }
 
   /**
-   * @return
+   * Tries to obtain the exclusive DnD-lock.
+   * 
+   * @param aMonitor
+   *          the monitor for the DnD-lock, cannot be <code>null</code>.
+   * @return <code>true</code> if the lock was obtained successfully by the
+   *         given monitor, <code>false</code> otherwise.
    */
-  public static boolean isLocked()
+  public static boolean obtainLock( final Object aMonitor )
   {
-    return locked.get();
+    return lockedMonitor.compareAndSet( null, aMonitor );
   }
 
   /**
-   * @param isLocked
+   * Releases the exclusive DnD-lock, if held by the given monitor.
+   * 
+   * @param aMonitor
+   *          the monitor for the DnD-lock, cannot be <code>null</code>.
+   * @return <code>true</code> if the lock was released successfully for the
+   *         given monitor, <code>false</code> otherwise.
    */
-  public static void setDragAndDropStarted( final boolean isLocked )
+  public static boolean releaseLock( final Object aMonitor )
   {
-    startedDnD.set( isLocked );
+    return lockedMonitor.compareAndSet( aMonitor, null );
   }
-
-  /**
-   * @param isLocked
-   */
-  public static void setLocked( final boolean isLocked )
-  {
-    locked.set( isLocked );
-  }
-
 }

@@ -27,6 +27,7 @@ import java.util.logging.*;
 import javax.swing.*;
 
 import nl.lxtreme.test.*;
+import nl.lxtreme.test.dnd.*;
 import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.view.laf.*;
 
@@ -51,7 +52,7 @@ public final class SignalDiagramController
   private SampleDataModel dataModel;
   private ScreenModel screenModel;
   private SignalDiagramComponent signalDiagram;
-
+  private final DragAndDropTargetController dndTargetController;
   private final SettingsProvider settingsProvider;
 
   // CONSTRUCTORS
@@ -64,6 +65,8 @@ public final class SignalDiagramController
     this.dataModel = aModel;
     this.screenModel = new ScreenModel( aModel.getWidth() );
     this.settingsProvider = new SettingsProvider();
+
+    this.dndTargetController = new DragAndDropTargetController( this );
   }
 
   // METHODS
@@ -109,13 +112,18 @@ public final class SignalDiagramController
    * @param aCoordinate
    *          the coordinate to return the channel drop point for, cannot be
    *          <code>null</code>.
-   * @return a drop point, never <code>null</code>.
+   * @return a drop point, can be <code>null</code> in case the drop point is
+   *         invalid (nowhere near a valid channel).
    */
   public Point getChannelDropPoint( final Point aCoordinate )
   {
     final int dropRow = getCalculatedChannelRow( aCoordinate );
-    final int channelHeight = this.screenModel.getChannelHeight();
+    if ( dropRow < 0 )
+    {
+      return null;
+    }
 
+    final int channelHeight = this.screenModel.getChannelHeight();
     return new Point( 0, ( dropRow + 1 ) * channelHeight );
   }
 
@@ -653,6 +661,14 @@ public final class SignalDiagramController
   }
 
   /**
+   * @return the dndTargetController
+   */
+  final DragAndDropTargetController getDndTargetController()
+  {
+    return this.dndTargetController;
+  }
+
+  /**
    * Returns the hover area of the signal under the given coordinate (= mouse
    * position).
    * 
@@ -745,6 +761,16 @@ public final class SignalDiagramController
   }
 
   /**
+   * Returns the actual signal view component.
+   * 
+   * @return a signal view component, never <code>null</code>.
+   */
+  final SignalView getSignalView()
+  {
+    return this.signalDiagram.getSignalView();
+  }
+
+  /**
    * @param aComponent
    */
   final void setSignalDiagram( final SignalDiagramComponent aComponent )
@@ -828,16 +854,6 @@ public final class SignalDiagramController
   private MeasurementView getMeasurementView()
   {
     return this.signalDiagram.getMeasurementView();
-  }
-
-  /**
-   * Returns the actual signal view component.
-   * 
-   * @return a signal view component, never <code>null</code>.
-   */
-  private SignalView getSignalView()
-  {
-    return this.signalDiagram.getSignalView();
   }
 
   /**

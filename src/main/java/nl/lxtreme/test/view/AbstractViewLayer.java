@@ -24,6 +24,7 @@ package nl.lxtreme.test.view;
 import javax.swing.*;
 
 import nl.lxtreme.test.*;
+import nl.lxtreme.test.dnd.*;
 
 
 /**
@@ -69,5 +70,15 @@ public abstract class AbstractViewLayer extends JComponent
   public final IUserInterfaceSettingsProvider getSettingsProvider()
   {
     return this.controller.getSettingsProvider();
+  }
+
+  /**
+   * Returns the drag-and-drop target controller of this component.
+   * 
+   * @return a DnD target controller, never <code>null</code>.
+   */
+  protected final DragAndDropTargetController getDnDTargetController()
+  {
+    return this.controller.getDndTargetController();
   }
 }
