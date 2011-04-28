@@ -158,8 +158,6 @@ public class CursorView extends AbstractViewLayer
 
       SwingUtilities.convertPointFromScreen( coordinate, sourceComponent );
 
-      this.controller.setSnapModeEnabled( isSnapModeKeyEvent( aEvent ) );
-
       final int cursorIdx = ( ( CursorTransferable )dragSourceContext.getTransferable() ).getCursorIdx();
       final long timestamp = this.controller.locationToTimestamp( coordinate );
       final String cursorFlag = this.controller.getCursorFlagText( cursorIdx, timestamp );
@@ -197,8 +195,7 @@ public class CursorView extends AbstractViewLayer
     @Override
     public void dropActionChanged( final DragSourceDragEvent aEvent )
     {
-      // NO-op
-      System.out.println( "dropActionChanged!" );
+      this.controller.setSnapModeEnabled( isSnapModeKeyEvent( aEvent ) );
     }
 
     /**

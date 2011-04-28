@@ -49,11 +49,12 @@ public final class SignalDiagramController
 
   // VARIABLES
 
+  private final DragAndDropTargetController dndTargetController;
+  private final SettingsProvider settingsProvider;
+
   private SampleDataModel dataModel;
   private ScreenModel screenModel;
   private SignalDiagramComponent signalDiagram;
-  private final DragAndDropTargetController dndTargetController;
-  private final SettingsProvider settingsProvider;
 
   // CONSTRUCTORS
 
