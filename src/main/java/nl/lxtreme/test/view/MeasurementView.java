@@ -46,11 +46,19 @@ public class MeasurementView extends AbstractViewLayer
   {
     super( aController );
     setOpaque( false );
-
-    updateUI();
   }
 
   // METHODS
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void addNotify()
+  {
+    super.addNotify();
+    updateUI();
+  }
 
   /**
    * Hides the hover from screen.
@@ -73,6 +81,16 @@ public class MeasurementView extends AbstractViewLayer
     LOG.fine( "Moving measurement hover..." );
 
     ( ( MeasurementUI )this.ui ).moveHover( aSignalHover, this );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void removeNotify()
+  {
+    setUI( null );
+    super.removeNotify();
   }
 
   /**

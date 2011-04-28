@@ -311,8 +311,6 @@ public class CursorView extends AbstractViewLayer
     setOpaque( false );
 
     this.dropHandler = new DropHandler();
-
-    updateUI();
   }
 
   // METHODS
@@ -323,8 +321,6 @@ public class CursorView extends AbstractViewLayer
   @Override
   public void addNotify()
   {
-    super.addNotify();
-
     final DragAndDropTargetController dndTargetController = getDnDTargetController();
 
     this.dndListener = new DragAndDropListener( getController() );
@@ -337,6 +333,10 @@ public class CursorView extends AbstractViewLayer
     dndTargetController.addHandler( this.dropHandler );
 
     setDropTarget( new DropTarget( this, dndTargetController ) );
+
+    updateUI();
+
+    super.addNotify();
   }
 
   /**
@@ -356,6 +356,8 @@ public class CursorView extends AbstractViewLayer
       dragSource.removeDragSourceMotionListener( this.dndListener );
       this.dndListener = null;
     }
+
+    setUI( null );
 
     super.removeNotify();
   }
