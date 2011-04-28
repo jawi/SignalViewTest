@@ -260,7 +260,7 @@ public class Main
 
     this.controller = new SignalDiagramController( model );
 
-    this.signalDiagram = new SignalDiagramComponent( this.controller );
+    this.signalDiagram = SignalDiagramComponent.create( this.controller );
   }
 
   /**

@@ -22,6 +22,7 @@ package nl.lxtreme.test.view.laf;
 
 
 import java.awt.*;
+import java.awt.event.*;
 
 import javax.swing.*;
 import javax.swing.plaf.*;
@@ -37,6 +38,87 @@ import nl.lxtreme.test.view.renderer.Renderer;
  */
 public class MeasurementUI extends ComponentUI
 {
+  // INNER TYPES
+
+  /**
+   * Provides a mouse listener for this measurement view component.
+   */
+  static final class MyMouseListener extends MouseAdapter
+  {
+    // CONSTANTS
+
+    private static final Cursor DEFAULT = Cursor.getDefaultCursor();
+    private static final Cursor CURSOR_HOVER = Cursor.getPredefinedCursor( Cursor.HAND_CURSOR );
+
+    // VARIABLES
+
+    private final SignalDiagramController controller;
+
+    private volatile boolean showing = false;
+
+    // CONSTRUCTORS
+
+    /**
+     * @param aController
+     */
+    public MyMouseListener( final SignalDiagramController aController )
+    {
+      this.controller = aController;
+    }
+
+    // METHODS
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void mouseMoved( final MouseEvent aEvent )
+    {
+      final Point point = aEvent.getPoint();
+      System.out.println( "Mouse moved (measurement): " + aEvent );
+
+      if ( !this.showing )
+      {
+        if ( this.controller.isMeasurementMode() )
+        {
+          this.showing = this.controller.showHover( point );
+          setMouseCursor( aEvent, CURSOR_HOVER );
+
+          aEvent.consume();
+        }
+      }
+      else
+      {
+        if ( !this.controller.isMeasurementMode() )
+        {
+          this.showing = this.controller.hideHover();
+          setMouseCursor( aEvent, DEFAULT );
+
+          aEvent.consume();
+        }
+        else
+        {
+          setMouseCursor( aEvent, CURSOR_HOVER );
+          this.controller.moveHover( point );
+
+          aEvent.consume();
+        }
+      }
+    }
+
+    /**
+     * @param aEvent
+     * @param aCursor
+     */
+    private void setMouseCursor( final MouseEvent aEvent, final Cursor aCursor )
+    {
+      if ( aEvent.getSource() instanceof JComponent )
+      {
+        ( ( JComponent )aEvent.getSource() ).setCursor( aCursor );
+      }
+    }
+  }
+
   // CONSTANTS
 
   public static final String LABEL_FONT = "measurement.label.font";
@@ -52,6 +134,8 @@ public class MeasurementUI extends ComponentUI
 
   private Rectangle textRectangle;
   private Rectangle arrowRectangle;
+
+  private MyMouseListener mouseListener;
 
   // METHODS
 
@@ -81,6 +165,14 @@ public class MeasurementUI extends ComponentUI
     {
       this.textFont = baseFont.deriveFont( baseFont.getSize2D() * 0.9f );
     }
+
+    // Lazy init...
+    if ( this.mouseListener == null )
+    {
+      this.mouseListener = new MyMouseListener( view.getController() );
+    }
+
+    view.addMouseMotionListener( this.mouseListener );
   }
 
   /**
@@ -136,7 +228,6 @@ public class MeasurementUI extends ComponentUI
       this.signalInfoRenderer.setContext( text );
 
       this.textRectangle = this.signalInfoRenderer.render( g2d, textXpos, textYpos );
-
     }
     finally
     {
@@ -157,6 +248,20 @@ public class MeasurementUI extends ComponentUI
       this.signalHover = aSignalHover.clone();
       repaintPartially( aComponent );
     }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void uninstallUI( final JComponent aComponent )
+  {
+    final MeasurementView view = ( MeasurementView )aComponent;
+
+    view.removeMouseListener( this.mouseListener );
+    view.removeMouseMotionListener( this.mouseListener );
+
+    this.mouseListener = null;
   }
 
   /**

@@ -261,6 +261,14 @@ public final class SignalDiagramController
   }
 
   /**
+   * @return the dndTargetController
+   */
+  public final DragAndDropTargetController getDndTargetController()
+  {
+    return this.dndTargetController;
+  }
+
+  /**
    * @return
    */
   public ScreenModel getScreenModel()
@@ -276,6 +284,14 @@ public final class SignalDiagramController
   public IUserInterfaceSettingsProvider getSettingsProvider()
   {
     return this.settingsProvider;
+  }
+
+  /**
+   * @return the signalDiagram
+   */
+  public final SignalDiagramComponent getSignalDiagram()
+  {
+    return this.signalDiagram;
   }
 
   /**
@@ -535,6 +551,7 @@ public final class SignalDiagramController
   public void setCursorsVisible( final boolean aVisible )
   {
     this.screenModel.setCursorMode( aVisible );
+    
     repaintLater( getCursorView(), getTimeLineView() );
   }
 
@@ -662,14 +679,6 @@ public final class SignalDiagramController
   }
 
   /**
-   * @return the dndTargetController
-   */
-  final DragAndDropTargetController getDndTargetController()
-  {
-    return this.dndTargetController;
-  }
-
-  /**
    * Returns the hover area of the signal under the given coordinate (= mouse
    * position).
    * 
@@ -762,16 +771,6 @@ public final class SignalDiagramController
   }
 
   /**
-   * Returns the actual signal view component.
-   * 
-   * @return a signal view component, never <code>null</code>.
-   */
-  final SignalView getSignalView()
-  {
-    return this.signalDiagram.getSignalView();
-  }
-
-  /**
    * @param aComponent
    */
   final void setSignalDiagram( final SignalDiagramComponent aComponent )
@@ -855,6 +854,16 @@ public final class SignalDiagramController
   private MeasurementView getMeasurementView()
   {
     return this.signalDiagram.getMeasurementView();
+  }
+
+  /**
+   * Returns the actual signal view component.
+   * 
+   * @return a signal view component, never <code>null</code>.
+   */
+  private SignalView getSignalView()
+  {
+    return this.signalDiagram.getSignalView();
   }
 
   /**

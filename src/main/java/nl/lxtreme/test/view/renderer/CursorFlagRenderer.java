@@ -91,6 +91,7 @@ public class CursorFlagRenderer extends BaseRenderer
     final Rectangle result = new Rectangle();
     result.width = flagWidth;
     result.height = clip.height;
+    result.grow( 2, 2 );
 
     final Color flagColor = aCanvas.getColor();
 

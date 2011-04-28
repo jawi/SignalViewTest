@@ -63,6 +63,16 @@ public abstract class AbstractViewLayer extends JComponent
   }
 
   /**
+   * Returns the drag-and-drop target controller of this component.
+   * 
+   * @return a DnD target controller, never <code>null</code>.
+   */
+  public final DragAndDropTargetController getDnDTargetController()
+  {
+    return this.controller.getDndTargetController();
+  }
+
+  /**
    * Returns the current settings provider.
    * 
    * @return the settings provider, never <code>null</code>.
@@ -70,15 +80,5 @@ public abstract class AbstractViewLayer extends JComponent
   public final IUserInterfaceSettingsProvider getSettingsProvider()
   {
     return this.controller.getSettingsProvider();
-  }
-
-  /**
-   * Returns the drag-and-drop target controller of this component.
-   * 
-   * @return a DnD target controller, never <code>null</code>.
-   */
-  protected final DragAndDropTargetController getDnDTargetController()
-  {
-    return this.controller.getDndTargetController();
   }
 }

@@ -30,7 +30,7 @@ import javax.swing.*;
  * Provides a glass pane for use while dragging channels around. This glass pane
  * will show a marker where the drop location of the channel will be.
  */
-final class GhostGlassPane extends JPanel
+public final class GhostGlassPane extends JPanel
 {
   // CONSTANTS
 

@@ -22,6 +22,7 @@ package nl.lxtreme.test.view.laf;
 
 
 import java.awt.*;
+import java.awt.event.*;
 
 import javax.swing.*;
 import javax.swing.plaf.*;
@@ -37,11 +38,51 @@ import nl.lxtreme.test.view.renderer.Renderer;
  */
 public class CursorUI extends ComponentUI
 {
-  // CONSTANTS
+  // INNER TYPES
+
+  /**
+   * Provides an mouse event listener to allow some of the functionality (such
+   * as DnD and cursor dragging) of this component to be controlled with the
+   * mouse.
+   */
+  static final class MyMouseListener extends MouseAdapter
+  {
+    // VARIABLES
+
+    private final SignalDiagramController controller;
+
+    // CONSTRUCTORS
+
+    /**
+     * @param aController
+     */
+    public MyMouseListener( final SignalDiagramController aController )
+    {
+      this.controller = aController;
+    }
+
+    // METHODS
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void mouseClicked( final MouseEvent aEvent )
+    {
+      // TODO: this should be done through a context menu...
+      if ( this.controller.isCursorMode() && ( aEvent.getClickCount() == 2 ) )
+      {
+        final Point point = aEvent.getPoint();
+        this.controller.moveCursor( 3, point );
+      }
+    }
+  }
 
   // VARIABLES
 
   private final Renderer cursorRenderer = new CursorFlagRenderer();
+
+  private MyMouseListener mouseListener;
 
   // METHODS
 
@@ -51,7 +92,15 @@ public class CursorUI extends ComponentUI
   @Override
   public void installUI( final JComponent aComponent )
   {
-    // TODO Auto-generated method stub
+    final CursorView view = ( CursorView )aComponent;
+
+    // Lazy init...
+    if ( this.mouseListener == null )
+    {
+      this.mouseListener = new MyMouseListener( view.getController() );
+    }
+
+    view.addMouseListener( this.mouseListener );
   }
 
   /**
@@ -102,6 +151,20 @@ public class CursorUI extends ComponentUI
     {
       canvas.dispose();
     }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void uninstallUI( final JComponent aComponent )
+  {
+    final CursorView view = ( CursorView )aComponent;
+
+    view.removeMouseListener( this.mouseListener );
+    view.removeMouseMotionListener( this.mouseListener );
+
+    this.mouseListener = null;
   }
 
   /**

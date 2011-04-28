@@ -292,9 +292,8 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   private final CursorView cursorView;
   private final MeasurementView measurementView;
 
-  private ComponentSizeListener componentSizeListener;
-  private KeyboardControlListener keyboardListener;
-  private CursorMouseListener cursorMouseListener;
+  private final ComponentSizeListener componentSizeListener;
+  private final KeyboardControlListener keyboardListener;
 
   // CONSTRUCTORS
 
@@ -304,22 +303,38 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
    * @param aController
    *          the controller to use, cannot be <code>null</code>.
    */
-  public SignalDiagramComponent( final SignalDiagramController aController )
+  private SignalDiagramComponent( final SignalDiagramController aController )
   {
     super( new StackLayout() );
 
     this.controller = aController;
 
+    this.componentSizeListener = new ComponentSizeListener( this.controller );
+    this.keyboardListener = new KeyboardControlListener( this.controller );
+
     this.signalView = new SignalView( this.controller );
     this.cursorView = new CursorView( this.controller );
     this.measurementView = new MeasurementView( this.controller );
-
-    add( this.signalView, StackLayout.TOP );
-    add( this.cursorView, StackLayout.TOP );
-    add( this.measurementView, StackLayout.TOP );
   }
 
   // METHODS
+
+  /**
+   * Factory method to create a new {@link SignalDiagramComponent} instance.
+   * 
+   * @param aController
+   *          the controller to use for the SignalDiagramComponent instance,
+   *          cannot be <code>null</code>.
+   * @return a new {@link SignalDiagramComponent} instance, never
+   *         <code>null</code>.
+   */
+  public static SignalDiagramComponent create( final SignalDiagramController aController )
+  {
+    final SignalDiagramComponent result = new SignalDiagramComponent( aController );
+    result.initComponent();
+    aController.setSignalDiagram( result );
+    return result;
+  }
 
   /**
    * Installs all listeners and the support for DnD.
@@ -331,22 +346,12 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   {
     try
     {
-      this.controller.setSignalDiagram( this );
-
       final JRootPane rootPane = SwingUtilities.getRootPane( this );
       rootPane.setGlassPane( new GhostGlassPane() );
-
-      this.componentSizeListener = new ComponentSizeListener( this.controller );
-      this.keyboardListener = new KeyboardControlListener( this.controller );
 
       final Container window = SwingUtilities.getWindowAncestor( this );
       window.addComponentListener( this.componentSizeListener );
       window.addKeyListener( this.keyboardListener );
-
-      this.cursorMouseListener = new CursorMouseListener( this.controller );
-
-      addMouseListener( this.cursorMouseListener );
-      addMouseMotionListener( this.cursorMouseListener );
 
       configureEnclosingScrollPane();
 
@@ -359,7 +364,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   }
 
   /**
-   * /** {@inheritDoc}
+   * {@inheritDoc}
    */
   @Override
   public Dimension getPreferredScrollableViewportSize()
@@ -460,23 +465,8 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       final Container parent = getParent();
       final Container window = SwingUtilities.getWindowAncestor( parent );
 
-      if ( this.componentSizeListener != null )
-      {
-        window.removeComponentListener( this.componentSizeListener );
-        this.componentSizeListener = null;
-      }
-      if ( this.keyboardListener != null )
-      {
-        window.removeKeyListener( this.keyboardListener );
-        this.keyboardListener = null;
-      }
-
-      if ( this.cursorMouseListener != null )
-      {
-        removeMouseListener( this.cursorMouseListener );
-        removeMouseMotionListener( this.cursorMouseListener );
-        this.cursorMouseListener = null;
-      }
+      window.removeComponentListener( this.componentSizeListener );
+      window.removeKeyListener( this.keyboardListener );
     }
     finally
     {
@@ -538,7 +528,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
         }
 
         final TimeLineView timelineView = new TimeLineView( this.controller );
-        timelineView.addMouseListener( this.cursorMouseListener );
 
         scrollPane.setColumnHeaderView( timelineView );
         scrollPane.setRowHeaderView( new ChannelLabelsView( this.controller ) );
@@ -674,6 +663,16 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   }
 
   /**
+   * Initializes this component.
+   */
+  private void initComponent()
+  {
+    add( this.signalView, StackLayout.TOP );
+    add( this.cursorView, StackLayout.TOP );
+    add( this.measurementView, StackLayout.TOP );
+  }
+
+  /**
    * Reverses the effect of <code>configureEnclosingScrollPane</code> by
    * replacing the <code>columnHeaderView</code> of the enclosing scroll pane
    * with <code>null</code>.
@@ -698,8 +697,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
         {
           return;
         }
-
-        scrollPane.getColumnHeader().removeMouseListener( this.cursorMouseListener );
 
         scrollPane.setColumnHeaderView( null );
         scrollPane.setRowHeaderView( null );
