@@ -538,6 +538,14 @@ public final class SignalDiagramController
   }
 
   /**
+   * @param aCursorIdx
+   */
+  public void removeCursor( final int aCursorIdx )
+  {
+    // TODO Auto-generated method stub
+  }
+
+  /**
    * Turns the visibility of all cursors either on or off.
    * <p>
    * This method does <em>not</em> modify any cursor, only whether they are
@@ -551,7 +559,7 @@ public final class SignalDiagramController
   public void setCursorsVisible( final boolean aVisible )
   {
     this.screenModel.setCursorMode( aVisible );
-    
+
     repaintLater( getCursorView(), getTimeLineView() );
   }
 

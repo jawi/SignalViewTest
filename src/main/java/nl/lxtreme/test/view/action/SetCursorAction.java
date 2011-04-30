@@ -1,0 +1,97 @@
+/*
+ * OpenBench LogicSniffer / SUMP project 
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or (at
+ * your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin St, Fifth Floor, Boston, MA 02110, USA
+ *
+ * Copyright (C) 2006-2010 Michael Poppitz, www.sump.org
+ * Copyright (C) 2010 J.W. Janssen, www.lxtreme.nl
+ */
+package nl.lxtreme.test.view.action;
+
+
+import java.awt.*;
+import java.awt.event.*;
+
+import javax.swing.*;
+
+import nl.lxtreme.test.view.*;
+
+
+/**
+ * 
+ */
+public class SetCursorAction extends AbstractAction
+{
+  // CONSTANTS
+
+  private static final long serialVersionUID = 1L;
+
+  public static final String KEY = "SetCursorAction";
+
+  // VARIABLES
+
+  private final SignalDiagramController controller;
+  private final int cursorIdx;
+
+  // CONSTRUCTORS
+
+  /**
+   * Creates a new SetCursorAction instance.
+   */
+  public SetCursorAction( final SignalDiagramController aController, final int aCursorIdx )
+  {
+    super( "Set cursor " + ( aCursorIdx + 1 ) );
+    this.controller = aController;
+    this.cursorIdx = aCursorIdx;
+  }
+
+  // METHODS
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void actionPerformed( final ActionEvent aEvent )
+  {
+    final JMenuItem menuitem = ( JMenuItem )aEvent.getSource();
+
+    final Point location = getContextMenuLocation( menuitem );
+    this.controller.moveCursor( this.cursorIdx, location );
+  }
+
+  /**
+   * Returns the context menu location client property of the given menu item's
+   * popup menu.
+   * 
+   * @param aMenuItem
+   *          the menu item to return the client property of, cannot be
+   *          <code>null</code>.
+   * @return a location denoting the context menu's position, never
+   *         <code>null</code>.
+   */
+  private Point getContextMenuLocation( final JMenuItem aMenuItem )
+  {
+    final JComponent container = ( JComponent )aMenuItem.getParent();
+
+    Point location = ( Point )container.getClientProperty( KEY );
+    if ( location == null )
+    {
+      // Make sure we return a defined point...
+      return new Point( 0, 0 );
+    }
+
+    return location;
+  }
+}
