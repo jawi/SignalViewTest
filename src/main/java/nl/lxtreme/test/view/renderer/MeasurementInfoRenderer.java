@@ -31,7 +31,7 @@ import nl.lxtreme.test.*;
 /**
  * 
  */
-public class SignalInfoRenderer extends BaseRenderer
+public class MeasurementInfoRenderer extends BaseRenderer
 {
   // INNER TYPES
 
@@ -103,7 +103,14 @@ public class SignalInfoRenderer extends BaseRenderer
     {
       throw new IllegalArgumentException( "Expected a String parameter!" );
     }
-    this.text = ( String )aParameters[0];
+    if ( aParameters[0] instanceof String )
+    {
+      this.text = ( String )aParameters[0];
+    }
+    else
+    {
+      this.text = String.valueOf( aParameters[0] );
+    }
   }
 
   /**

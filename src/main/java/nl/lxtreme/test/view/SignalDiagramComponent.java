@@ -289,7 +289,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
   private final SignalView signalView;
   private final CursorView cursorView;
-  private final MeasurementView measurementView;
 
   private final ComponentSizeListener componentSizeListener;
   private final KeyboardControlListener keyboardListener;
@@ -313,7 +312,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
     this.signalView = new SignalView( this.controller );
     this.cursorView = new CursorView( this.controller );
-    this.measurementView = new MeasurementView( this.controller );
   }
 
   // METHODS
@@ -346,7 +344,11 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     try
     {
       final JRootPane rootPane = SwingUtilities.getRootPane( this );
-      rootPane.setGlassPane( new GhostGlassPane() );
+      final GhostGlassPane glassPane = new GhostGlassPane( this, this.controller );
+      rootPane.setGlassPane( glassPane );
+
+      Toolkit.getDefaultToolkit().addAWTEventListener( glassPane,
+          AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK );
 
       final Container window = SwingUtilities.getWindowAncestor( this );
       window.addComponentListener( this.componentSizeListener );
@@ -426,6 +428,16 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   }
 
   /**
+   * Returns the actual signal view component.
+   * 
+   * @return a signal view component, never <code>null</code>.
+   */
+  public final SignalView getSignalView()
+  {
+    return this.signalView;
+  }
+
+  /**
    * @see javax.swing.JComponent#paint(java.awt.Graphics)
    */
   @Override
@@ -479,24 +491,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   final CursorView getCursorView()
   {
     return this.cursorView;
-  }
-
-  /**
-   * @return the arrowView
-   */
-  final MeasurementView getMeasurementView()
-  {
-    return this.measurementView;
-  }
-
-  /**
-   * Returns the actual signal view component.
-   * 
-   * @return a signal view component, never <code>null</code>.
-   */
-  final SignalView getSignalView()
-  {
-    return this.signalView;
   }
 
   /**
@@ -668,7 +662,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   {
     add( this.signalView, StackLayout.TOP );
     add( this.cursorView, StackLayout.TOP );
-    add( this.measurementView, StackLayout.TOP );
   }
 
   /**

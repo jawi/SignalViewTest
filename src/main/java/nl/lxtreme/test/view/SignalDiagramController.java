@@ -294,12 +294,104 @@ public final class SignalDiagramController
   }
 
   /**
+   * Returns the hover area of the signal under the given coordinate (= mouse
+   * position).
+   * 
+   * @param aPoint
+   *          the mouse coordinate to determine the signal rectangle for, cannot
+   *          be <code>null</code>.
+   * @return the rectangle of the signal the given coordinate contains,
+   *         <code>null</code> if not found.
+   */
+  public final SignalHoverInfo getSignalHover( final Point aPoint )
+  {
+    final int signalWidth = this.dataModel.getWidth();
+    final int signalHeight = this.screenModel.getSignalHeight();
+    final int channelHeight = this.screenModel.getChannelHeight();
+
+    final int virtualRow = ( aPoint.y - signalHeight ) / channelHeight;
+    if ( ( virtualRow < 0 ) || ( virtualRow > ( signalWidth - 1 ) ) )
+    {
+      return null;
+    }
+
+    final int realRow = this.screenModel.toRealRow( virtualRow );
+    final double zoomFactor = this.screenModel.getZoomFactor();
+
+    final long[] timestamps = this.dataModel.getTimestamps();
+
+    long startTimestamp = -1L;
+    long middleTimestamp = -1L;
+    long endTimestamp = -1L;
+    int middleXpos = -1;
+
+    // find the reference time value; which is the "timestamp" under the
+    // cursor...
+    final int refIdx = locationToSampleIndex( aPoint );
+    final int[] values = this.dataModel.getValues();
+    if ( ( refIdx >= 0 ) && ( refIdx < values.length ) )
+    {
+      final int mask = ( 1 << realRow );
+      final int refValue = ( values[refIdx] & mask );
+
+      int idx = refIdx;
+      do
+      {
+        idx--;
+      }
+      while ( ( idx >= 0 ) && ( ( values[idx] & mask ) == refValue ) );
+      // convert the found index back to "screen" values...
+      int middleSampleIdx = Math.max( 0, idx + 1 );
+      middleTimestamp = timestamps[middleSampleIdx];
+
+      // Search for the original value again, to complete the pulse...
+      do
+      {
+        idx--;
+      }
+      while ( ( idx >= 0 ) && ( ( values[idx] & mask ) != refValue ) );
+
+      // convert the found index back to "screen" values...
+      int startSampleIdx = Math.max( 0, idx + 1 );
+      startTimestamp = timestamps[startSampleIdx];
+
+      idx = refIdx;
+      do
+      {
+        idx++;
+      }
+      while ( ( idx < values.length ) && ( ( values[idx] & mask ) == refValue ) );
+
+      // convert the found index back to "screen" values...
+      int endSampleIdx = Math.min( idx, timestamps.length - 1 );
+      endTimestamp = timestamps[endSampleIdx];
+    }
+
+    final Rectangle rect = new Rectangle();
+    rect.x = ( int )( zoomFactor * startTimestamp );
+    rect.width = ( int )( zoomFactor * ( endTimestamp - startTimestamp ) );
+    rect.y = ( virtualRow * channelHeight ) + this.screenModel.getSignalOffset();
+    rect.height = signalHeight;
+
+    // The position where the "other" signal transition should be...
+    middleXpos = ( int )( zoomFactor * middleTimestamp );
+
+    // Calculate the "absolute" time based on the mouse position, use a
+    // "over sampling" factor to allow intermediary (between two time stamps)
+    // time value to be shown...
+    final long timestamp = ( long )( ( SignalHoverInfo.TIMESTAMP_FACTOR * aPoint.x ) / zoomFactor );
+
+    return new SignalHoverInfo( rect, startTimestamp, endTimestamp, middleTimestamp, timestamp, middleXpos, realRow,
+        this.dataModel.getSampleRate() );
+  }
+
+  /**
    * @param aPoint
    * @return
    */
   public boolean hideHover()
   {
-    getMeasurementView().hideHover();
+    // getMeasurementView().hideHover();
     return false;
   }
 
@@ -403,8 +495,8 @@ public final class SignalDiagramController
     // Update the screen model...
     this.screenModel.moveRows( row, newRow );
 
-    final JScrollPane scrollPane = ( JScrollPane )SwingUtilities.getAncestorOfClass( JScrollPane.class,
-        getMeasurementView() );
+    final JScrollPane scrollPane = ( JScrollPane )SwingUtilities
+        .getAncestorOfClass( JScrollPane.class, getSignalView() );
     if ( scrollPane != null )
     {
       final int signalOffset = this.screenModel.getSignalOffset();
@@ -487,7 +579,7 @@ public final class SignalDiagramController
   {
     final SignalHoverInfo signalHover = getSignalHover( convertToPointOf( getSignalView(), aPoint ) );
 
-    getMeasurementView().moveHover( signalHover );
+    // getMeasurementView().moveHover( signalHover );
   }
 
   /**
@@ -495,8 +587,8 @@ public final class SignalDiagramController
    */
   public void recalculateDimensions()
   {
-    final JScrollPane scrollPane = ( JScrollPane )SwingUtilities.getAncestorOfClass( JScrollPane.class,
-        getMeasurementView() );
+    final JScrollPane scrollPane = ( JScrollPane )SwingUtilities
+        .getAncestorOfClass( JScrollPane.class, getSignalView() );
     if ( scrollPane != null )
     {
       final Rectangle viewPortSize = scrollPane.getViewport().getVisibleRect();
@@ -572,7 +664,13 @@ public final class SignalDiagramController
   public void setMeasurementMode( final boolean aEnabled )
   {
     this.screenModel.setMeasurementMode( aEnabled );
-    repaintLater( getMeasurementView() );
+
+    final JRootPane rootPane = this.signalDiagram.getRootPane();
+    final GhostGlassPane glassPane = ( GhostGlassPane )rootPane.getGlassPane();
+
+    glassPane.setVisible( aEnabled );
+
+    // repaintLater( getMeasurementView() );
   }
 
   /**
@@ -631,7 +729,7 @@ public final class SignalDiagramController
     final SignalHoverInfo signalHover = getSignalHover( convertToPointOf( getSignalView(), aPoint ) );
     if ( signalHover != null )
     {
-      getMeasurementView().showHover( signalHover );
+      // getMeasurementView().showHover( signalHover );
     }
 
     return ( signalHover != null );
@@ -683,98 +781,6 @@ public final class SignalDiagramController
     zoomRelative( 0.5 );
 
     recalculateDimensions();
-  }
-
-  /**
-   * Returns the hover area of the signal under the given coordinate (= mouse
-   * position).
-   * 
-   * @param aPoint
-   *          the mouse coordinate to determine the signal rectangle for, cannot
-   *          be <code>null</code>.
-   * @return the rectangle of the signal the given coordinate contains,
-   *         <code>null</code> if not found.
-   */
-  final SignalHoverInfo getSignalHover( final Point aPoint )
-  {
-    final int signalWidth = this.dataModel.getWidth();
-    final int signalHeight = this.screenModel.getSignalHeight();
-    final int channelHeight = this.screenModel.getChannelHeight();
-
-    final int virtualRow = ( aPoint.y - signalHeight ) / channelHeight;
-    if ( ( virtualRow < 0 ) || ( virtualRow > ( signalWidth - 1 ) ) )
-    {
-      return null;
-    }
-
-    final int realRow = this.screenModel.toRealRow( virtualRow );
-    final double zoomFactor = this.screenModel.getZoomFactor();
-
-    final long[] timestamps = this.dataModel.getTimestamps();
-
-    long startTimestamp = -1L;
-    long middleTimestamp = -1L;
-    long endTimestamp = -1L;
-    int middleXpos = -1;
-
-    // find the reference time value; which is the "timestamp" under the
-    // cursor...
-    final int refIdx = locationToSampleIndex( aPoint );
-    final int[] values = this.dataModel.getValues();
-    if ( ( refIdx >= 0 ) && ( refIdx < values.length ) )
-    {
-      final int mask = ( 1 << realRow );
-      final int refValue = ( values[refIdx] & mask );
-
-      int idx = refIdx;
-      do
-      {
-        idx--;
-      }
-      while ( ( idx >= 0 ) && ( ( values[idx] & mask ) == refValue ) );
-      // convert the found index back to "screen" values...
-      int middleSampleIdx = Math.max( 0, idx + 1 );
-      middleTimestamp = timestamps[middleSampleIdx];
-
-      // Search for the original value again, to complete the pulse...
-      do
-      {
-        idx--;
-      }
-      while ( ( idx >= 0 ) && ( ( values[idx] & mask ) != refValue ) );
-
-      // convert the found index back to "screen" values...
-      int startSampleIdx = Math.max( 0, idx + 1 );
-      startTimestamp = timestamps[startSampleIdx];
-
-      idx = refIdx;
-      do
-      {
-        idx++;
-      }
-      while ( ( idx < values.length ) && ( ( values[idx] & mask ) == refValue ) );
-
-      // convert the found index back to "screen" values...
-      int endSampleIdx = Math.min( idx, timestamps.length - 1 );
-      endTimestamp = timestamps[endSampleIdx];
-    }
-
-    final Rectangle rect = new Rectangle();
-    rect.x = ( int )( zoomFactor * startTimestamp );
-    rect.width = ( int )( zoomFactor * ( endTimestamp - startTimestamp ) );
-    rect.y = ( virtualRow * channelHeight ) + this.screenModel.getSignalOffset();
-    rect.height = signalHeight;
-
-    // The position where the "other" signal transition should be...
-    middleXpos = ( int )( zoomFactor * middleTimestamp );
-
-    // Calculate the "absolute" time based on the mouse position, use a
-    // "over sampling" factor to allow intermediary (between two time stamps)
-    // time value to be shown...
-    final long timestamp = ( long )( ( SignalHoverInfo.TIMESTAMP_FACTOR * aPoint.x ) / zoomFactor );
-
-    return new SignalHoverInfo( rect, startTimestamp, endTimestamp, middleTimestamp, timestamp, middleXpos, realRow,
-        this.dataModel.getSampleRate() );
   }
 
   /**
@@ -856,14 +862,6 @@ public final class SignalDiagramController
   }
 
   /**
-   * @return the arrowView
-   */
-  private MeasurementView getMeasurementView()
-  {
-    return this.signalDiagram.getMeasurementView();
-  }
-
-  /**
    * Returns the actual signal view component.
    * 
    * @return a signal view component, never <code>null</code>.
@@ -895,10 +893,9 @@ public final class SignalDiagramController
    */
   private Dimension getVisibleViewSize()
   {
-    final MeasurementView measurementView = getMeasurementView();
+    final JComponent component = getSignalView();
 
-    final JScrollPane scrollPane = ( JScrollPane )SwingUtilities
-        .getAncestorOfClass( JScrollPane.class, measurementView );
+    final JScrollPane scrollPane = ( JScrollPane )SwingUtilities.getAncestorOfClass( JScrollPane.class, component );
 
     final Rectangle rect;
     if ( scrollPane != null )

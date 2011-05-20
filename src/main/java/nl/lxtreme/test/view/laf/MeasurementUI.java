@@ -74,7 +74,6 @@ public class MeasurementUI extends ComponentUI
     public void mouseMoved( final MouseEvent aEvent )
     {
       final Point point = aEvent.getPoint();
-      System.out.println( "Mouse moved (measurement): " + aEvent );
 
       if ( !this.showing )
       {
@@ -124,7 +123,7 @@ public class MeasurementUI extends ComponentUI
 
   // VARIABLES
 
-  private final Renderer signalInfoRenderer = new SignalInfoRenderer();
+  private final Renderer signalInfoRenderer = new MeasurementInfoRenderer();
   private final Renderer arrowRenderer = new ArrowRenderer();
 
   private Font textFont;
