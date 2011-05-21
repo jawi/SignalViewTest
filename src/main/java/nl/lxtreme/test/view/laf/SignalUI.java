@@ -21,6 +21,7 @@ package nl.lxtreme.test.view.laf;
 
 
 import java.awt.*;
+import java.awt.event.*;
 
 import javax.swing.*;
 import javax.swing.plaf.*;
@@ -28,22 +29,167 @@ import javax.swing.plaf.*;
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.view.*;
+import nl.lxtreme.test.view.renderer.*;
+import nl.lxtreme.test.view.renderer.Renderer;
 
 
 /**
  * 
  */
-public class SignalUI extends ComponentUI
+public class SignalUI extends ComponentUI implements IMeasurementListener
 {
+  // INNER TYPES
+
+  /**
+   * Provides an mouse event listener to allow some of the functionality (such
+   * as DnD and cursor dragging) of this component to be controlled with the
+   * mouse. It is implemented as an {@link AWTEventListener} to make it
+   * "transparent" to the rest of the components. Without this, the events would
+   * be consumed without getting propagated to the actual scrollpane.
+   */
+  static final class MyMouseListener implements AWTEventListener
+  {
+    // CONSTANTS
+
+    private static final Cursor DEFAULT = Cursor.getDefaultCursor();
+    private static final Cursor CURSOR_HOVER = Cursor.getPredefinedCursor( Cursor.CROSSHAIR_CURSOR );
+    private static final Cursor CURSOR_MOVE_CURSOR = Cursor.getPredefinedCursor( Cursor.MOVE_CURSOR );
+
+    // VARIABLES
+
+    private final SignalView view;
+    private final SignalDiagramController controller;
+
+    // CONSTRUCTORS
+
+    /**
+     * @param aController
+     */
+    public MyMouseListener( final SignalView aView, final SignalDiagramController aController )
+    {
+      this.view = aView;
+      this.controller = aController;
+    }
+
+    // METHODS
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void eventDispatched( final AWTEvent aEvent )
+    {
+      if ( aEvent instanceof MouseEvent )
+      {
+        final MouseEvent event = ( MouseEvent )aEvent;
+        final MouseEvent converted = SwingUtilities.convertMouseEvent( event.getComponent(), event, this.view );
+
+        if ( event.getID() == MouseEvent.MOUSE_CLICKED )
+        {
+          mouseClicked( converted );
+        }
+        else if ( event.getID() == MouseEvent.MOUSE_RELEASED )
+        {
+          mouseReleased( converted );
+        }
+        else if ( event.getID() == MouseEvent.MOUSE_MOVED )
+        {
+          mouseMoved( converted );
+        }
+      }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void mouseClicked( final MouseEvent aEvent )
+    {
+      // TODO: this should be done through a context menu...
+      if ( this.controller.isCursorMode() && ( aEvent.getClickCount() == 2 ) )
+      {
+        final Point point = aEvent.getPoint();
+        this.controller.moveCursor( 3, point );
+      }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void mouseMoved( final MouseEvent aEvent )
+    {
+      if ( this.controller.isCursorMode() || this.controller.isMeasurementMode() )
+      {
+        final Point point = aEvent.getPoint();
+        Cursor mouseCursor = DEFAULT;
+
+        if ( this.controller.isMeasurementMode() && this.controller.fireMeasurementEvent( point ) )
+        {
+          mouseCursor = CURSOR_HOVER;
+        }
+
+        if ( this.controller.isCursorMode() && ( this.controller.findCursor( point ) >= 0 ) )
+        {
+          mouseCursor = CURSOR_MOVE_CURSOR;
+        }
+
+        setMouseCursor( aEvent, mouseCursor );
+      }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void mouseReleased( final MouseEvent aEvent )
+    {
+      if ( this.controller.isCursorMode() )
+      {
+        setMouseCursor( aEvent, DEFAULT );
+      }
+    }
+
+    /**
+     * @param aEvent
+     * @param aCursor
+     */
+    private void setMouseCursor( final MouseEvent aEvent, final Cursor aCursor )
+    {
+      if ( aEvent.getSource() instanceof JComponent )
+      {
+        ( ( JComponent )aEvent.getSource() ).setCursor( aCursor );
+      }
+    }
+
+  }
+
   // CONSTANTS
 
   public static final String COMPONENT_BACKGROUND_COLOR = "channellabels.color.background";
+  public static final String LABEL_FONT = "measurement.label.font";
 
   // VARIABLES
 
+  private final Renderer cursorRenderer = new CursorFlagRenderer();
+  private final Renderer signalInfoRenderer = new MeasurementInfoRenderer();
+  private final Renderer arrowRenderer = new ArrowRenderer();
+
   private Color backgroundColor;
+  private Font textFont;
+
+  private MyMouseListener mouseListener;
+
+  private volatile boolean listening = true;
+  private volatile SignalHoverInfo signalHoverInfo;
 
   // METHODS
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void handleMeasureEvent( final SignalHoverInfo aEvent )
+  {
+    this.signalHoverInfo = aEvent;
+  }
 
   /**
    * {@inheritDoc}
@@ -60,6 +206,34 @@ public class SignalUI extends ComponentUI
     {
       this.backgroundColor = Utils.parseColor( "#1E2126" );
     }
+
+    final Font baseFont = ( Font )UIManager.get( "Label.font" );
+
+    this.textFont = settingsProvider.getFont( LABEL_FONT );
+    if ( this.textFont == null )
+    {
+      this.textFont = baseFont.deriveFont( baseFont.getSize2D() * 0.9f );
+    }
+
+    // Lazy init...
+    if ( this.mouseListener == null )
+    {
+      this.mouseListener = new MyMouseListener( view, view.getController() );
+    }
+
+    view.getController().addMeasurementListener( this );
+
+    Toolkit.getDefaultToolkit().addAWTEventListener( this.mouseListener,
+        AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public boolean isListening()
+  {
+    return this.listening;
   }
 
   /**
@@ -68,6 +242,8 @@ public class SignalUI extends ComponentUI
   @Override
   public void paint( final Graphics aGraphics, final JComponent aComponent )
   {
+    this.listening = false;
+
     final SignalView view = ( SignalView )aComponent;
 
     final SignalDiagramController controller = view.getController();
@@ -154,12 +330,40 @@ public class SignalUI extends ComponentUI
 
         canvas.drawPolyline( x, y, p );
       }
+
+      // Draw the cursor "flags"...
+      if ( controller.isCursorMode() )
+      {
+        paintCursorFlags( controller, view, canvas, clip );
+      }
+
+      // Draw the measurement stuff...
+      if ( controller.isMeasurementMode() && ( this.signalHoverInfo != null ) )
+      {
+        paintMeasurementInfo( canvas, this.signalHoverInfo );
+      }
     }
     finally
     {
       canvas.dispose();
       canvas = null;
+
+      this.listening = true;
     }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void uninstallUI( final JComponent aComponent )
+  {
+    final SignalView view = ( SignalView )aComponent;
+    view.getController().removeMeasurementListener( this );
+
+    Toolkit.getDefaultToolkit().removeAWTEventListener( this.mouseListener );
+
+    this.mouseListener = null;
   }
 
   /**
@@ -190,5 +394,88 @@ public class SignalUI extends ComponentUI
     final Point location = aClip.getLocation();
     int index = aController.locationToSampleIndex( location );
     return Math.max( index - 1, 0 );
+  }
+
+  /**
+   * Returns the Y-position where the cursor (+ flag) should be drawn.
+   * 
+   * @return a Y-position, in the coordinate space of this component.
+   */
+  private int getYposition( final JComponent aComponent )
+  {
+    int result = 0;
+    if ( SwingUtilities.getAncestorOfClass( JViewport.class, aComponent ) != null )
+    {
+      // negative in order to ensure the flag itself is hidden
+      result = -40;
+    }
+    return result;
+  }
+
+  /**
+   * Paints the cursors on this time line.
+   * 
+   * @param aCanvas
+   *          the canvas to paint the cursor (flags) on;
+   * @param aClip
+   *          the clip boundaries.
+   */
+  private void paintCursorFlags( final SignalDiagramController aController, final JComponent aView,
+      final Graphics2D aCanvas, final Rectangle aClip )
+  {
+    final ScreenModel screenModel = aController.getScreenModel();
+
+    for ( int i = 0; i < SampleDataModel.MAX_CURSORS; i++ )
+    {
+      int x = aController.getCursorScreenCoordinate( i );
+      int y = getYposition( aView );
+
+      if ( ( x < 0 ) || !aClip.contains( x, 0 ) )
+      {
+        // Trivial reject: don't paint undefined cursors, or cursors outside the
+        // clip boundaries...
+        continue;
+      }
+
+      aCanvas.setColor( screenModel.getCursorColor( i ) );
+
+      this.cursorRenderer.setContext( aController.getCursorFlagText( i ) );
+
+      this.cursorRenderer.render( aCanvas, x, y );
+    }
+  }
+
+  /**
+   * @param aCanvas
+   * @param aSignalHover
+   */
+  private void paintMeasurementInfo( final Graphics2D aCanvas, final SignalHoverInfo aSignalHover )
+  {
+    Rectangle signalHoverRect = aSignalHover.getRectangle();
+
+    int x = signalHoverRect.x;
+    int y = ( int )signalHoverRect.getCenterY();
+    int w = signalHoverRect.width;
+    int middlePos = aSignalHover.getMiddleXpos() - x;
+
+    // Tell Swing how we would like to render ourselves...
+    aCanvas.setRenderingHints( createRenderingHints() );
+
+    aCanvas.setColor( Color.YELLOW );
+
+    this.arrowRenderer.setContext( Integer.valueOf( w ), Integer.valueOf( middlePos ) );
+
+    Rectangle arrowRectangle = this.arrowRenderer.render( aCanvas, x, y );
+
+    // Render the tool tip...
+    final String text = aSignalHover.toString();
+    final int textXpos = ( int )( arrowRectangle.getCenterX() + 8 );
+    final int textYpos = arrowRectangle.y + 8;
+
+    aCanvas.setFont( this.textFont );
+
+    this.signalInfoRenderer.setContext( text );
+
+    this.signalInfoRenderer.render( aCanvas, textXpos, textYpos );
   }
 }

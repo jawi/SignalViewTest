@@ -15,25 +15,22 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St, Fifth Floor, Boston, MA 02110, USA
  *
- * Copyright (C) 2010-2011 - J.W. Janssen, <http://www.lxtreme.nl>
+ * 
+ * Copyright (C) 2010-2011 - J.W. Janssen, http://www.lxtreme.nl
  */
 package nl.lxtreme.test.view;
 
 
 import java.awt.*;
-import java.awt.event.*;
 
 import javax.swing.*;
-
-import nl.lxtreme.test.view.renderer.*;
-import nl.lxtreme.test.view.renderer.Renderer;
 
 
 /**
  * Provides a glass pane for use while dragging channels around. This glass pane
  * will show a marker where the drop location of the channel will be.
  */
-public final class GhostGlassPane extends JPanel implements AWTEventListener
+public final class GhostGlassPane extends JPanel
 {
   // CONSTANTS
 
@@ -44,25 +41,16 @@ public final class GhostGlassPane extends JPanel implements AWTEventListener
   // VARIABLES
 
   private volatile Rectangle affectedArea;
-  private volatile Point mousePoint;
-  private volatile Point drawPoint;
-
-  private final JComponent component;
-  private final SignalDiagramController controller;
-
-  private final Renderer signalInfoRenderer = new MeasurementInfoRenderer();
-  private final Renderer arrowRenderer = new ArrowRenderer();
-  private volatile Renderer customRenderer;
+  private volatile Point dropPoint;
+  private volatile nl.lxtreme.test.view.renderer.Renderer renderer;
 
   // CONSTRUCTORS
 
   /**
    * Creates a new {@link GhostGlassPane} instance.
    */
-  public GhostGlassPane( final JComponent aComponent, final SignalDiagramController aController )
+  public GhostGlassPane()
   {
-    this.component = aComponent;
-    this.controller = aController;
     setOpaque( false );
   }
 
@@ -74,56 +62,7 @@ public final class GhostGlassPane extends JPanel implements AWTEventListener
    */
   public void clearDropPoint()
   {
-    this.drawPoint = null;
-  }
-
-  /**
-   * If someone adds a mouseListener to the GlassPane or set a new cursor we
-   * expect that he knows what he is doing and return the super.contains(x, y)
-   * otherwise we return false to respect the cursors for the underneath
-   * components
-   */
-  @Override
-  public boolean contains( final int aX, final int aY )
-  {
-    if ( ( getMouseListeners().length == 0 ) && ( getMouseMotionListeners().length == 0 )
-        && ( getMouseWheelListeners().length == 0 )
-    /* && ( getCursor() == Cursor.getPredefinedCursor( Cursor.DEFAULT_CURSOR ) ) */)
-    {
-      return false;
-    }
-    return super.contains( aX, aY );
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public void eventDispatched( final AWTEvent aEvent )
-  {
-    if ( aEvent instanceof MouseEvent )
-    {
-      final MouseEvent me = ( MouseEvent )aEvent;
-      final JComponent source = ( JComponent )me.getComponent();
-
-      if ( !SwingUtilities.isDescendingFrom( source, this.component ) )
-      {
-        return;
-      }
-      if ( ( me.getID() == MouseEvent.MOUSE_EXITED ) && ( source == this.component ) )
-      {
-        this.drawPoint = this.mousePoint = null;
-      }
-      else
-      {
-        System.out.println( "BEFORE = " + me.getPoint() );
-        MouseEvent converted = SwingUtilities.convertMouseEvent( source, me, source.getRootPane() );
-        System.out.println( "AFTER  = " + converted.getPoint() );
-        this.mousePoint = me.getPoint();
-        this.drawPoint = converted.getPoint();
-      }
-      repaint();
-    }
+    this.dropPoint = null;
   }
 
   /**
@@ -160,7 +99,7 @@ public final class GhostGlassPane extends JPanel implements AWTEventListener
    */
   public void setDropPoint( final Point aLocation )
   {
-    // setDropPoint( aLocation, this.renderer );
+    setDropPoint( aLocation, this.renderer );
   }
 
   /**
@@ -175,8 +114,8 @@ public final class GhostGlassPane extends JPanel implements AWTEventListener
    */
   public void setDropPoint( final Point aLocation, final nl.lxtreme.test.view.renderer.Renderer aRenderer )
   {
-    // this.dropPoint = aLocation;
-    // this.renderer = aRenderer;
+    this.dropPoint = aLocation;
+    this.renderer = aRenderer;
   }
 
   /**
@@ -187,21 +126,10 @@ public final class GhostGlassPane extends JPanel implements AWTEventListener
    */
   public void setRenderContext( final Object... aParameters )
   {
-    if ( this.customRenderer != null )
+    if ( this.renderer != null )
     {
-      this.customRenderer.setContext( aParameters );
+      this.renderer.setContext( aParameters );
     }
-  }
-
-  /**
-   * Sets renderer to the given value.
-   * 
-   * @param aRenderer
-   *          the renderer to set.
-   */
-  public void setRenderer( final nl.lxtreme.test.view.renderer.Renderer aRenderer )
-  {
-    this.customRenderer = aRenderer;
   }
 
   /**
@@ -210,7 +138,7 @@ public final class GhostGlassPane extends JPanel implements AWTEventListener
   @Override
   protected void paintComponent( final Graphics aGraphics )
   {
-    if ( ( this.drawPoint == null ) || !isVisible() )
+    if ( ( this.dropPoint == null ) || ( this.renderer == null ) || !isVisible() )
     {
       return;
     }
@@ -222,46 +150,12 @@ public final class GhostGlassPane extends JPanel implements AWTEventListener
 
       g2d.setComposite( AlphaComposite.getInstance( AlphaComposite.SRC_OVER, GhostGlassPane.ALPHA ) );
 
-      if ( this.controller.isMeasurementMode() )
-      {
-        final SignalHoverInfo signalHover = this.controller.getSignalHover( this.mousePoint );
-        if ( signalHover != null )
-        {
-          Rectangle signalHoverRect = signalHover.getRectangle();
+      g2d.setColor( Color.YELLOW );
 
-          int x = signalHoverRect.x;
-          int y = ( int )signalHoverRect.getCenterY();
-          int w = signalHoverRect.width;
-          int middlePos = signalHover.getMiddleXpos() - x;
+      int x = this.dropPoint.x;
+      int y = this.dropPoint.y;
 
-          // Tell Swing how we would like to render ourselves...
-          g2d.setRenderingHints( createRenderingHints() );
-
-          g2d.setColor( Color.YELLOW );
-
-          this.arrowRenderer.setContext( Integer.valueOf( w ), Integer.valueOf( middlePos ) );
-
-          Rectangle rect1 = this.arrowRenderer.render( g2d, this.drawPoint.x, this.drawPoint.y );
-
-          final int textXpos = ( int )( rect1.getCenterX() + 8 );
-          final int textYpos = rect1.y + 8;
-
-          this.signalInfoRenderer.setContext( signalHover );
-
-          Rectangle rect2 = this.signalInfoRenderer.render( g2d, textXpos, textYpos );
-
-          this.affectedArea = rect1.intersection( rect2 );
-        }
-      }
-      else
-      {
-        g2d.setColor( Color.YELLOW );
-
-        int x = this.drawPoint.x;
-        int y = this.drawPoint.y;
-
-        this.affectedArea = this.customRenderer.render( g2d, x, y );
-      }
+      this.affectedArea = this.renderer.render( g2d, x, y );
     }
     finally
     {
@@ -280,4 +174,5 @@ public final class GhostGlassPane extends JPanel implements AWTEventListener
     hints.put( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED );
     return hints;
   }
+
 }

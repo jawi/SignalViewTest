@@ -117,115 +117,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   }
 
   /**
-   * Provides an mouse event listener to allow some of the functionality (such
-   * as DnD and cursor dragging) of this component to be controlled with the
-   * mouse.
-   */
-  static final class CursorMouseListener extends MouseAdapter
-  {
-    // CONSTANTS
-
-    private static final Cursor DEFAULT = Cursor.getDefaultCursor();
-    private static final Cursor CURSOR_HOVER = Cursor.getPredefinedCursor( Cursor.CROSSHAIR_CURSOR );
-    private static final Cursor CURSOR_MOVE_CURSOR = Cursor.getPredefinedCursor( Cursor.MOVE_CURSOR );
-
-    // VARIABLES
-
-    private final SignalDiagramController controller;
-
-    private volatile boolean showing = false;
-
-    // CONSTRUCTORS
-
-    /**
-     * @param aController
-     */
-    public CursorMouseListener( final SignalDiagramController aController )
-    {
-      this.controller = aController;
-    }
-
-    // METHODS
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void mouseClicked( final MouseEvent aEvent )
-    {
-      // TODO: this should be done through a context menu...
-      if ( this.controller.isCursorMode() && ( aEvent.getClickCount() == 2 ) )
-      {
-        final Point point = aEvent.getPoint();
-        this.controller.moveCursor( 3, point );
-      }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void mouseMoved( final MouseEvent aEvent )
-    {
-      final Point point = aEvent.getPoint();
-
-      if ( !this.showing )
-      {
-        if ( this.controller.isMeasurementMode() )
-        {
-          this.showing = this.controller.showHover( point );
-          setMouseCursor( aEvent, CURSOR_HOVER );
-        }
-        else if ( this.controller.isCursorMode() )
-        {
-          if ( this.controller.findCursor( aEvent.getPoint() ) >= 0 )
-          {
-            setMouseCursor( aEvent, CURSOR_MOVE_CURSOR );
-          }
-          else
-          {
-            setMouseCursor( aEvent, DEFAULT );
-          }
-        }
-      }
-      else
-      {
-        if ( !this.controller.isMeasurementMode() )
-        {
-          this.showing = this.controller.hideHover();
-          setMouseCursor( aEvent, DEFAULT );
-        }
-        else
-        {
-          setMouseCursor( aEvent, CURSOR_HOVER );
-          this.controller.moveHover( point );
-        }
-      }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void mouseReleased( final MouseEvent aEvent )
-    {
-      setMouseCursor( aEvent, DEFAULT );
-    }
-
-    /**
-     * @param aEvent
-     * @param aCursor
-     */
-    private void setMouseCursor( final MouseEvent aEvent, final Cursor aCursor )
-    {
-      if ( aEvent.getSource() instanceof JComponent )
-      {
-        ( ( JComponent )aEvent.getSource() ).setCursor( aCursor );
-      }
-    }
-  }
-
-  /**
    * Provides an keyboard event listener to allow some of the functionality
    * (such as: zooming) of this component to be controlled from the keyboard.
    */
@@ -281,14 +172,13 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
   private static final long serialVersionUID = 1L;
 
-  private static final boolean DEBUG = false;
+  private static final boolean DEBUG = true;
 
   // VARIABLES
 
   private final SignalDiagramController controller;
 
   private final SignalView signalView;
-  private final CursorView cursorView;
 
   private final ComponentSizeListener componentSizeListener;
   private final KeyboardControlListener keyboardListener;
@@ -303,7 +193,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
    */
   private SignalDiagramComponent( final SignalDiagramController aController )
   {
-    super( new StackLayout() );
+    super();
 
     this.controller = aController;
 
@@ -311,7 +201,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     this.keyboardListener = new KeyboardControlListener( this.controller );
 
     this.signalView = new SignalView( this.controller );
-    this.cursorView = new CursorView( this.controller );
   }
 
   // METHODS
@@ -344,11 +233,8 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     try
     {
       final JRootPane rootPane = SwingUtilities.getRootPane( this );
-      final GhostGlassPane glassPane = new GhostGlassPane( this, this.controller );
+      final GhostGlassPane glassPane = new GhostGlassPane();
       rootPane.setGlassPane( glassPane );
-
-      Toolkit.getDefaultToolkit().addAWTEventListener( glassPane,
-          AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK );
 
       final Container window = SwingUtilities.getWindowAncestor( this );
       window.addComponentListener( this.componentSizeListener );
@@ -483,14 +369,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     {
       super.removeNotify();
     }
-  }
-
-  /**
-   * @return the cursorView
-   */
-  final CursorView getCursorView()
-  {
-    return this.cursorView;
   }
 
   /**
@@ -660,8 +538,8 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
    */
   private void initComponent()
   {
-    add( this.signalView, StackLayout.TOP );
-    add( this.cursorView, StackLayout.TOP );
+    setLayout( new BorderLayout() );
+    add( this.signalView, BorderLayout.CENTER );
   }
 
   /**

@@ -24,6 +24,7 @@ import java.awt.*;
 import java.util.logging.*;
 
 import javax.swing.*;
+import javax.swing.event.*;
 
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.dnd.*;
@@ -50,6 +51,7 @@ public final class SignalDiagramController
 
   private final DragAndDropTargetController dndTargetController;
   private final SettingsProvider settingsProvider;
+  private final EventListenerList eventListeners;
 
   private SampleDataModel dataModel;
   private ScreenModel screenModel;
@@ -67,9 +69,19 @@ public final class SignalDiagramController
     this.settingsProvider = new SettingsProvider();
 
     this.dndTargetController = new DragAndDropTargetController( this );
+
+    this.eventListeners = new EventListenerList();
   }
 
   // METHODS
+
+  /**
+   * @param aListener
+   */
+  public void addMeasurementListener( final IMeasurementListener aListener )
+  {
+    this.eventListeners.add( IMeasurementListener.class, aListener );
+  }
 
   /**
    * Finds the cursor under the given point.
@@ -81,7 +93,7 @@ public final class SignalDiagramController
    */
   public int findCursor( final Point aPoint )
   {
-    final Point point = convertToPointOf( getCursorView(), aPoint );
+    final Point point = convertToPointOf( getSignalView(), aPoint );
     final long refIdx = locationToTimestamp( point );
 
     final double snapArea = CURSOR_SENSITIVITY_AREA / this.screenModel.getZoomFactor();
@@ -104,6 +116,27 @@ public final class SignalDiagramController
     }
 
     return -1;
+  }
+
+  /**
+   * @param aPoint
+   */
+  public boolean fireMeasurementEvent( final Point aPoint )
+  {
+    final SignalHoverInfo signalHover = getSignalHover( aPoint );
+    if ( signalHover != null )
+    {
+      final IMeasurementListener[] listeners = this.eventListeners.getListeners( IMeasurementListener.class );
+      for ( IMeasurementListener listener : listeners )
+      {
+        if ( listener.isListening() )
+        {
+          listener.handleMeasureEvent( signalHover );
+        }
+      }
+      this.signalDiagram.repaint(); // XXX
+    }
+    return signalHover != null;
   }
 
   /**
@@ -309,7 +342,7 @@ public final class SignalDiagramController
     final int signalHeight = this.screenModel.getSignalHeight();
     final int channelHeight = this.screenModel.getChannelHeight();
 
-    final int virtualRow = ( aPoint.y - signalHeight ) / channelHeight;
+    final int virtualRow = ( aPoint.y / channelHeight );
     if ( ( virtualRow < 0 ) || ( virtualRow > ( signalWidth - 1 ) ) )
     {
       return null;
@@ -383,16 +416,6 @@ public final class SignalDiagramController
 
     return new SignalHoverInfo( rect, startTimestamp, endTimestamp, middleTimestamp, timestamp, middleXpos, realRow,
         this.dataModel.getSampleRate() );
-  }
-
-  /**
-   * @param aPoint
-   * @return
-   */
-  public boolean hideHover()
-  {
-    // getMeasurementView().hideHover();
-    return false;
   }
 
   /**
@@ -549,9 +572,9 @@ public final class SignalDiagramController
       throw new IllegalArgumentException( "Invalid cursor index!" );
     }
 
-    final CursorView cursorView = getCursorView();
+    final SignalView view = getSignalView();
 
-    final Point point = convertToPointOf( cursorView, aPoint );
+    final Point point = convertToPointOf( view, aPoint );
 
     if ( isSnapModeEnabled() )
     {
@@ -568,18 +591,8 @@ public final class SignalDiagramController
 
     if ( this.dataModel.setCursor( aCursorIdx, Long.valueOf( newCursorTimestamp ) ) == null )
     {
-      repaintLater( cursorView, getTimeLineView() );
+      repaintLater( view, getTimeLineView() );
     }
-  }
-
-  /**
-   * @param aPoint
-   */
-  public void moveHover( final Point aPoint )
-  {
-    final SignalHoverInfo signalHover = getSignalHover( convertToPointOf( getSignalView(), aPoint ) );
-
-    // getMeasurementView().moveHover( signalHover );
   }
 
   /**
@@ -637,6 +650,14 @@ public final class SignalDiagramController
   }
 
   /**
+   * @param aListener
+   */
+  public void removeMeasurementListener( final IMeasurementListener aListener )
+  {
+    this.eventListeners.remove( IMeasurementListener.class, aListener );
+  }
+
+  /**
    * Turns the visibility of all cursors either on or off.
    * <p>
    * This method does <em>not</em> modify any cursor, only whether they are
@@ -651,7 +672,7 @@ public final class SignalDiagramController
   {
     this.screenModel.setCursorMode( aVisible );
 
-    repaintLater( getCursorView(), getTimeLineView() );
+    repaintLater( getSignalView(), getTimeLineView() );
   }
 
   /**
@@ -665,10 +686,11 @@ public final class SignalDiagramController
   {
     this.screenModel.setMeasurementMode( aEnabled );
 
-    final JRootPane rootPane = this.signalDiagram.getRootPane();
-    final GhostGlassPane glassPane = ( GhostGlassPane )rootPane.getGlassPane();
-
-    glassPane.setVisible( aEnabled );
+    // final JRootPane rootPane = this.signalDiagram.getRootPane();
+    // final GhostGlassPane glassPane = ( GhostGlassPane
+    // )rootPane.getGlassPane();
+    //
+    // glassPane.setVisible( aEnabled );
 
     // repaintLater( getMeasurementView() );
   }
@@ -713,26 +735,6 @@ public final class SignalDiagramController
   public void setSnapModeEnabled( final boolean aSnapMode )
   {
     this.screenModel.setSnapCursor( aSnapMode );
-  }
-
-  /**
-   * Shows the hover information for the given coordinate.
-   * 
-   * @param aPoint
-   *          the coordinate to show the hover information for, cannot be
-   *          <code>null</code>.
-   * @return <code>true</code> if the hover is going to be shown,
-   *         <code>false</code> otherwise.
-   */
-  public boolean showHover( final Point aPoint )
-  {
-    final SignalHoverInfo signalHover = getSignalHover( convertToPointOf( getSignalView(), aPoint ) );
-    if ( signalHover != null )
-    {
-      // getMeasurementView().showHover( signalHover );
-    }
-
-    return ( signalHover != null );
   }
 
   /**
@@ -851,14 +853,6 @@ public final class SignalDiagramController
     }
 
     return row;
-  }
-
-  /**
-   * @return the cursorView
-   */
-  private CursorView getCursorView()
-  {
-    return this.signalDiagram.getCursorView();
   }
 
   /**
