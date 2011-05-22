@@ -36,11 +36,13 @@ public class SignalHoverInfo implements Cloneable
 
   // VARIABLES
 
+  private final long startTimestamp;
+  private final long endTimestamp;
   private final Rectangle rectangle;
   private final double timestamp;
   private final double pulseWidth;
   private final double totalPulseWidth;
-  private final Integer channelIdx;
+  private final int channelIdx;
   private final int sampleRate;
   private final int middleXpos;
 
@@ -73,8 +75,9 @@ public class SignalHoverInfo implements Cloneable
       final int aSampleRate )
   {
     this.rectangle = aRectangle;
-
     this.middleXpos = aMiddleXpos;
+    this.startTimestamp = aStartTimestamp;
+    this.endTimestamp = aEndTimestamp;
 
     this.totalPulseWidth = ( aEndTimestamp - aStartTimestamp ) / ( double )aSampleRate;
 
@@ -95,7 +98,7 @@ public class SignalHoverInfo implements Cloneable
     this.pulseWidth = pw;
 
     this.timestamp = aTimestamp / ( TIMESTAMP_FACTOR * aSampleRate );
-    this.channelIdx = Integer.valueOf( aChannelIdx );
+    this.channelIdx = aChannelIdx;
 
     this.sampleRate = aSampleRate;
   }
@@ -134,7 +137,7 @@ public class SignalHoverInfo implements Cloneable
     }
 
     final SignalHoverInfo other = ( SignalHoverInfo )aObject;
-    if ( this.channelIdx.intValue() != other.channelIdx.intValue() )
+    if ( this.channelIdx != other.channelIdx )
     {
       return false;
     }
@@ -159,9 +162,19 @@ public class SignalHoverInfo implements Cloneable
    * 
    * @return a channel index, >= 0, never <code>null</code>.
    */
-  public Integer getChannelIndex()
+  public int getChannelIndex()
   {
     return this.channelIdx;
+  }
+
+  /**
+   * Returns the current value of endTimestamp.
+   * 
+   * @return the endTimestamp
+   */
+  public long getEndTimestamp()
+  {
+    return this.endTimestamp;
   }
 
   /**
@@ -195,6 +208,16 @@ public class SignalHoverInfo implements Cloneable
   }
 
   /**
+   * Returns the current value of startTimestamp.
+   * 
+   * @return the startTimestamp
+   */
+  public long getStartTimestamp()
+  {
+    return this.startTimestamp;
+  }
+
+  /**
    * Returns the time value where the mouse cursor is, in seconds.
    * 
    * @return a time value, in seconds.
@@ -222,7 +245,7 @@ public class SignalHoverInfo implements Cloneable
   {
     final int prime = 31;
     int result = 1;
-    result = prime * result + ( ( this.channelIdx == null ) ? 0 : this.channelIdx.hashCode() );
+    result = prime * result + this.channelIdx;
     long temp;
     temp = Double.doubleToLongBits( this.totalPulseWidth );
     result = prime * result + ( int )( temp ^ ( temp >>> 32 ) );

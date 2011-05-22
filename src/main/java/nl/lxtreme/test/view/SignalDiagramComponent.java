@@ -123,6 +123,11 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
    */
   static final class KeyboardControlListener extends KeyAdapter
   {
+    // CONSTANTS
+
+    private static final Cursor DEFAULT = Cursor.getDefaultCursor();
+    private static final Cursor CURSOR_MOVE_TIMESTAMP = Cursor.getPredefinedCursor( Cursor.E_RESIZE_CURSOR );
+
     // VARIABLES
 
     private final SignalDiagramController controller;
@@ -138,6 +143,29 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     }
 
     // METHODS
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void keyPressed( final KeyEvent aEvent )
+    {
+      Component comp = this.controller.getSignalDiagram();
+      if ( aEvent.isControlDown() )
+      {
+        comp.setCursor( CURSOR_MOVE_TIMESTAMP );
+      }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void keyReleased( final KeyEvent aEvent )
+    {
+      Component comp = this.controller.getSignalDiagram();
+      comp.setCursor( DEFAULT );
+    }
 
     /**
      * {@inheritDoc}
@@ -237,7 +265,19 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
      */
     protected void mouseClicked( final MouseEvent aEvent )
     {
-      // NO-op
+      if ( aEvent.isControlDown() )
+      {
+        final Point point = aEvent.getPoint();
+
+        final SignalHoverInfo signalHover = this.controller.getSignalHover( point );
+        if ( signalHover != null )
+        {
+          final int channel = signalHover.getChannelIndex();
+          final long timestamp = signalHover.getEndTimestamp();
+
+          this.controller.scrollToTimestamp( channel, timestamp );
+        }
+      }
     }
 
     /**
@@ -245,27 +285,24 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
      */
     protected void mouseMoved( final MouseEvent aEvent )
     {
+      this.view.getRootPane().setCursor( DEFAULT );
+      this.view.setCursor( null );
+
       if ( this.controller.isCursorMode() || this.controller.isMeasurementMode() )
       {
         final Point point = aEvent.getPoint();
-        Cursor mouseCursor = DEFAULT;
 
         if ( this.controller.isMeasurementMode() )
         {
           SignalHoverInfo signalHover = this.controller.getSignalHover( point );
-          if ( signalHover != null )
-          {
-            mouseCursor = CURSOR_HOVER;
-          }
           this.controller.fireMeasurementEvent( signalHover );
+          this.view.setCursor( signalHover == null ? DEFAULT : CURSOR_HOVER );
         }
 
         if ( this.controller.isCursorMode() && ( this.controller.findCursor( point ) >= 0 ) )
         {
-          mouseCursor = CURSOR_MOVE_CURSOR;
+          this.view.getRootPane().setCursor( CURSOR_MOVE_CURSOR );
         }
-
-        setMouseCursor( aEvent, mouseCursor );
       }
     }
 
@@ -283,10 +320,9 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     protected void mouseReleased( final MouseEvent aEvent )
     {
       handlePopupTrigger( aEvent );
-      if ( this.controller.isCursorMode() )
-      {
-        setMouseCursor( aEvent, DEFAULT );
-      }
+
+      this.view.getRootPane().setCursor( DEFAULT );
+      this.view.setCursor( null );
     }
 
     /**
@@ -319,7 +355,9 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
           }
           contextMenu.addSeparator();
           contextMenu.add( new DeleteAllCursorsAction( this.controller ) );
-
+          // when an action is selected, we *no* longer know where the point was
+          // where the user clicked. Therefore, we need to store it separately
+          // for later use...
           contextMenu.putClientProperty( SetCursorAction.KEY, point );
         }
 
@@ -329,19 +367,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
         }
       }
     }
-
-    /**
-     * @param aEvent
-     * @param aCursor
-     */
-    private void setMouseCursor( final MouseEvent aEvent, final Cursor aCursor )
-    {
-      if ( aEvent.getSource() instanceof JComponent )
-      {
-        ( ( JComponent )aEvent.getSource() ).setCursor( aCursor );
-      }
-    }
-
   }
 
   // CONSTANTS
