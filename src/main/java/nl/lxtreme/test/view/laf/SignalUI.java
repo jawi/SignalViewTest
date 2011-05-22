@@ -21,8 +21,6 @@ package nl.lxtreme.test.view.laf;
 
 
 import java.awt.*;
-import java.awt.event.*;
-
 import javax.swing.*;
 import javax.swing.plaf.*;
 
@@ -38,129 +36,6 @@ import nl.lxtreme.test.view.renderer.Renderer;
  */
 public class SignalUI extends ComponentUI implements IMeasurementListener
 {
-  // INNER TYPES
-
-  /**
-   * Provides an mouse event listener to allow some of the functionality (such
-   * as DnD and cursor dragging) of this component to be controlled with the
-   * mouse. It is implemented as an {@link AWTEventListener} to make it
-   * "transparent" to the rest of the components. Without this, the events would
-   * be consumed without getting propagated to the actual scrollpane.
-   */
-  static final class MyMouseListener implements AWTEventListener
-  {
-    // CONSTANTS
-
-    private static final Cursor DEFAULT = Cursor.getDefaultCursor();
-    private static final Cursor CURSOR_HOVER = Cursor.getPredefinedCursor( Cursor.CROSSHAIR_CURSOR );
-    private static final Cursor CURSOR_MOVE_CURSOR = Cursor.getPredefinedCursor( Cursor.MOVE_CURSOR );
-
-    // VARIABLES
-
-    private final SignalView view;
-    private final SignalDiagramController controller;
-
-    // CONSTRUCTORS
-
-    /**
-     * @param aController
-     */
-    public MyMouseListener( final SignalView aView, final SignalDiagramController aController )
-    {
-      this.view = aView;
-      this.controller = aController;
-    }
-
-    // METHODS
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void eventDispatched( final AWTEvent aEvent )
-    {
-      if ( aEvent instanceof MouseEvent )
-      {
-        final MouseEvent event = ( MouseEvent )aEvent;
-        final MouseEvent converted = SwingUtilities.convertMouseEvent( event.getComponent(), event, this.view );
-
-        if ( event.getID() == MouseEvent.MOUSE_CLICKED )
-        {
-          mouseClicked( converted );
-        }
-        else if ( event.getID() == MouseEvent.MOUSE_RELEASED )
-        {
-          mouseReleased( converted );
-        }
-        else if ( event.getID() == MouseEvent.MOUSE_MOVED )
-        {
-          mouseMoved( converted );
-        }
-      }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void mouseClicked( final MouseEvent aEvent )
-    {
-      // TODO: this should be done through a context menu...
-      if ( this.controller.isCursorMode() && ( aEvent.getClickCount() == 2 ) )
-      {
-        final Point point = aEvent.getPoint();
-        this.controller.moveCursor( 3, point );
-      }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void mouseMoved( final MouseEvent aEvent )
-    {
-      if ( this.controller.isCursorMode() || this.controller.isMeasurementMode() )
-      {
-        final Point point = aEvent.getPoint();
-        Cursor mouseCursor = DEFAULT;
-
-        if ( this.controller.isMeasurementMode() && this.controller.fireMeasurementEvent( point ) )
-        {
-          mouseCursor = CURSOR_HOVER;
-        }
-
-        if ( this.controller.isCursorMode() && ( this.controller.findCursor( point ) >= 0 ) )
-        {
-          mouseCursor = CURSOR_MOVE_CURSOR;
-        }
-
-        setMouseCursor( aEvent, mouseCursor );
-      }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void mouseReleased( final MouseEvent aEvent )
-    {
-      if ( this.controller.isCursorMode() )
-      {
-        setMouseCursor( aEvent, DEFAULT );
-      }
-    }
-
-    /**
-     * @param aEvent
-     * @param aCursor
-     */
-    private void setMouseCursor( final MouseEvent aEvent, final Cursor aCursor )
-    {
-      if ( aEvent.getSource() instanceof JComponent )
-      {
-        ( ( JComponent )aEvent.getSource() ).setCursor( aCursor );
-      }
-    }
-
-  }
-
   // CONSTANTS
 
   public static final String COMPONENT_BACKGROUND_COLOR = "channellabels.color.background";
@@ -173,8 +48,6 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
 
   private Color backgroundColor;
   private Font textFont;
-
-  private MyMouseListener mouseListener;
 
   private volatile boolean listening = true;
   private volatile SignalHoverInfo signalHoverInfo;
@@ -200,8 +73,15 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
   {
     this.signalHoverInfo = aEvent;
 
-    this.measurementRect = new Rectangle( aEvent.getRectangle() );
-    this.measurementRect.grow( ArrowRenderer.HEAD_WIDTH, ArrowRenderer.HEAD_HEIGHT );
+    if ( aEvent != null )
+    {
+      this.measurementRect = new Rectangle( aEvent.getRectangle() );
+      this.measurementRect.grow( ArrowRenderer.HEAD_WIDTH, ArrowRenderer.HEAD_HEIGHT );
+    }
+    else
+    {
+      this.measurementRect = null;
+    }
   }
 
   /**
@@ -227,15 +107,6 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
     {
       this.textFont = baseFont.deriveFont( baseFont.getSize2D() * 0.9f );
     }
-
-    // Lazy init... TODO move to its own entity
-    if ( this.mouseListener == null )
-    {
-      this.mouseListener = new MyMouseListener( view, view.getController() );
-    }
-
-    Toolkit.getDefaultToolkit().addAWTEventListener( this.mouseListener,
-        AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK );
   }
 
   /**
@@ -361,17 +232,6 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
 
       this.listening = true;
     }
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public void uninstallUI( final JComponent aComponent )
-  {
-    Toolkit.getDefaultToolkit().removeAWTEventListener( this.mouseListener );
-
-    this.mouseListener = null;
   }
 
   /**

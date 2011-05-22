@@ -27,6 +27,7 @@ import javax.swing.*;
 
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.model.*;
+import nl.lxtreme.test.view.action.*;
 
 
 /**
@@ -168,11 +169,186 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     }
   }
 
+  /**
+   * Provides an mouse event listener to allow some of the functionality (such
+   * as DnD and cursor dragging) of this component to be controlled with the
+   * mouse. It is implemented as an {@link AWTEventListener} to make it
+   * "transparent" to the rest of the components. Without this, the events would
+   * be consumed without getting propagated to the actual scrollpane.
+   */
+  static final class TransparentMouseListener implements AWTEventListener
+  {
+    // CONSTANTS
+
+    private static final Cursor DEFAULT = Cursor.getDefaultCursor();
+    private static final Cursor CURSOR_HOVER = Cursor.getPredefinedCursor( Cursor.CROSSHAIR_CURSOR );
+    private static final Cursor CURSOR_MOVE_CURSOR = Cursor.getPredefinedCursor( Cursor.MOVE_CURSOR );
+
+    // VARIABLES
+
+    private final SignalView view;
+    private final SignalDiagramController controller;
+
+    // CONSTRUCTORS
+
+    /**
+     * @param aController
+     */
+    public TransparentMouseListener( final SignalView aView, final SignalDiagramController aController )
+    {
+      this.view = aView;
+      this.controller = aController;
+    }
+
+    // METHODS
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void eventDispatched( final AWTEvent aEvent )
+    {
+      if ( aEvent instanceof MouseEvent )
+      {
+        final MouseEvent event = ( MouseEvent )aEvent;
+        final MouseEvent converted = SwingUtilities.convertMouseEvent( event.getComponent(), event, this.view );
+
+        if ( event.getID() == MouseEvent.MOUSE_CLICKED )
+        {
+          mouseClicked( converted );
+        }
+        else if ( event.getID() == MouseEvent.MOUSE_PRESSED )
+        {
+          mousePressed( converted );
+        }
+        else if ( event.getID() == MouseEvent.MOUSE_RELEASED )
+        {
+          mouseReleased( converted );
+        }
+        else if ( event.getID() == MouseEvent.MOUSE_MOVED )
+        {
+          mouseMoved( converted );
+        }
+      }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void mouseClicked( final MouseEvent aEvent )
+    {
+      // NO-op
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void mouseMoved( final MouseEvent aEvent )
+    {
+      if ( this.controller.isCursorMode() || this.controller.isMeasurementMode() )
+      {
+        final Point point = aEvent.getPoint();
+        Cursor mouseCursor = DEFAULT;
+
+        if ( this.controller.isMeasurementMode() )
+        {
+          SignalHoverInfo signalHover = this.controller.getSignalHover( point );
+          if ( signalHover != null )
+          {
+            mouseCursor = CURSOR_HOVER;
+          }
+          this.controller.fireMeasurementEvent( signalHover );
+        }
+
+        if ( this.controller.isCursorMode() && ( this.controller.findCursor( point ) >= 0 ) )
+        {
+          mouseCursor = CURSOR_MOVE_CURSOR;
+        }
+
+        setMouseCursor( aEvent, mouseCursor );
+      }
+    }
+
+    /**
+     * @param aEvent
+     */
+    protected void mousePressed( final MouseEvent aEvent )
+    {
+      handlePopupTrigger( aEvent );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void mouseReleased( final MouseEvent aEvent )
+    {
+      handlePopupTrigger( aEvent );
+      if ( this.controller.isCursorMode() )
+      {
+        setMouseCursor( aEvent, DEFAULT );
+      }
+    }
+
+    /**
+     * @param aEvent
+     */
+    private void handlePopupTrigger( final MouseEvent aEvent )
+    {
+      if ( this.controller.isCursorMode() && aEvent.isPopupTrigger() )
+      {
+        final Point point = aEvent.getPoint();
+
+        final JPopupMenu contextMenu;
+
+        int cursor = this.controller.findCursor( point );
+        if ( cursor >= 0 )
+        {
+          // Hovering above existing cursor, show remove menu...
+          contextMenu = new JPopupMenu();
+          contextMenu.add( new DeleteCursorAction( this.controller, cursor ) );
+          contextMenu.add( new DeleteAllCursorsAction( this.controller ) );
+        }
+        else
+        {
+          // Not hovering above existing cursor, show add menu...
+          contextMenu = new JPopupMenu();
+          for ( int i = 0; i < SampleDataModel.MAX_CURSORS; i++ )
+          {
+            final SetCursorAction action = new SetCursorAction( this.controller, i );
+            contextMenu.add( new JCheckBoxMenuItem( action ) );
+          }
+          contextMenu.addSeparator();
+          contextMenu.add( new DeleteAllCursorsAction( this.controller ) );
+
+          contextMenu.putClientProperty( SetCursorAction.KEY, point );
+        }
+
+        if ( contextMenu != null )
+        {
+          contextMenu.show( aEvent.getComponent(), aEvent.getX(), aEvent.getY() );
+        }
+      }
+    }
+
+    /**
+     * @param aEvent
+     * @param aCursor
+     */
+    private void setMouseCursor( final MouseEvent aEvent, final Cursor aCursor )
+    {
+      if ( aEvent.getSource() instanceof JComponent )
+      {
+        ( ( JComponent )aEvent.getSource() ).setCursor( aCursor );
+      }
+    }
+
+  }
+
   // CONSTANTS
 
   private static final long serialVersionUID = 1L;
 
-  private static final boolean DEBUG = false;
+  private static final boolean DEBUG = true;
 
   // VARIABLES
 
@@ -182,6 +358,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
   private final ComponentSizeListener componentSizeListener;
   private final KeyboardControlListener keyboardListener;
+  private final TransparentMouseListener mouseListener;
 
   // CONSTRUCTORS
 
@@ -197,10 +374,12 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
     this.controller = aController;
 
+    this.signalView = new SignalView( this.controller );
+
     this.componentSizeListener = new ComponentSizeListener( this.controller );
     this.keyboardListener = new KeyboardControlListener( this.controller );
+    this.mouseListener = new TransparentMouseListener( this.signalView, this.controller );
 
-    this.signalView = new SignalView( this.controller );
   }
 
   // METHODS
@@ -232,6 +411,9 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   {
     try
     {
+      Toolkit.getDefaultToolkit().addAWTEventListener( this.mouseListener,
+          AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK );
+
       final JRootPane rootPane = SwingUtilities.getRootPane( this );
       final GhostGlassPane glassPane = new GhostGlassPane();
       rootPane.setGlassPane( glassPane );
@@ -364,6 +546,8 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
       window.removeComponentListener( this.componentSizeListener );
       window.removeKeyListener( this.keyboardListener );
+
+      Toolkit.getDefaultToolkit().removeAWTEventListener( this.mouseListener );
     }
     finally
     {

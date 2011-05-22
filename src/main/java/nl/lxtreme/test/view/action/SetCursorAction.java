@@ -54,6 +54,8 @@ public class SetCursorAction extends AbstractAction
     super( "Set cursor " + ( aCursorIdx + 1 ) );
     this.controller = aController;
     this.cursorIdx = aCursorIdx;
+
+    putValue( Action.SELECTED_KEY, Boolean.valueOf( this.controller.isCursorDefined( aCursorIdx ) ) );
   }
 
   // METHODS

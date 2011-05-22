@@ -88,24 +88,20 @@ public class CursorFlagRenderer extends BaseRenderer
     final int flagHeight = fm.getHeight() + PADDING_HEIGHT;
 
     final Rectangle result = new Rectangle();
-    result.width = flagWidth;
+    result.width = flagWidth + 2;
     result.height = clip.height;
-    result.grow( 2, 2 );
 
     final Color flagColor = aCanvas.getColor();
 
-    if ( clip.contains( result.x, result.y, result.width, flagHeight - 1 ) )
-    {
-      aCanvas.fillRect( result.x, result.y, result.width, flagHeight - 1 );
+    aCanvas.fillRect( result.x, result.y, result.width, flagHeight - 1 );
 
-      final int textXpos = result.x + PADDING_LEFT;
-      final int textYpos = result.y + fm.getLeading() + fm.getAscent() + PADDING_TOP;
+    final int textXpos = result.x + PADDING_LEFT;
+    final int textYpos = result.y + fm.getLeading() + fm.getAscent() + PADDING_TOP;
 
-      final Color textColor = Utils.getContrastColor( flagColor );
-      aCanvas.setColor( textColor );
+    final Color textColor = Utils.getContrastColor( flagColor );
+    aCanvas.setColor( textColor );
 
-      aCanvas.drawString( this.cursorFlagText, textXpos, textYpos );
-    }
+    aCanvas.drawString( this.cursorFlagText, textXpos, textYpos );
 
     aCanvas.setColor( flagColor );
 

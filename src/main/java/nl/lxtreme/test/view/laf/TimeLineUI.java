@@ -147,7 +147,8 @@ public class TimeLineUI extends ComponentUI
         // XXX where does the 16 come from???
         if ( ( relXpos < ( clip.x - 16 ) ) || ( relXpos > ( 16 + clip.x + clip.width ) ) )
         {
-          continue;
+          // System.out.println( "SKIP!" );
+          // continue;
         }
 
         if ( ( timestamp % tickIncr ) == 0 )
@@ -301,7 +302,7 @@ public class TimeLineUI extends ComponentUI
       int x = aController.getCursorScreenCoordinate( i );
       int y = 4;
 
-      if ( ( x < 0 ) || !aClip.contains( x, y ) )
+      if ( x < 0 )
       {
         // Trivial reject: don't paint undefined cursors, or cursors outside the
         // clip boundaries...

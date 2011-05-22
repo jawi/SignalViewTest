@@ -121,21 +121,16 @@ public final class SignalDiagramController
   /**
    * @param aPoint
    */
-  public boolean fireMeasurementEvent( final Point aPoint )
+  public void fireMeasurementEvent( final SignalHoverInfo signalHover )
   {
-    final SignalHoverInfo signalHover = getSignalHover( aPoint );
-    if ( signalHover != null )
+    final IMeasurementListener[] listeners = this.eventListeners.getListeners( IMeasurementListener.class );
+    for ( IMeasurementListener listener : listeners )
     {
-      final IMeasurementListener[] listeners = this.eventListeners.getListeners( IMeasurementListener.class );
-      for ( IMeasurementListener listener : listeners )
+      if ( listener.isListening() )
       {
-        if ( listener.isListening() )
-        {
-          listener.handleMeasureEvent( signalHover );
-        }
+        listener.handleMeasureEvent( signalHover );
       }
     }
-    return signalHover != null;
   }
 
   /**
@@ -418,6 +413,17 @@ public final class SignalDiagramController
   }
 
   /**
+   * XXX
+   * 
+   * @param aI
+   * @return
+   */
+  public boolean isCursorDefined( final int aCursorIdx )
+  {
+    return getDataModel().getCursor( aCursorIdx ) != null;
+  }
+
+  /**
    * @return
    */
   public boolean isCursorMode()
@@ -588,10 +594,9 @@ public final class SignalDiagramController
 
     final long newCursorTimestamp = locationToTimestamp( point );
 
-    if ( this.dataModel.setCursor( aCursorIdx, Long.valueOf( newCursorTimestamp ) ) == null )
-    {
-      repaintLater( view, getTimeLineView() );
-    }
+    this.dataModel.setCursor( aCursorIdx, Long.valueOf( newCursorTimestamp ) );
+
+    repaintLater( view, getTimeLineView() );
   }
 
   /**
@@ -641,14 +646,25 @@ public final class SignalDiagramController
   }
 
   /**
+   * XXX
+   * 
    * @param aCursorIdx
    */
   public void removeCursor( final int aCursorIdx )
   {
-    // TODO Auto-generated method stub
+    if ( ( aCursorIdx < 0 ) || ( aCursorIdx >= this.dataModel.getCursors().length ) )
+    {
+      throw new IllegalArgumentException( "Invalid cursor index!" );
+    }
+
+    this.dataModel.setCursor( aCursorIdx, null );
+
+    repaintLater( getSignalView(), getTimeLineView() );
   }
 
   /**
+   * XXX
+   * 
    * @param aListener
    */
   public void removeMeasurementListener( final IMeasurementListener aListener )
@@ -685,13 +701,7 @@ public final class SignalDiagramController
   {
     this.screenModel.setMeasurementMode( aEnabled );
 
-    // final JRootPane rootPane = this.signalDiagram.getRootPane();
-    // final GhostGlassPane glassPane = ( GhostGlassPane
-    // )rootPane.getGlassPane();
-    //
-    // glassPane.setVisible( aEnabled );
-
-    // repaintLater( getMeasurementView() );
+    getSignalView().handleMeasureEvent( null );
   }
 
   /**

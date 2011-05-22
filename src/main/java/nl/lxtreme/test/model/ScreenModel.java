@@ -214,7 +214,7 @@ public class ScreenModel
    */
   public Color getCursorColor( final int aCursorIdx )
   {
-    return this.colors[aCursorIdx].darker().darker();
+    return this.colors[aCursorIdx % this.colors.length].darker().darker();
   }
 
   /**

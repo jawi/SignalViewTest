@@ -345,13 +345,20 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
   {
     final SignalUI signalUI = ( SignalUI )this.ui;
 
-    Rectangle oldRect = signalUI.getMeasurementRect();
+    final Rectangle oldRect = signalUI.getMeasurementRect();
 
     signalUI.handleMeasureEvent( aEvent );
 
-    Rectangle newRect = signalUI.getMeasurementRect();
+    final Rectangle newRect = signalUI.getMeasurementRect();
 
-    setToolTipText( aEvent.toHtmlString() );
+    if ( aEvent != null )
+    {
+      setToolTipText( aEvent.toHtmlString() );
+    }
+    else
+    {
+      setToolTipText( null );
+    }
 
     if ( oldRect != null )
     {
