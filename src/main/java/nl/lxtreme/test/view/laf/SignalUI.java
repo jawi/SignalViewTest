@@ -169,7 +169,6 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
   // VARIABLES
 
   private final Renderer cursorRenderer = new CursorFlagRenderer();
-  private final Renderer signalInfoRenderer = new MeasurementInfoRenderer();
   private final Renderer arrowRenderer = new ArrowRenderer();
 
   private Color backgroundColor;
@@ -179,8 +178,19 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
 
   private volatile boolean listening = true;
   private volatile SignalHoverInfo signalHoverInfo;
+  private volatile Rectangle measurementRect;
 
   // METHODS
+
+  /**
+   * Returns the current value of measurementRect.
+   * 
+   * @return the measurementRect
+   */
+  public Rectangle getMeasurementRect()
+  {
+    return this.measurementRect;
+  }
 
   /**
    * {@inheritDoc}
@@ -189,6 +199,9 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
   public void handleMeasureEvent( final SignalHoverInfo aEvent )
   {
     this.signalHoverInfo = aEvent;
+
+    this.measurementRect = new Rectangle( aEvent.getRectangle() );
+    this.measurementRect.grow( ArrowRenderer.HEAD_WIDTH, ArrowRenderer.HEAD_HEIGHT );
   }
 
   /**
@@ -215,13 +228,11 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
       this.textFont = baseFont.deriveFont( baseFont.getSize2D() * 0.9f );
     }
 
-    // Lazy init...
+    // Lazy init... TODO move to its own entity
     if ( this.mouseListener == null )
     {
       this.mouseListener = new MyMouseListener( view, view.getController() );
     }
-
-    view.getController().addMeasurementListener( this );
 
     Toolkit.getDefaultToolkit().addAWTEventListener( this.mouseListener,
         AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK );
@@ -358,12 +369,35 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
   @Override
   public void uninstallUI( final JComponent aComponent )
   {
-    final SignalView view = ( SignalView )aComponent;
-    view.getController().removeMeasurementListener( this );
-
     Toolkit.getDefaultToolkit().removeAWTEventListener( this.mouseListener );
 
     this.mouseListener = null;
+  }
+
+  /**
+   * Creates the rendering hints for this the drawing of arrows.
+   */
+  private RenderingHints createArrowRenderingHints()
+  {
+    RenderingHints hints = new RenderingHints( RenderingHints.KEY_INTERPOLATION,
+        RenderingHints.VALUE_INTERPOLATION_BICUBIC );
+    hints.put( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
+    hints.put( RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED );
+    hints.put( RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED );
+    hints.put( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY );
+    return hints;
+  }
+
+  /**
+   * Creates the rendering hints for this view.
+   */
+  private RenderingHints createCursorRenderingHints()
+  {
+    RenderingHints hints = new RenderingHints( RenderingHints.KEY_INTERPOLATION,
+        RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR );
+    hints.put( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
+    hints.put( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED );
+    return hints;
   }
 
   /**
@@ -425,6 +459,9 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
   {
     final ScreenModel screenModel = aController.getScreenModel();
 
+    // Tell Swing how we would like to render ourselves...
+    aCanvas.setRenderingHints( createCursorRenderingHints() );
+
     for ( int i = 0; i < SampleDataModel.MAX_CURSORS; i++ )
     {
       int x = aController.getCursorScreenCoordinate( i );
@@ -459,23 +496,11 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
     int middlePos = aSignalHover.getMiddleXpos() - x;
 
     // Tell Swing how we would like to render ourselves...
-    aCanvas.setRenderingHints( createRenderingHints() );
+    aCanvas.setRenderingHints( createArrowRenderingHints() );
 
     aCanvas.setColor( Color.YELLOW );
 
     this.arrowRenderer.setContext( Integer.valueOf( w ), Integer.valueOf( middlePos ) );
-
-    Rectangle arrowRectangle = this.arrowRenderer.render( aCanvas, x, y );
-
-    // Render the tool tip...
-    final String text = aSignalHover.toString();
-    final int textXpos = ( int )( arrowRectangle.getCenterX() + 8 );
-    final int textYpos = arrowRectangle.y + 8;
-
-    aCanvas.setFont( this.textFont );
-
-    this.signalInfoRenderer.setContext( text );
-
-    this.signalInfoRenderer.render( aCanvas, textXpos, textYpos );
+    this.arrowRenderer.render( aCanvas, x, y );
   }
 }

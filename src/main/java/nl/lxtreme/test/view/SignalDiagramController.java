@@ -134,7 +134,6 @@ public final class SignalDiagramController
           listener.handleMeasureEvent( signalHover );
         }
       }
-      this.signalDiagram.repaint(); // XXX
     }
     return signalHover != null;
   }

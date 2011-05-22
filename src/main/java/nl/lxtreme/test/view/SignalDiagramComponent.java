@@ -172,7 +172,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
   private static final long serialVersionUID = 1L;
 
-  private static final boolean DEBUG = true;
+  private static final boolean DEBUG = false;
 
   // VARIABLES
 

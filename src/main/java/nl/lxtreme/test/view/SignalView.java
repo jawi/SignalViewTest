@@ -28,6 +28,7 @@ import java.util.logging.*;
 
 import javax.swing.*;
 
+import nl.lxtreme.test.*;
 import nl.lxtreme.test.dnd.*;
 import nl.lxtreme.test.dnd.DragAndDropTargetController.*;
 import nl.lxtreme.test.view.laf.*;
@@ -38,7 +39,7 @@ import nl.lxtreme.test.view.renderer.Renderer;
 /**
  * Provides a view for the signal data as individual channels.
  */
-public class SignalView extends AbstractViewLayer
+public class SignalView extends AbstractViewLayer implements IMeasurementListener
 {
   // INNER TYPES
 
@@ -331,7 +332,44 @@ public class SignalView extends AbstractViewLayer
 
     updateUI();
 
+    getController().addMeasurementListener( this );
+
     super.addNotify();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void handleMeasureEvent( final SignalHoverInfo aEvent )
+  {
+    final SignalUI signalUI = ( SignalUI )this.ui;
+
+    Rectangle oldRect = signalUI.getMeasurementRect();
+
+    signalUI.handleMeasureEvent( aEvent );
+
+    Rectangle newRect = signalUI.getMeasurementRect();
+
+    setToolTipText( aEvent.toHtmlString() );
+
+    if ( oldRect != null )
+    {
+      repaint( oldRect );
+    }
+    if ( newRect != null )
+    {
+      repaint( newRect );
+    }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public boolean isListening()
+  {
+    return ( ( SignalUI )this.ui ).isListening();
   }
 
   /**
@@ -353,6 +391,8 @@ public class SignalView extends AbstractViewLayer
     }
 
     setUI( null );
+
+    getController().removeMeasurementListener( this );
 
     super.removeNotify();
   }

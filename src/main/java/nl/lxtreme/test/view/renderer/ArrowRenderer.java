@@ -33,8 +33,8 @@ public class ArrowRenderer extends BaseRenderer
   private static final int LEFT_FACING = 1;
   private static final int RIGHT_FACING = -1;
 
-  private static final int HEAD_WIDTH = 8;
-  private static final int HEAD_HEIGHT = 8;
+  public static final int HEAD_WIDTH = 8;
+  public static final int HEAD_HEIGHT = 8;
 
   // VARIABLES
 
@@ -78,7 +78,7 @@ public class ArrowRenderer extends BaseRenderer
 
     drawDoubleHeadedArrow( aCanvas, 0, 0, this.width, 0, 8, 8 );
 
-    return new Rectangle( 0, 0, this.width, HEAD_HEIGHT );
+    return new Rectangle( -HEAD_WIDTH, -HEAD_HEIGHT, this.width + ( 2 * HEAD_WIDTH ), 3 * HEAD_HEIGHT );
   }
 
   /**

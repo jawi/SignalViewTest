@@ -236,6 +236,21 @@ public class SignalHoverInfo implements Cloneable
   /**
    * {@inheritDoc}
    */
+  public String toHtmlString()
+  {
+    final StringBuilder sb = new StringBuilder();
+    sb.append( "<html>" );
+    sb.append( "Width: " ).append( displayTime( getPulseWidth() ) ).append( "<br>" );
+    sb.append( "Period: " ).append( displayTime( getTotalPulseWidth() ) ).append( "<br>" );
+    sb.append( "Time: " ).append( displayTime( getTimeValue() ) ).append( "<br>" );
+    sb.append( "Channel: " ).append( getChannelIndex() );
+    sb.append( "</html>" );
+    return sb.toString();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public String toString()
   {
