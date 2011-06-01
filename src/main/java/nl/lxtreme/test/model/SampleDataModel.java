@@ -202,7 +202,7 @@ public class SampleDataModel
 
   public int getWidth()
   {
-    return 9;
+    return 32;
   }
 
   /**

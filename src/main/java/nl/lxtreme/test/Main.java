@@ -151,6 +151,8 @@ public class Main
       {
         final Main main = new Main();
 
+        ThreadViolationDetectionRepaintManager.install();
+
         main.init();
         main.build();
         main.run();
@@ -255,7 +257,7 @@ public class Main
     } );
     diagramMenu.add( diagramEnableMeasureModeItem );
 
-    final SampleDataModel model = new SampleDataModel( 1024 * 256, new RandomDataProvider() );
+    final SampleDataModel model = new SampleDataModel( 1024 * 1024, new RandomDataProvider() );
 
     this.controller = new SignalDiagramController( model );
 

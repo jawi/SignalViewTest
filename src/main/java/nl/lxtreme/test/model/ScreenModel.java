@@ -84,6 +84,7 @@ public class ScreenModel
   private boolean zoomAll;
   private int signalHeight;
   private int channelHeight;
+  private int visibleMask;
   private boolean measurementMode;
   private boolean cursorMode;
   private boolean snapCursor;
@@ -152,6 +153,8 @@ public class ScreenModel
     {
       this.cursorLabels[i] = String.format( "T%c", Integer.valueOf( i + 'a' ) );
     }
+
+    this.visibleMask = 0x555;
   }
 
   // METHODS
@@ -274,6 +277,17 @@ public class ScreenModel
     return this.zoomFactor;
   }
 
+  public boolean isChannelVisible( final int aChannelIdx )
+  {
+    if ( ( aChannelIdx < 0 ) || ( aChannelIdx >= this.virtualRowMapping.length ) )
+    {
+      throw new IllegalArgumentException( "Invalid channel index!" );
+    }
+
+    int mask = ( 1 << aChannelIdx );
+    return ( this.visibleMask & mask ) != 0;
+  }
+
   /**
    * @return the cursorMode
    */
@@ -322,6 +336,28 @@ public class ScreenModel
   public void setChannelHeight( final int aChannelHeight )
   {
     this.channelHeight = aChannelHeight;
+  }
+
+  /**
+   * @param aChannelIdx
+   * @param aVisible
+   */
+  public void setChannelVisible( final int aChannelIdx, final boolean aVisible )
+  {
+    if ( ( aChannelIdx < 0 ) || ( aChannelIdx >= this.virtualRowMapping.length ) )
+    {
+      throw new IllegalArgumentException( "Invalid channel index!" );
+    }
+
+    int mask = ( 1 << aChannelIdx );
+    if ( aVisible )
+    {
+      this.visibleMask |= mask;
+    }
+    else
+    {
+      this.visibleMask &= ~mask;
+    }
   }
 
   /**

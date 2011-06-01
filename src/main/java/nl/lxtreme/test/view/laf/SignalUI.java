@@ -151,8 +151,8 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
       final int endIdx = getEndIndex( controller, clip, values.length );
       final int size = Math.min( values.length - 1, ( endIdx - startIdx ) + 1 );
 
-      final int[] x = new int[2 * size];
-      final int[] y = new int[2 * size];
+      SignalRenderer actualSignalRenderer = new ActualSignalRenderer( dataModel, screenModel );
+      SignalRenderer constantSignalRenderer = new ConstantSignalRenderer( dataModel, screenModel );
 
       final int signalHeight = screenModel.getSignalHeight();
       final int channelHeight = screenModel.getChannelHeight();
@@ -182,35 +182,19 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
         // determine where we really should draw the signal...
         final int dy = signalOffset + ( channelHeight * virtualRow );
 
-        long timestamp = timestamps[startIdx];
-        int prevSampleValue = ( ( values[startIdx] & mask ) == 0 ) ? 1 : 0;
-
-        x[0] = ( int )( zoomFactor * timestamp );
-        y[0] = dy + ( signalHeight * prevSampleValue );
-        int p = 1;
-
-        for ( int i = 1; i < size; i++ )
+        final SignalRenderer renderer;
+        if ( screenModel.isChannelVisible( b ) )
         {
-          final int sampleIdx = ( i + startIdx );
-
-          int sampleValue = ( ( values[sampleIdx] & mask ) == 0 ) ? 1 : 0;
-          timestamp = timestamps[sampleIdx];
-
-          if ( prevSampleValue != sampleValue )
-          {
-            x[p] = ( int )( zoomFactor * timestamp );
-            y[p] = dy + ( signalHeight * prevSampleValue );
-            p++;
-          }
-
-          x[p] = ( int )( zoomFactor * timestamp );
-          y[p] = dy + ( signalHeight * sampleValue );
-          p++;
-
-          prevSampleValue = sampleValue;
+          actualSignalRenderer.setContext( startIdx, size, mask );
+          renderer = actualSignalRenderer;
+        }
+        else
+        {
+          constantSignalRenderer.setContext( startIdx, size );
+          renderer = constantSignalRenderer;
         }
 
-        canvas.drawPolyline( x, y, p );
+        renderer.render( canvas, 0, dy );
       }
 
       // Draw the cursor "flags"...

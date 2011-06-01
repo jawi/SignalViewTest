@@ -311,7 +311,10 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
      */
     protected void mousePressed( final MouseEvent aEvent )
     {
-      handlePopupTrigger( aEvent );
+      if ( !handlePopupTrigger( aEvent ) )
+      {
+        // NO-op
+      }
     }
 
     /**
@@ -319,7 +322,10 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
      */
     protected void mouseReleased( final MouseEvent aEvent )
     {
-      handlePopupTrigger( aEvent );
+      if ( !handlePopupTrigger( aEvent ) )
+      {
+        // NO-op
+      }
 
       this.view.getRootPane().setCursor( DEFAULT );
       this.view.setCursor( null );
@@ -328,9 +334,10 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     /**
      * @param aEvent
      */
-    private void handlePopupTrigger( final MouseEvent aEvent )
+    private boolean handlePopupTrigger( final MouseEvent aEvent )
     {
-      if ( this.controller.isCursorMode() && aEvent.isPopupTrigger() )
+      final boolean popupTrigger = this.controller.isCursorMode() && aEvent.isPopupTrigger();
+      if ( popupTrigger )
       {
         final Point point = aEvent.getPoint();
 
@@ -366,6 +373,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
           contextMenu.show( aEvent.getComponent(), aEvent.getX(), aEvent.getY() );
         }
       }
+      return popupTrigger;
     }
   }
 
