@@ -151,8 +151,8 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
       final int endIdx = getEndIndex( controller, clip, values.length );
       final int size = Math.min( values.length - 1, ( endIdx - startIdx ) + 1 );
 
-      SignalRenderer actualSignalRenderer = new ActualSignalRenderer( dataModel, screenModel );
-      SignalRenderer constantSignalRenderer = new ConstantSignalRenderer( dataModel, screenModel );
+      final int[] x = new int[2 * size];
+      final int[] y = new int[2 * size];
 
       final int signalHeight = screenModel.getSignalHeight();
       final int channelHeight = screenModel.getChannelHeight();
@@ -182,19 +182,47 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
         // determine where we really should draw the signal...
         final int dy = signalOffset + ( channelHeight * virtualRow );
 
-        final SignalRenderer renderer;
-        if ( screenModel.isChannelVisible( b ) )
+        int p;
+
+        if ( !screenModel.isChannelVisible( b ) )
         {
-          actualSignalRenderer.setContext( startIdx, size, mask );
-          renderer = actualSignalRenderer;
+          x[0] = ( int )( zoomFactor * timestamps[startIdx] );
+          y[0] = dy + signalHeight;
+
+          x[1] = ( int )( zoomFactor * timestamps[endIdx] );
+          y[1] = dy + signalHeight;
+          p = 2;
         }
         else
         {
-          constantSignalRenderer.setContext( startIdx, size );
-          renderer = constantSignalRenderer;
+          long timestamp = timestamps[startIdx];
+          int prevSampleValue = ( values[startIdx] & mask ) >> b;
+
+          x[0] = ( int )( zoomFactor * timestamp );
+          y[0] = dy + ( signalHeight * prevSampleValue );
+          p = 1;
+
+          for ( int sampleIdx = startIdx + 1; sampleIdx < size; sampleIdx++ )
+          {
+            timestamp = timestamps[sampleIdx];
+            int sampleValue = ( values[sampleIdx] & mask ) >> b;
+
+            if ( prevSampleValue != sampleValue )
+            {
+              x[p] = ( int )( zoomFactor * timestamp );
+              y[p] = dy + ( signalHeight * prevSampleValue );
+              p++;
+            }
+
+            x[p] = ( int )( zoomFactor * timestamp );
+            y[p] = dy + ( signalHeight * sampleValue );
+            p++;
+
+            prevSampleValue = sampleValue;
+          }
         }
 
-        renderer.render( canvas, 0, dy );
+        canvas.drawPolyline( x, y, p );
       }
 
       // Draw the cursor "flags"...

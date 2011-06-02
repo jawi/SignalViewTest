@@ -38,11 +38,11 @@ public class ActualSignalRenderer extends BaseRenderer implements SignalRenderer
   private final double zoomFactor;
   private final int signalHeight;
 
-  private int[] x;
-  private int[] y;
+  private static int[] x;
+  private static int[] y;
 
-  private int startIdx;
-  private int size;
+  private final int startIdx;
+  private final int size;
   private int mask;
 
   // CONSTRUCTORS
@@ -50,12 +50,27 @@ public class ActualSignalRenderer extends BaseRenderer implements SignalRenderer
   /**
    * Creates a new ActualSignalRenderer instance.
    */
-  public ActualSignalRenderer( final SampleDataModel aDataModel, final ScreenModel aScreenModel )
+  public ActualSignalRenderer( final SampleDataModel aDataModel, final ScreenModel aScreenModel, final int aStartIndex,
+      final int aSize )
   {
     this.timestamps = aDataModel.getTimestamps();
     this.values = aDataModel.getValues();
     this.zoomFactor = aScreenModel.getZoomFactor();
     this.signalHeight = aScreenModel.getSignalHeight();
+    this.startIdx = aStartIndex;
+    this.size = aSize;
+
+    if ( ( x == null ) || ( x.length < 2 * this.size ) )
+    {
+      System.out.println( "RESIZE FROM " + ( x == null ? 0 : x.length ) + " TO " + ( 2 * this.size ) );
+      x = null;
+      x = new int[2 * this.size];
+    }
+    if ( ( y == null ) || ( y.length < 2 * this.size ) )
+    {
+      y = null;
+      y = new int[2 * this.size];
+    }
   }
 
   // METHODS
@@ -66,14 +81,12 @@ public class ActualSignalRenderer extends BaseRenderer implements SignalRenderer
   @Override
   public void setContext( final Object... aParameters )
   {
-    if ( ( aParameters == null ) || ( aParameters.length < 3 ) )
+    if ( ( aParameters == null ) || ( aParameters.length < 1 ) )
     {
-      throw new IllegalArgumentException( "Expected three integer parameters: startIdx, size & mask!" );
+      throw new IllegalArgumentException( "Expected one integer parameter: mask!" );
     }
 
-    this.startIdx = ( ( Integer )aParameters[0] ).intValue();
-    this.size = ( ( Integer )aParameters[1] ).intValue();
-    this.mask = ( ( Integer )aParameters[2] ).intValue();
+    this.mask = ( ( Integer )aParameters[0] ).intValue();
   }
 
   /**
@@ -82,38 +95,33 @@ public class ActualSignalRenderer extends BaseRenderer implements SignalRenderer
   @Override
   protected Rectangle render( final Graphics2D aCanvas )
   {
-    this.x = new int[2 * this.size];
-    this.y = new int[2 * this.size];
-
     long timestamp = this.timestamps[this.startIdx];
     int prevSampleValue = ( ( this.values[this.startIdx] & this.mask ) == 0 ) ? 1 : 0;
 
-    this.x[0] = ( int )( this.zoomFactor * timestamp );
-    this.y[0] = ( this.signalHeight * prevSampleValue );
+    x[0] = ( int )( this.zoomFactor * timestamp );
+    y[0] = ( this.signalHeight * prevSampleValue );
     int p = 1;
 
-    for ( int i = 1; i < this.size; i++ )
+    for ( int sampleIdx = this.startIdx + 1; sampleIdx < this.size; sampleIdx++ )
     {
-      final int sampleIdx = ( i + this.startIdx );
-
       int sampleValue = ( ( this.values[sampleIdx] & this.mask ) == 0 ) ? 1 : 0;
       timestamp = this.timestamps[sampleIdx];
 
       if ( prevSampleValue != sampleValue )
       {
-        this.x[p] = ( int )( this.zoomFactor * timestamp );
-        this.y[p] = ( this.signalHeight * prevSampleValue );
+        x[p] = ( int )( this.zoomFactor * timestamp );
+        y[p] = ( this.signalHeight * prevSampleValue );
         p++;
       }
 
-      this.x[p] = ( int )( this.zoomFactor * timestamp );
-      this.y[p] = ( this.signalHeight * sampleValue );
+      x[p] = ( int )( this.zoomFactor * timestamp );
+      y[p] = ( this.signalHeight * sampleValue );
       p++;
 
       prevSampleValue = sampleValue;
     }
 
-    aCanvas.drawPolyline( this.x, this.y, p );
+    aCanvas.drawPolyline( x, y, p );
 
     return null;
   }

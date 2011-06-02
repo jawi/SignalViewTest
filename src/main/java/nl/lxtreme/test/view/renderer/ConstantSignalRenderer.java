@@ -40,19 +40,23 @@ public class ConstantSignalRenderer extends BaseRenderer implements SignalRender
   private final int[] x;
   private final int[] y;
 
-  private int startIdx;
-  private int size;
+  private final int startIdx;
+  private final int size;
 
   // CONSTRUCTORS
 
   /**
    * Creates a new ConstantSignalRenderer instance.
    */
-  public ConstantSignalRenderer( final SampleDataModel aDataModel, final ScreenModel aScreenModel )
+  public ConstantSignalRenderer( final SampleDataModel aDataModel, final ScreenModel aScreenModel,
+      final int aStartIndex, final int aSize )
   {
     this.timestamps = aDataModel.getTimestamps();
     this.zoomFactor = aScreenModel.getZoomFactor();
     this.signalHeight = aScreenModel.getSignalHeight();
+
+    this.startIdx = aStartIndex;
+    this.size = aSize;
 
     this.x = new int[2];
     this.y = new int[2];
@@ -66,13 +70,7 @@ public class ConstantSignalRenderer extends BaseRenderer implements SignalRender
   @Override
   public void setContext( final Object... aParameters )
   {
-    if ( ( aParameters == null ) || ( aParameters.length < 2 ) )
-    {
-      throw new IllegalArgumentException( "Expected two integer parameters: startIdx & size!" );
-    }
-
-    this.startIdx = ( ( Integer )aParameters[0] ).intValue();
-    this.size = ( ( Integer )aParameters[1] ).intValue();
+    // NO-op
   }
 
   /**
@@ -84,7 +82,9 @@ public class ConstantSignalRenderer extends BaseRenderer implements SignalRender
     this.x[0] = ( int )( this.zoomFactor * this.timestamps[this.startIdx] );
     this.y[0] = this.signalHeight;
 
-    this.x[1] = ( int )( this.zoomFactor * this.timestamps[this.startIdx + this.size] );
+    final int maxT = Math.min( this.startIdx + this.size, this.timestamps.length - 1 );
+
+    this.x[1] = ( int )( this.zoomFactor * this.timestamps[maxT] );
     this.y[1] = this.signalHeight;
 
     aCanvas.drawPolyline( this.x, this.y, 2 );
