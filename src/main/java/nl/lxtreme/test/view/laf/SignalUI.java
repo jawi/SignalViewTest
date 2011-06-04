@@ -21,6 +21,7 @@ package nl.lxtreme.test.view.laf;
 
 
 import java.awt.*;
+
 import javax.swing.*;
 import javax.swing.plaf.*;
 
@@ -41,6 +42,9 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
   public static final String COMPONENT_BACKGROUND_COLOR = "channellabels.color.background";
   public static final String LABEL_FONT = "measurement.label.font";
 
+  /** XXX The threshold when we're going to draw a bit more sloppy... */
+  private static final int SLOPPY_THRESHOLD = 1000000;
+
   // VARIABLES
 
   private final Renderer cursorRenderer = new CursorFlagRenderer();
@@ -52,6 +56,9 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
   private volatile boolean listening = true;
   private volatile SignalHoverInfo signalHoverInfo;
   private volatile Rectangle measurementRect;
+
+  private static final int[] x = new int[2 * SLOPPY_THRESHOLD];
+  private static final int[] y = new int[2 * SLOPPY_THRESHOLD];
 
   // METHODS
 
@@ -151,9 +158,6 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
       final int endIdx = getEndIndex( controller, clip, values.length );
       final int size = Math.min( values.length - 1, ( endIdx - startIdx ) + 1 );
 
-      final int[] x = new int[2 * size];
-      final int[] y = new int[2 * size];
-
       final int signalHeight = screenModel.getSignalHeight();
       final int channelHeight = screenModel.getChannelHeight();
       // Where is the signal to be drawn?
@@ -176,7 +180,7 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
           continue;
         }
 
-        canvas.setColor( screenModel.getChannelColor( b ) );
+        final Color channelColor = screenModel.getChannelColor( b );
 
         final int mask = ( 1 << b );
         // determine where we really should draw the signal...
@@ -186,43 +190,87 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
 
         if ( !screenModel.isChannelVisible( b ) )
         {
+          canvas.setColor( channelColor.darker().darker() );
+
+          // Forced zero'd channel is *very* easy to draw...
           x[0] = ( int )( zoomFactor * timestamps[startIdx] );
           y[0] = dy + signalHeight;
 
           x[1] = ( int )( zoomFactor * timestamps[endIdx] );
           y[1] = dy + signalHeight;
           p = 2;
+
+          canvas.drawPolyline( x, y, p );
         }
         else
         {
-          long timestamp = timestamps[startIdx];
-          int prevSampleValue = ( values[startIdx] & mask ) >> b;
-
-          x[0] = ( int )( zoomFactor * timestamp );
-          y[0] = dy + ( signalHeight * prevSampleValue );
-          p = 1;
-
-          for ( int sampleIdx = startIdx + 1; sampleIdx < size; sampleIdx++ )
+          if ( size > SLOPPY_THRESHOLD )
           {
-            timestamp = timestamps[sampleIdx];
-            int sampleValue = ( values[sampleIdx] & mask ) >> b;
+            canvas.setColor( channelColor.darker() );
 
-            if ( prevSampleValue != sampleValue )
+            // Large data set; be a bit more sloppy in the drawing to gain some
+            // performance...
+            int incr = ( int )Math.floor( 1.0 / ( 3 * zoomFactor ) );
+
+            float mean = 0.0f;
+            for ( int sampleIdx = startIdx; sampleIdx < endIdx; sampleIdx++ )
             {
+              mean = mean + ( ( values[sampleIdx] & mask ) >> b );
+            }
+            mean = mean / size;
+
+            for ( int sampleIdx = startIdx; sampleIdx < endIdx; sampleIdx += incr )
+            {
+              final int nextSampleIdx = Math.min( endIdx, sampleIdx + incr - 1 );
+
+              float blkMean = 0.0f;
+              for ( int i = sampleIdx; i < nextSampleIdx; i++ )
+              {
+                blkMean = blkMean + ( ( values[i] & mask ) >> b );
+              }
+              blkMean = blkMean / incr;
+
+              int x1 = ( int )( zoomFactor * timestamps[startIdx] );
+              int x2 = ( int )( zoomFactor * timestamps[nextSampleIdx - 1] );
+              int y1 = signalHeight * ( blkMean < mean ? 0 : 1 );
+
+              canvas.drawRect( x1, dy, x2 - x1, y1 );
+            }
+          }
+          else
+          {
+            canvas.setColor( channelColor );
+
+            // "Normal" data set; draw as accurate as possible...
+            long timestamp = timestamps[startIdx];
+            int prevSampleValue = 1 - ( ( values[startIdx] & mask ) >> b );
+
+            x[0] = ( int )( zoomFactor * timestamp );
+            y[0] = dy + ( signalHeight * prevSampleValue );
+            p = 1;
+
+            for ( int sampleIdx = startIdx + 1; sampleIdx < endIdx; sampleIdx++ )
+            {
+              timestamp = timestamps[sampleIdx];
+              int sampleValue = 1 - ( ( values[sampleIdx] & mask ) >> b );
+
+              if ( prevSampleValue != sampleValue )
+              {
+                x[p] = ( int )( zoomFactor * timestamp );
+                y[p] = dy + ( signalHeight * prevSampleValue );
+                p++;
+              }
+
               x[p] = ( int )( zoomFactor * timestamp );
-              y[p] = dy + ( signalHeight * prevSampleValue );
+              y[p] = dy + ( signalHeight * sampleValue );
               p++;
+
+              prevSampleValue = sampleValue;
             }
 
-            x[p] = ( int )( zoomFactor * timestamp );
-            y[p] = dy + ( signalHeight * sampleValue );
-            p++;
-
-            prevSampleValue = sampleValue;
+            canvas.drawPolyline( x, y, p );
           }
         }
-
-        canvas.drawPolyline( x, y, p );
       }
 
       // Draw the cursor "flags"...

@@ -63,6 +63,45 @@ public class Main
   }
 
   /**
+   * Provides only samples with alternating values with large spaces in between.
+   */
+  static class AlternatingDataWithSpacesProvider implements SampleDataProvider
+  {
+    @Override
+    public int getSampleData( final int[] aValues, final long[] aTimestamps, final int aSize )
+    {
+      boolean markOrSpace = false; // mark
+      int lastValue = -1;
+      for ( int i = 0; i < aSize; i++ )
+      {
+        if ( i % 1000000 == 0 )
+        {
+          markOrSpace = !markOrSpace;
+        }
+
+        if ( markOrSpace )
+        {
+          if ( i > 0 )
+          {
+            aValues[i] = ( ( lastValue == 0xAAAA ) ? 0x5555 : 0xAAAA );
+          }
+          else
+          {
+            aValues[i] = 0xAAAA;
+          }
+          lastValue = aValues[i];
+        }
+        else
+        {
+          aValues[i] = 0;
+        }
+        aTimestamps[i] = ( i * 10 );
+      }
+      return 1000000000; // 1000MHz
+    }
+  }
+
+  /**
    * Provides only samples that together form a 10-bit counter.
    */
   static class CounterDataProvider implements SampleDataProvider
@@ -257,7 +296,9 @@ public class Main
     } );
     diagramMenu.add( diagramEnableMeasureModeItem );
 
-    final SampleDataModel model = new SampleDataModel( 1 * 1024 * 1024, new AlternatingDataProvider() );
+    final SampleDataModel model = new SampleDataModel( 1 * 1024 * 1024, new AlternatingDataWithSpacesProvider() );
+    // final SampleDataModel model = new SampleDataModel( 10 * 1024 * 1024, new
+    // RandomDataProvider() );
 
     this.controller = new SignalDiagramController( model );
 

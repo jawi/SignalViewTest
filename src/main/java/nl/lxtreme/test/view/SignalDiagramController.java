@@ -610,7 +610,7 @@ public final class SignalDiagramController
     {
       final Rectangle viewPortSize = scrollPane.getViewport().getVisibleRect();
 
-      int width = ( int )Math.min( Integer.MAX_VALUE, getAbsoluteLength() );
+      int width = ( int )Math.min( Short.MAX_VALUE, getAbsoluteLength() );
       if ( width < viewPortSize.width )
       {
         width = viewPortSize.width;
@@ -858,7 +858,9 @@ public final class SignalDiagramController
   private long getAbsoluteLength()
   {
     final long[] timestamps = this.dataModel.getTimestamps();
-    return ( long )( ( timestamps[timestamps.length - 1] + 1 ) * this.screenModel.getZoomFactor() );
+    final long end = timestamps[timestamps.length - 1] + 1;
+    final long start = timestamps[0];
+    return ( long )( ( end - start ) * this.screenModel.getZoomFactor() );
   }
 
   /**
@@ -885,6 +887,24 @@ public final class SignalDiagramController
     }
 
     return row;
+  }
+
+  /**
+   * Determines the maximum zoom level that we can handle without causing
+   * display problems.
+   * <p>
+   * It appears that the maximum width of a component can be
+   * {@link Short#MAX_VALUE} pixels wide.
+   * </p>
+   * 
+   * @return a maximum zoom level.
+   */
+  private double getMaxZoomLevel()
+  {
+    final long[] timestamps = this.dataModel.getTimestamps();
+    final double end = timestamps[timestamps.length - 1] + 1;
+    final double start = timestamps[0];
+    return Math.floor( ( end - start ) / Short.MAX_VALUE );
   }
 
   /**
@@ -980,7 +1000,7 @@ public final class SignalDiagramController
       this.screenModel.setZoomAll( false );
     }
 
-    LOG.log( Level.INFO, "Setting zoom factor to {0}...", Double.valueOf( this.screenModel.getZoomFactor() ) );
+    LOG.log( Level.INFO, "Setting zoom factor to " + this.screenModel.getZoomFactor() );
   }
 
   /**
@@ -988,7 +1008,9 @@ public final class SignalDiagramController
    */
   private void zoomRelative( final double aFactor )
   {
-    final double newFactor = Math.min( 1000.0, aFactor * this.screenModel.getZoomFactor() );
+    final double maxFactor = getMaxZoomLevel();
+    System.out.println( "MAX zoom level = " + maxFactor );
+    final double newFactor = Math.min( maxFactor, aFactor * this.screenModel.getZoomFactor() );
     zoomAbsolute( newFactor );
   }
 }
