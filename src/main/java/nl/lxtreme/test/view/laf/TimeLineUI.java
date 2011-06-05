@@ -44,7 +44,7 @@ public class TimeLineUI extends ComponentUI
   public static final String MINOR_TICK_LABEL_FONT = "timeline.minortick.label.font";
 
   /** The tick increment (in pixels). */
-  private static final int TIMELINE_INCREMENT = 10;
+  private static final int TIMELINE_INCREMENT = 5;
   /** The height of this component. */
   public static final int TIMELINE_HEIGHT = 40;
 
@@ -130,14 +130,14 @@ public class TimeLineUI extends ComponentUI
       final double timebase = getTimebase( aComponent, zoomFactor );
 
       double tickIncr = Math.max( 1.0, timebase / TIMELINE_INCREMENT );
-      double timeIncr = Math.max( 1.0, timebase / ( 10.0 * TIMELINE_INCREMENT ) );
+      double timeIncr = Math.max( 0.1, timebase / ( 10.0 * TIMELINE_INCREMENT ) );
 
       final Rectangle visibleRect = view.getVisibleRect();
 
       final long startTimeStamp = getStartTimestamp( controller, visibleRect );
       final long endTimeStamp = getEndTimestamp( controller, visibleRect );
 
-      double timestamp = ( Math.ceil( startTimeStamp / tickIncr ) * tickIncr );
+      double timestamp = ( Math.round( startTimeStamp / tickIncr ) * tickIncr );
       double majorTimestamp = timestamp;
 
       for ( ; timestamp <= endTimeStamp; timestamp += timeIncr )
@@ -267,7 +267,9 @@ public class TimeLineUI extends ComponentUI
     final SampleDataModel dataModel = aController.getDataModel();
     final long[] timestamps = dataModel.getTimestamps();
 
-    return idx == 0 ? 0 : timestamps[idx];
+    // Make sure that if we're at the beginning of the timeline, we're always
+    // start at 0...
+    return ( idx == 0 ) ? 0 : timestamps[idx];
   }
 
   /**

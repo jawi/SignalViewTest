@@ -296,7 +296,7 @@ public class Main
     } );
     diagramMenu.add( diagramEnableMeasureModeItem );
 
-    final SampleDataModel model = new SampleDataModel( 1 * 1024 * 1024, new AlternatingDataWithSpacesProvider() );
+    final SampleDataModel model = new SampleDataModel( 256 * 1024, new AlternatingDataWithSpacesProvider() );
     // final SampleDataModel model = new SampleDataModel( 10 * 1024 * 1024, new
     // RandomDataProvider() );
 

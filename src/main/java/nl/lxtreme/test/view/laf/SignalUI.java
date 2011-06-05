@@ -191,7 +191,7 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
         if ( !screenModel.isChannelVisible( b ) )
         {
           canvas.setColor( channelColor.darker().darker() );
-
+          // Make sure we always start with time 0...
           long timestamp = ( startIdx == 0 ) ? 0 : timestamps[startIdx];
 
           // Forced zero'd channel is *very* easy to draw...
@@ -232,10 +232,11 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
               }
               blkMean = blkMean / incr;
 
+              // Make sure we always start with time 0...
               long timestamp = ( startIdx == 0 ) ? 0 : timestamps[startIdx];
 
               int x1 = ( int )( zoomFactor * timestamp );
-              int x2 = ( int )( zoomFactor * timestamps[nextSampleIdx - 1] );
+              int x2 = ( int )( zoomFactor * timestamps[nextSampleIdx] );
               int y1 = signalHeight * ( blkMean < mean ? 0 : 1 );
 
               canvas.drawRect( x1, dy, x2 - x1, y1 );
@@ -243,9 +244,10 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
           }
           else
           {
+            // "Normal" data set; draw as accurate as possible...
             canvas.setColor( channelColor );
 
-            // "Normal" data set; draw as accurate as possible...
+            // Make sure we always start with time 0...
             long timestamp = ( startIdx == 0 ) ? 0 : timestamps[startIdx];
             int prevSampleValue = 1 - ( ( values[startIdx] & mask ) >> b );
 
