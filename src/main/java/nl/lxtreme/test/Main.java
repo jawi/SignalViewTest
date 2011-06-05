@@ -95,9 +95,9 @@ public class Main
         {
           aValues[i] = 0;
         }
-        aTimestamps[i] = ( i * 10 );
+        aTimestamps[i] = 10000 + ( i * 10 );
       }
-      return 1000000000; // 1000MHz
+      return 1000000000; // 1GHz
     }
   }
 

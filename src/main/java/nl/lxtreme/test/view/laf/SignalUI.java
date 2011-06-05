@@ -192,8 +192,10 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
         {
           canvas.setColor( channelColor.darker().darker() );
 
+          long timestamp = ( startIdx == 0 ) ? 0 : timestamps[startIdx];
+
           // Forced zero'd channel is *very* easy to draw...
-          x[0] = ( int )( zoomFactor * timestamps[startIdx] );
+          x[0] = ( int )( zoomFactor * timestamp );
           y[0] = dy + signalHeight;
 
           x[1] = ( int )( zoomFactor * timestamps[endIdx] );
@@ -230,7 +232,9 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
               }
               blkMean = blkMean / incr;
 
-              int x1 = ( int )( zoomFactor * timestamps[startIdx] );
+              long timestamp = ( startIdx == 0 ) ? 0 : timestamps[startIdx];
+
+              int x1 = ( int )( zoomFactor * timestamp );
               int x2 = ( int )( zoomFactor * timestamps[nextSampleIdx - 1] );
               int y1 = signalHeight * ( blkMean < mean ? 0 : 1 );
 
@@ -242,14 +246,14 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
             canvas.setColor( channelColor );
 
             // "Normal" data set; draw as accurate as possible...
-            long timestamp = timestamps[startIdx];
+            long timestamp = ( startIdx == 0 ) ? 0 : timestamps[startIdx];
             int prevSampleValue = 1 - ( ( values[startIdx] & mask ) >> b );
 
             x[0] = ( int )( zoomFactor * timestamp );
             y[0] = dy + ( signalHeight * prevSampleValue );
             p = 1;
 
-            for ( int sampleIdx = startIdx + 1; sampleIdx < endIdx; sampleIdx++ )
+            for ( int sampleIdx = startIdx; sampleIdx < endIdx; sampleIdx++ )
             {
               timestamp = timestamps[sampleIdx];
               int sampleValue = 1 - ( ( values[sampleIdx] & mask ) >> b );

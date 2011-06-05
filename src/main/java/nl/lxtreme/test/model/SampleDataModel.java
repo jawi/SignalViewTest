@@ -70,9 +70,11 @@ public class SampleDataModel
 
     this.sampleRate = aProvider.getSampleData( this.values, this.timestamps, aSize );
 
+    final double end = this.timestamps[this.timestamps.length - 1] + 1 - this.timestamps[0];
+
     System.out.println( "Data sample rate  : " + Utils.displayFrequency( this.sampleRate ) );
     System.out.println( "Data size         : " + aSize + " samples." );
-    System.out.println( "Total sample time : " + Utils.displayTime( aSize / ( double )this.sampleRate ) );
+    System.out.println( "Total sample time : " + Utils.displayTime( end / this.sampleRate ) );
 
     this.cursors = new Long[MAX_CURSORS];
     this.cursors[0] = Long.valueOf( 100 );

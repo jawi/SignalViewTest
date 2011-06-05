@@ -610,7 +610,7 @@ public final class SignalDiagramController
     {
       final Rectangle viewPortSize = scrollPane.getViewport().getVisibleRect();
 
-      int width = ( int )Math.min( Short.MAX_VALUE, getAbsoluteLength() );
+      int width = ( int )Math.min( getMaxWidth(), getAbsoluteLength() );
       if ( width < viewPortSize.width )
       {
         width = viewPortSize.width;
@@ -890,6 +890,14 @@ public final class SignalDiagramController
   }
 
   /**
+   * @return
+   */
+  private int getMaxWidth()
+  {
+    return Integer.MAX_VALUE;
+  }
+
+  /**
    * Determines the maximum zoom level that we can handle without causing
    * display problems.
    * <p>
@@ -904,7 +912,7 @@ public final class SignalDiagramController
     final long[] timestamps = this.dataModel.getTimestamps();
     final double end = timestamps[timestamps.length - 1] + 1;
     final double start = timestamps[0];
-    return Math.floor( ( end - start ) / Short.MAX_VALUE );
+    return Math.floor( getMaxWidth() / ( end - start ) );
   }
 
   /**

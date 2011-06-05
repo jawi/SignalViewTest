@@ -267,7 +267,7 @@ public class TimeLineUI extends ComponentUI
     final SampleDataModel dataModel = aController.getDataModel();
     final long[] timestamps = dataModel.getTimestamps();
 
-    return timestamps[idx];
+    return idx == 0 ? 0 : timestamps[idx];
   }
 
   /**
