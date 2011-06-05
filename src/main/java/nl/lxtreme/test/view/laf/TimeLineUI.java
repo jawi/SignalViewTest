@@ -41,7 +41,10 @@ public class TimeLineUI extends ComponentUI
 
   public static final String COMPONENT_BACKGROUND_COLOR = "timeline.color.background";
   public static final String MAJOR_TICK_LABEL_FONT = "timeline.majortick.label.font";
+  public static final String MAJOR_TICK_COLOR = "timeline.majortick.color";
   public static final String MINOR_TICK_LABEL_FONT = "timeline.minortick.label.font";
+  public static final String MINOR_TICK_COLOR = "timeline.minortick.color";
+  public static final String TIME_COLOR = "timeline.text.color";
 
   /** The tick increment (in pixels). */
   private static final int TIMELINE_INCREMENT = 5;
@@ -49,17 +52,23 @@ public class TimeLineUI extends ComponentUI
   public static final int TIMELINE_HEIGHT = 40;
 
   private static final int SHORT_TICK_HEIGHT = 4;
+
   private static final int PADDING_Y = 1;
+  private static final int TEXT_PADDING_X = 2;
 
   private static final int BASE_TICK_Y_POS = TIMELINE_HEIGHT - PADDING_Y;
   private static final int SHORT_TICK_Y_POS = TIMELINE_HEIGHT - PADDING_Y - SHORT_TICK_HEIGHT;
-  private static final int LONG_TICK_Y_POS = TIMELINE_HEIGHT - PADDING_Y - 2 * SHORT_TICK_HEIGHT;
+  private static final int MAJOR_TICK_Y_POS = TIMELINE_HEIGHT - PADDING_Y - 3 * SHORT_TICK_HEIGHT;
+  private static final int MINOR_TICK_Y_POS = TIMELINE_HEIGHT - PADDING_Y - 2 * SHORT_TICK_HEIGHT;
 
   // VARIABLES
 
   private final Renderer cursorRenderer = new CursorFlagRenderer();
 
   private Color backgroundColor;
+  private Color majorTickColor;
+  private Color minorTickColor;
+  private Color textColor;
   private Font majorTickFont;
   private Font minorTickFont;
 
@@ -89,10 +98,28 @@ public class TimeLineUI extends ComponentUI
       this.minorTickFont = baseFont.deriveFont( baseFont.getSize() * 0.8f );
     }
 
+    this.minorTickColor = settingsProvider.getColor( MINOR_TICK_COLOR );
+    if ( this.minorTickColor == null )
+    {
+      this.minorTickColor = Color.LIGHT_GRAY;
+    }
+
     this.majorTickFont = settingsProvider.getFont( MAJOR_TICK_LABEL_FONT );
     if ( this.majorTickFont == null )
     {
       this.majorTickFont = baseFont.deriveFont( baseFont.getSize() * 0.9f );
+    }
+
+    this.majorTickColor = settingsProvider.getColor( MAJOR_TICK_COLOR );
+    if ( this.majorTickColor == null )
+    {
+      this.majorTickColor = Color.LIGHT_GRAY;
+    }
+
+    this.textColor = settingsProvider.getColor( TIME_COLOR );
+    if ( this.textColor == null )
+    {
+      this.textColor = Color.LIGHT_GRAY;
     }
   }
 
@@ -137,68 +164,70 @@ public class TimeLineUI extends ComponentUI
       final long startTimeStamp = getStartTimestamp( controller, visibleRect );
       final long endTimeStamp = getEndTimestamp( controller, visibleRect );
 
-      double timestamp = ( Math.round( startTimeStamp / tickIncr ) * tickIncr );
-      double majorTimestamp = timestamp;
+      double timestamp = Math.floor( startTimeStamp / tickIncr ) * tickIncr;
+      double majorTimestamp = Math.round( startTimeStamp / timebase ) * timebase;
 
-      for ( ; timestamp <= endTimeStamp; timestamp += timeIncr )
+      while ( timestamp <= endTimeStamp )
       {
         int relXpos = ( int )( zoomFactor * timestamp );
 
-        // XXX where does the 16 come from???
-        if ( ( relXpos < ( clip.x - 16 ) ) || ( relXpos > ( 16 + clip.x + clip.width ) ) )
+        if ( ( timestamp % tickIncr ) != 0 )
         {
-          // System.out.println( "SKIP!" );
-          // continue;
-        }
+          canvas.setColor( this.minorTickColor.darker() );
 
-        if ( ( timestamp % tickIncr ) == 0 )
+          canvas.drawLine( relXpos, BASE_TICK_Y_POS, relXpos, SHORT_TICK_Y_POS );
+        }
+        else
         {
           boolean major = ( ( timestamp % timebase ) == 0 );
 
           final String time;
           final int textWidth;
           final int textHeight;
+          final int tickHeight;
 
           if ( major )
           {
             majorTimestamp = timestamp;
-            final double tickTime = majorTimestamp / sampleRate;
+
+            final double tickTime = ( majorTimestamp / sampleRate );
             time = Utils.displayTime( tickTime, 3, "", true /* aIncludeUnit */);
 
             canvas.setFont( this.majorTickFont );
-            textWidth = majorFM.stringWidth( time ) + 2;
+
+            textWidth = majorFM.stringWidth( time ) + TEXT_PADDING_X;
             textHeight = 2 * minorFontHeight;
+
+            canvas.setColor( this.majorTickColor );
+
+            tickHeight = MAJOR_TICK_Y_POS;
           }
           else
           {
             final double tickTime = ( timestamp - majorTimestamp ) / sampleRate;
-            time = "+" + Utils.displayTime( tickTime, 1, "", true /* aIncludeUnit */);
+            time = Utils.displayTime( tickTime, 1, "", true /* aIncludeUnit */);
 
             canvas.setFont( this.minorTickFont );
-            textWidth = minorFM.stringWidth( time ) + 2;
+            textWidth = minorFM.stringWidth( time ) + TEXT_PADDING_X;
             textHeight = minorFontHeight;
+
+            canvas.setColor( this.minorTickColor );
+
+            tickHeight = MINOR_TICK_Y_POS;
           }
+
+          canvas.drawLine( relXpos, BASE_TICK_Y_POS, relXpos, tickHeight );
 
           int textXpos = Math.max( 1, ( int )( relXpos - ( textWidth / 2.0 ) ) );
           int textYpos = Math.max( 1, ( BASE_TICK_Y_POS - textHeight ) );
 
-          canvas.setColor( Color.LIGHT_GRAY );
+          canvas.setColor( this.textColor );
 
           canvas.drawString( time, textXpos, textYpos );
-
-          if ( major )
-          {
-            canvas.setColor( Color.LIGHT_GRAY.brighter() );
-          }
-
-          canvas.drawLine( relXpos, BASE_TICK_Y_POS, relXpos, LONG_TICK_Y_POS );
         }
-        else
-        {
-          canvas.setColor( Color.DARK_GRAY );
 
-          canvas.drawLine( relXpos, BASE_TICK_Y_POS, relXpos, SHORT_TICK_Y_POS );
-        }
+        // make sure we're rounding to a single digit after the comma...
+        timestamp = Math.round( 10.0 * ( timestamp + timeIncr ) ) / 10.0;
       }
 
       // Draw the cursor "flags"...
@@ -258,7 +287,7 @@ public class TimeLineUI extends ComponentUI
   private long getStartTimestamp( final SignalDiagramController aController, final Rectangle aClip )
   {
     final Point location = aClip.getLocation();
-    final int idx = aController.locationToSampleIndex( location );
+    final int idx = aController.locationToSampleIndex( location ) - 1;
     if ( idx < 0 )
     {
       return 0L;

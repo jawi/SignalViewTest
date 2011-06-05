@@ -95,7 +95,7 @@ public class Main
         {
           aValues[i] = 0;
         }
-        aTimestamps[i] = 10000 + ( i * 10 );
+        aTimestamps[i] = 0 + ( i * 10 );
       }
       return 1000000000; // 1GHz
     }
@@ -296,9 +296,9 @@ public class Main
     } );
     diagramMenu.add( diagramEnableMeasureModeItem );
 
-    final SampleDataModel model = new SampleDataModel( 256 * 1024, new AlternatingDataWithSpacesProvider() );
-    // final SampleDataModel model = new SampleDataModel( 10 * 1024 * 1024, new
-    // RandomDataProvider() );
+    // final SampleDataModel model = new SampleDataModel( 256 * 1024, new
+    // AlternatingDataWithSpacesProvider() );
+    final SampleDataModel model = new SampleDataModel( 512 * 1024, new RandomDataProvider() );
 
     this.controller = new SignalDiagramController( model );
 

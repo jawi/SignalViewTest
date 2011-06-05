@@ -337,7 +337,7 @@ public final class SignalDiagramController
     final int channelHeight = this.screenModel.getChannelHeight();
 
     final int virtualRow = ( aPoint.y / channelHeight );
-    if ( ( virtualRow < 0 ) || ( virtualRow > ( signalWidth - 1 ) ) )
+    if ( ( virtualRow < 0 ) || ( virtualRow > ( signalWidth - 1 ) ) || !this.screenModel.isChannelVisible( virtualRow ) )
     {
       return null;
     }
@@ -413,10 +413,12 @@ public final class SignalDiagramController
   }
 
   /**
-   * XXX
+   * Returns whether the cursor denoted by the given index is defined.
    * 
-   * @param aI
-   * @return
+   * @param aCursorIdx
+   *          the index of the cursor to check.
+   * @return <code>true</code> if the cursor with the given index is defined,
+   *         <code>false</code> otherwise.
    */
   public boolean isCursorDefined( final int aCursorIdx )
   {
@@ -646,9 +648,10 @@ public final class SignalDiagramController
   }
 
   /**
-   * XXX
+   * Removes the cursor denoted by the given index.
    * 
    * @param aCursorIdx
+   *          the index of the cursor to remove.
    */
   public void removeCursor( final int aCursorIdx )
   {
@@ -663,9 +666,10 @@ public final class SignalDiagramController
   }
 
   /**
-   * XXX
+   * Removes the given measurement listener from the list of listeners.
    * 
    * @param aListener
+   *          the listener to remove, cannot be <code>null</code>.
    */
   public void removeMeasurementListener( final IMeasurementListener aListener )
   {
