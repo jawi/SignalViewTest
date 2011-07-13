@@ -53,7 +53,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     /**
      * @param aController
      */
-    public ComponentSizeListener( final SignalDiagramController aController )
+    public ComponentSizeListener(final SignalDiagramController aController)
     {
       this.controller = aController;
     }
@@ -62,46 +62,46 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
      * {@inheritDoc}
      */
     @Override
-    public void componentResized( final ComponentEvent aEvent )
+    public void componentResized(final ComponentEvent aEvent)
     {
       final Component component = aEvent.getComponent();
-      SwingUtilities.invokeLater( new Runnable()
+      SwingUtilities.invokeLater(new Runnable()
       {
         private final SignalDiagramController ctrl = ComponentSizeListener.this.controller;
 
         @Override
         public void run()
         {
-          component.setCursor( Cursor.getPredefinedCursor( Cursor.WAIT_CURSOR ) );
+          component.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
           try
           {
-            if ( this.ctrl.isZoomAll() )
+            if (this.ctrl.isZoomAll())
             {
               this.ctrl.zoomAll();
             }
           }
           finally
           {
-            component.setCursor( Cursor.getDefaultCursor() );
+            component.setCursor(Cursor.getDefaultCursor());
           }
         }
-      } );
+      });
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void componentShown( final ComponentEvent aEvent )
+    public void componentShown(final ComponentEvent aEvent)
     {
       final Component component = aEvent.getComponent();
-      SwingUtilities.invokeLater( new Runnable()
+      SwingUtilities.invokeLater(new Runnable()
       {
         @Override
         public void run()
         {
-          component.setCursor( Cursor.getPredefinedCursor( Cursor.WAIT_CURSOR ) );
+          component.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
           try
           {
@@ -110,10 +110,10 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
           }
           finally
           {
-            component.setCursor( Cursor.getDefaultCursor() );
+            component.setCursor(Cursor.getDefaultCursor());
           }
         }
-      } );
+      });
     }
   }
 
@@ -126,7 +126,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     // CONSTANTS
 
     private static final Cursor DEFAULT = Cursor.getDefaultCursor();
-    private static final Cursor CURSOR_MOVE_TIMESTAMP = Cursor.getPredefinedCursor( Cursor.E_RESIZE_CURSOR );
+    private static final Cursor CURSOR_MOVE_TIMESTAMP = Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
 
     // VARIABLES
 
@@ -137,7 +137,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     /**
      * @param aController
      */
-    public KeyboardControlListener( final SignalDiagramController aController )
+    public KeyboardControlListener(final SignalDiagramController aController)
     {
       this.controller = aController;
     }
@@ -148,12 +148,12 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
      * {@inheritDoc}
      */
     @Override
-    public void keyPressed( final KeyEvent aEvent )
+    public void keyPressed(final KeyEvent aEvent)
     {
       Component comp = this.controller.getSignalDiagram();
-      if ( aEvent.isControlDown() )
+      if (aEvent.isControlDown())
       {
-        comp.setCursor( CURSOR_MOVE_TIMESTAMP );
+        comp.setCursor(CURSOR_MOVE_TIMESTAMP);
       }
     }
 
@@ -161,36 +161,36 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
      * {@inheritDoc}
      */
     @Override
-    public void keyReleased( final KeyEvent aEvent )
+    public void keyReleased(final KeyEvent aEvent)
     {
       Component comp = this.controller.getSignalDiagram();
-      comp.setCursor( DEFAULT );
+      comp.setCursor(DEFAULT);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void keyTyped( final KeyEvent aEvent )
+    public void keyTyped(final KeyEvent aEvent)
     {
-      if ( aEvent.getID() != KeyEvent.KEY_TYPED )
+      if (aEvent.getID() != KeyEvent.KEY_TYPED)
       {
         return;
       }
 
-      if ( ( '+' == aEvent.getKeyChar() ) || ( '=' == aEvent.getKeyChar() ) )
+      if (('+' == aEvent.getKeyChar()) || ('=' == aEvent.getKeyChar()))
       {
         this.controller.zoomIn();
       }
-      else if ( ( '-' == aEvent.getKeyChar() ) || ( '_' == aEvent.getKeyChar() ) )
+      else if (('-' == aEvent.getKeyChar()) || ('_' == aEvent.getKeyChar()))
       {
         this.controller.zoomOut();
       }
-      else if ( '0' == aEvent.getKeyChar() )
+      else if ('0' == aEvent.getKeyChar())
       {
         this.controller.zoomAll();
       }
-      else if ( '1' == aEvent.getKeyChar() )
+      else if ('1' == aEvent.getKeyChar())
       {
         this.controller.zoomOriginal();
       }
@@ -209,8 +209,8 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     // CONSTANTS
 
     private static final Cursor DEFAULT = Cursor.getDefaultCursor();
-    private static final Cursor CURSOR_HOVER = Cursor.getPredefinedCursor( Cursor.CROSSHAIR_CURSOR );
-    private static final Cursor CURSOR_MOVE_CURSOR = Cursor.getPredefinedCursor( Cursor.MOVE_CURSOR );
+    private static final Cursor CURSOR_HOVER = Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR);
+    private static final Cursor CURSOR_MOVE_CURSOR = Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR);
 
     // VARIABLES
 
@@ -222,7 +222,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     /**
      * @param aController
      */
-    public TransparentMouseListener( final SignalView aView, final SignalDiagramController aController )
+    public TransparentMouseListener(final SignalView aView, final SignalDiagramController aController)
     {
       this.view = aView;
       this.controller = aController;
@@ -234,28 +234,28 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
      * {@inheritDoc}
      */
     @Override
-    public void eventDispatched( final AWTEvent aEvent )
+    public void eventDispatched(final AWTEvent aEvent)
     {
-      if ( aEvent instanceof MouseEvent )
+      if (aEvent instanceof MouseEvent)
       {
-        final MouseEvent event = ( MouseEvent )aEvent;
-        final MouseEvent converted = SwingUtilities.convertMouseEvent( event.getComponent(), event, this.view );
+        final MouseEvent event = (MouseEvent) aEvent;
+        final MouseEvent converted = SwingUtilities.convertMouseEvent(event.getComponent(), event, this.view);
 
-        if ( event.getID() == MouseEvent.MOUSE_CLICKED )
+        if (event.getID() == MouseEvent.MOUSE_CLICKED)
         {
-          mouseClicked( converted );
+          mouseClicked(converted);
         }
-        else if ( event.getID() == MouseEvent.MOUSE_PRESSED )
+        else if (event.getID() == MouseEvent.MOUSE_PRESSED)
         {
-          mousePressed( converted );
+          mousePressed(converted);
         }
-        else if ( event.getID() == MouseEvent.MOUSE_RELEASED )
+        else if (event.getID() == MouseEvent.MOUSE_RELEASED)
         {
-          mouseReleased( converted );
+          mouseReleased(converted);
         }
-        else if ( event.getID() == MouseEvent.MOUSE_MOVED )
+        else if (event.getID() == MouseEvent.MOUSE_MOVED)
         {
-          mouseMoved( converted );
+          mouseMoved(converted);
         }
       }
     }
@@ -263,19 +263,19 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     /**
      * {@inheritDoc}
      */
-    protected void mouseClicked( final MouseEvent aEvent )
+    protected void mouseClicked(final MouseEvent aEvent)
     {
-      if ( aEvent.isControlDown() )
+      if (aEvent.isControlDown())
       {
         final Point point = aEvent.getPoint();
 
-        final SignalHoverInfo signalHover = this.controller.getSignalHover( point );
-        if ( signalHover != null )
+        final SignalHoverInfo signalHover = this.controller.getSignalHover(point);
+        if (signalHover != null)
         {
           final int channel = signalHover.getChannelIndex();
           final long timestamp = signalHover.getEndTimestamp();
 
-          this.controller.scrollToTimestamp( channel, timestamp );
+          this.controller.scrollToTimestamp(channel, timestamp);
         }
       }
     }
@@ -283,25 +283,25 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     /**
      * {@inheritDoc}
      */
-    protected void mouseMoved( final MouseEvent aEvent )
+    protected void mouseMoved(final MouseEvent aEvent)
     {
-      this.view.getRootPane().setCursor( DEFAULT );
-      this.view.setCursor( null );
+      this.view.getRootPane().setCursor(DEFAULT);
+      this.view.setCursor(null);
 
-      if ( this.controller.isCursorMode() || this.controller.isMeasurementMode() )
+      if (this.controller.isCursorMode() || this.controller.isMeasurementMode())
       {
         final Point point = aEvent.getPoint();
 
-        if ( this.controller.isMeasurementMode() )
+        if (this.controller.isMeasurementMode())
         {
-          SignalHoverInfo signalHover = this.controller.getSignalHover( point );
-          this.controller.fireMeasurementEvent( signalHover );
-          this.view.setCursor( signalHover == null ? DEFAULT : CURSOR_HOVER );
+          SignalHoverInfo signalHover = this.controller.getSignalHover(point);
+          this.controller.fireMeasurementEvent(signalHover);
+          this.view.setCursor(signalHover == null ? DEFAULT : CURSOR_HOVER);
         }
 
-        if ( this.controller.isCursorMode() && ( this.controller.findCursor( point ) >= 0 ) )
+        if (this.controller.isCursorMode() && (this.controller.findCursor(point) >= 0))
         {
-          this.view.getRootPane().setCursor( CURSOR_MOVE_CURSOR );
+          this.view.getRootPane().setCursor(CURSOR_MOVE_CURSOR);
         }
       }
     }
@@ -309,9 +309,9 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     /**
      * @param aEvent
      */
-    protected void mousePressed( final MouseEvent aEvent )
+    protected void mousePressed(final MouseEvent aEvent)
     {
-      if ( !handlePopupTrigger( aEvent ) )
+      if (!handlePopupTrigger(aEvent))
       {
         // NO-op
       }
@@ -320,57 +320,57 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     /**
      * {@inheritDoc}
      */
-    protected void mouseReleased( final MouseEvent aEvent )
+    protected void mouseReleased(final MouseEvent aEvent)
     {
-      if ( !handlePopupTrigger( aEvent ) )
+      if (!handlePopupTrigger(aEvent))
       {
         // NO-op
       }
 
-      this.view.getRootPane().setCursor( DEFAULT );
-      this.view.setCursor( null );
+      this.view.getRootPane().setCursor(DEFAULT);
+      this.view.setCursor(null);
     }
 
     /**
      * @param aEvent
      */
-    private boolean handlePopupTrigger( final MouseEvent aEvent )
+    private boolean handlePopupTrigger(final MouseEvent aEvent)
     {
       final boolean popupTrigger = this.controller.isCursorMode() && aEvent.isPopupTrigger();
-      if ( popupTrigger )
+      if (popupTrigger)
       {
         final Point point = aEvent.getPoint();
 
         final JPopupMenu contextMenu;
 
-        int cursor = this.controller.findCursor( point );
-        if ( cursor >= 0 )
+        int cursor = this.controller.findCursor(point);
+        if (cursor >= 0)
         {
           // Hovering above existing cursor, show remove menu...
           contextMenu = new JPopupMenu();
-          contextMenu.add( new DeleteCursorAction( this.controller, cursor ) );
-          contextMenu.add( new DeleteAllCursorsAction( this.controller ) );
+          contextMenu.add(new DeleteCursorAction(this.controller, cursor));
+          contextMenu.add(new DeleteAllCursorsAction(this.controller));
         }
         else
         {
           // Not hovering above existing cursor, show add menu...
           contextMenu = new JPopupMenu();
-          for ( int i = 0; i < SampleDataModel.MAX_CURSORS; i++ )
+          for (int i = 0; i < SampleDataModel.MAX_CURSORS; i++)
           {
-            final SetCursorAction action = new SetCursorAction( this.controller, i );
-            contextMenu.add( new JCheckBoxMenuItem( action ) );
+            final SetCursorAction action = new SetCursorAction(this.controller, i);
+            contextMenu.add(new JCheckBoxMenuItem(action));
           }
           contextMenu.addSeparator();
-          contextMenu.add( new DeleteAllCursorsAction( this.controller ) );
+          contextMenu.add(new DeleteAllCursorsAction(this.controller));
           // when an action is selected, we *no* longer know where the point was
           // where the user clicked. Therefore, we need to store it separately
           // for later use...
-          contextMenu.putClientProperty( SetCursorAction.KEY, point );
+          contextMenu.putClientProperty(SetCursorAction.KEY, point);
         }
 
-        if ( contextMenu != null )
+        if (contextMenu != null)
         {
-          contextMenu.show( aEvent.getComponent(), aEvent.getX(), aEvent.getY() );
+          contextMenu.show(aEvent.getComponent(), aEvent.getX(), aEvent.getY());
         }
       }
       return popupTrigger;
@@ -401,17 +401,17 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
    * @param aController
    *          the controller to use, cannot be <code>null</code>.
    */
-  private SignalDiagramComponent( final SignalDiagramController aController )
+  private SignalDiagramComponent(final SignalDiagramController aController)
   {
     super();
 
     this.controller = aController;
 
-    this.signalView = new SignalView( this.controller );
+    this.signalView = new SignalView(this.controller);
 
-    this.componentSizeListener = new ComponentSizeListener( this.controller );
-    this.keyboardListener = new KeyboardControlListener( this.controller );
-    this.mouseListener = new TransparentMouseListener( this.signalView, this.controller );
+    this.componentSizeListener = new ComponentSizeListener(this.controller);
+    this.keyboardListener = new KeyboardControlListener(this.controller);
+    this.mouseListener = new TransparentMouseListener(this.signalView, this.controller);
 
   }
 
@@ -426,11 +426,11 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
    * @return a new {@link SignalDiagramComponent} instance, never
    *         <code>null</code>.
    */
-  public static SignalDiagramComponent create( final SignalDiagramController aController )
+  public static SignalDiagramComponent create(final SignalDiagramController aController)
   {
-    final SignalDiagramComponent result = new SignalDiagramComponent( aController );
+    final SignalDiagramComponent result = new SignalDiagramComponent(aController);
     result.initComponent();
-    aController.setSignalDiagram( result );
+    aController.setSignalDiagram(result);
     return result;
   }
 
@@ -444,16 +444,16 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   {
     try
     {
-      Toolkit.getDefaultToolkit().addAWTEventListener( this.mouseListener,
-          AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK );
+      Toolkit.getDefaultToolkit().addAWTEventListener(this.mouseListener,
+          AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
 
-      final JRootPane rootPane = SwingUtilities.getRootPane( this );
-      final GhostGlassPane glassPane = new GhostGlassPane();
-      rootPane.setGlassPane( glassPane );
+      final JRootPane rootPane = SwingUtilities.getRootPane(this);
+      final GhostGlassPane glassPane = new GhostGlassPane(controller);
+      rootPane.setGlassPane(glassPane);
 
-      final Container window = SwingUtilities.getWindowAncestor( this );
-      window.addComponentListener( this.componentSizeListener );
-      window.addKeyListener( this.keyboardListener );
+      final Container window = SwingUtilities.getWindowAncestor(this);
+      window.addComponentListener(this.componentSizeListener);
+      window.addKeyListener(this.keyboardListener);
 
       configureEnclosingScrollPane();
 
@@ -478,7 +478,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
    * {@inheritDoc}
    */
   @Override
-  public int getScrollableBlockIncrement( final Rectangle aVisibleRect, final int aOrientation, final int aDirection )
+  public int getScrollableBlockIncrement(final Rectangle aVisibleRect, final int aOrientation, final int aDirection)
   {
     final SampleDataModel dataModel = this.controller.getDataModel();
     final ScreenModel screenModel = this.controller.getScreenModel();
@@ -488,14 +488,14 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     final int lastSampleIdx = dataModel.getSize();
 
     final int inc;
-    if ( aOrientation == SwingConstants.VERTICAL )
+    if (aOrientation == SwingConstants.VERTICAL)
     {
-      inc = getVerticalBlockIncrement( aVisibleRect, aDirection, channelHeight, channelCount );
+      inc = getVerticalBlockIncrement(aVisibleRect, aDirection, channelHeight, channelCount);
     }
     else
     /* if ( aOrientation == SwingConstants.HORIZONTAL ) */
     {
-      inc = getHorizontalBlockIncrement( aVisibleRect, aDirection, lastSampleIdx );
+      inc = getHorizontalBlockIncrement(aVisibleRect, aDirection, lastSampleIdx);
     }
 
     return inc;
@@ -523,9 +523,9 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
    * {@inheritDoc}
    */
   @Override
-  public int getScrollableUnitIncrement( final Rectangle aVisibleRect, final int aOrientation, final int aDirection )
+  public int getScrollableUnitIncrement(final Rectangle aVisibleRect, final int aOrientation, final int aDirection)
   {
-    return getScrollableBlockIncrement( aVisibleRect, aOrientation, aDirection );
+    return getScrollableBlockIncrement(aVisibleRect, aOrientation, aDirection);
   }
 
   /**
@@ -542,25 +542,25 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
    * @see javax.swing.JComponent#paint(java.awt.Graphics)
    */
   @Override
-  public void paint( final Graphics aGraphics )
+  public void paint(final Graphics aGraphics)
   {
-    if ( DEBUG )
+    if (DEBUG)
     {
       final long startTime = System.nanoTime();
       try
       {
-        super.paint( aGraphics );
+        super.paint(aGraphics);
       }
       finally
       {
         final long endTime = System.nanoTime();
         final long renderTime = endTime - startTime;
-        System.out.println( "Rendering time = " + Utils.displayTime( renderTime / 1.0e9 ) );
+        System.out.println("Rendering time = " + Utils.displayTime(renderTime / 1.0e9));
       }
     }
     else
     {
-      super.paint( aGraphics );
+      super.paint(aGraphics);
     }
   }
 
@@ -575,12 +575,12 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       unconfigureEnclosingScrollPane();
 
       final Container parent = getParent();
-      final Container window = SwingUtilities.getWindowAncestor( parent );
+      final Container window = SwingUtilities.getWindowAncestor(parent);
 
-      window.removeComponentListener( this.componentSizeListener );
-      window.removeKeyListener( this.keyboardListener );
+      window.removeComponentListener(this.componentSizeListener);
+      window.removeKeyListener(this.keyboardListener);
 
-      Toolkit.getDefaultToolkit().removeAWTEventListener( this.mouseListener );
+      Toolkit.getDefaultToolkit().removeAWTEventListener(this.mouseListener);
     }
     finally
     {
@@ -600,27 +600,27 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   private void configureEnclosingScrollPane()
   {
     final Container p = getParent();
-    if ( p instanceof JViewport )
+    if (p instanceof JViewport)
     {
       final Container gp = p.getParent();
-      if ( gp instanceof JScrollPane )
+      if (gp instanceof JScrollPane)
       {
-        final JScrollPane scrollPane = ( JScrollPane )gp;
+        final JScrollPane scrollPane = (JScrollPane) gp;
         // Make certain we are the viewPort's view and not, for
         // example, the rowHeaderView of the scrollPane -
         // an implementor of fixed columns might do this.
         final JViewport viewport = scrollPane.getViewport();
-        if ( ( viewport == null ) || ( viewport.getView() != this ) )
+        if ((viewport == null) || (viewport.getView() != this))
         {
           return;
         }
 
-        final TimeLineView timelineView = new TimeLineView( this.controller );
+        final TimeLineView timelineView = new TimeLineView(this.controller);
 
-        scrollPane.setColumnHeaderView( timelineView );
-        scrollPane.setRowHeaderView( new ChannelLabelsView( this.controller ) );
+        scrollPane.setColumnHeaderView(timelineView);
+        scrollPane.setRowHeaderView(new ChannelLabelsView(this.controller));
 
-        scrollPane.setCorner( ScrollPaneConstants.UPPER_LEADING_CORNER, new CornerView( this.controller ) );
+        scrollPane.setCorner(ScrollPaneConstants.UPPER_LEADING_CORNER, new CornerView(this.controller));
       }
     }
   }
@@ -646,27 +646,27 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
    * @return a horizontal block increment, determined according to the rules
    *         described.
    */
-  private int getHorizontalBlockIncrement( final Rectangle aVisibleRect, final int aDirection, final int aLastSampleIdx )
+  private int getHorizontalBlockIncrement(final Rectangle aVisibleRect, final int aDirection, final int aLastSampleIdx)
   {
     final int blockIncr = 50;
 
-    final int firstVisibleSample = this.controller.locationToSampleIndex( aVisibleRect.getLocation() );
-    final int lastVisibleSample = this.controller.locationToSampleIndex( new Point(
-        aVisibleRect.x + aVisibleRect.width, 0 ) );
+    final int firstVisibleSample = this.controller.locationToSampleIndex(aVisibleRect.getLocation());
+    final int lastVisibleSample = this.controller.locationToSampleIndex(new Point(
+        aVisibleRect.x + aVisibleRect.width, 0));
 
     int inc = 0;
-    if ( aDirection < 0 )
+    if (aDirection < 0)
     {
       // Scroll left
-      if ( firstVisibleSample > 0 )
+      if (firstVisibleSample > 0)
       {
         inc = blockIncr;
       }
     }
-    else if ( aDirection > 0 )
+    else if (aDirection > 0)
     {
       // Scroll right
-      if ( lastVisibleSample < aLastSampleIdx )
+      if (lastVisibleSample < aLastSampleIdx)
       {
         inc = blockIncr;
       }
@@ -700,48 +700,48 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
    * @return a vertical block increment, determined according to the rules
    *         described.
    */
-  private int getVerticalBlockIncrement( final Rectangle aVisibleRect, final int aDirection, final int aChannelHeight,
-      final int aChannelCount )
+  private int getVerticalBlockIncrement(final Rectangle aVisibleRect, final int aDirection, final int aChannelHeight,
+      final int aChannelCount)
   {
     int inc;
-    int firstVisibleRow = ( int )( aVisibleRect.y / ( double )aChannelHeight );
-    int lastVisibleRow = ( int )( ( aVisibleRect.y + aVisibleRect.height ) / ( double )aChannelHeight );
+    int firstVisibleRow = (int) (aVisibleRect.y / (double) aChannelHeight);
+    int lastVisibleRow = (int) ((aVisibleRect.y + aVisibleRect.height) / (double) aChannelHeight);
 
     inc = 0;
-    if ( aDirection < 0 )
+    if (aDirection < 0)
     {
       // Scroll up...
-      if ( ( firstVisibleRow > 0 ) && ( lastVisibleRow <= aChannelCount ) )
+      if ((firstVisibleRow > 0) && (lastVisibleRow <= aChannelCount))
       {
         // Scroll to the first fully visible channel row...
         inc = aVisibleRect.y % aChannelHeight;
       }
-      if ( inc == 0 )
+      if (inc == 0)
       {
         // All rows are fully visible, scroll an entire row up...
         inc = aChannelHeight;
       }
-      if ( ( aVisibleRect.y - inc ) < 0 )
+      if ((aVisibleRect.y - inc) < 0)
       {
         // Make sure that we do not scroll beyond the first row...
         inc = aVisibleRect.y;
       }
     }
-    else if ( aDirection > 0 )
+    else if (aDirection > 0)
     {
       // Scroll down...
-      if ( ( firstVisibleRow >= 0 ) && ( lastVisibleRow < aChannelCount ) )
+      if ((firstVisibleRow >= 0) && (lastVisibleRow < aChannelCount))
       {
         // Scroll to the first fully visible channel row...
         inc = aVisibleRect.y % aChannelHeight;
       }
-      if ( inc == 0 )
+      if (inc == 0)
       {
         // All rows are fully visible, scroll an entire row up...
         inc = aChannelHeight;
       }
       int height = getHeight();
-      if ( ( aVisibleRect.y + aVisibleRect.height + inc ) > height )
+      if ((aVisibleRect.y + aVisibleRect.height + inc) > height)
       {
         // Make sure that we do not scroll beyond the last row...
         inc = height - aVisibleRect.y - aVisibleRect.height;
@@ -755,8 +755,8 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
    */
   private void initComponent()
   {
-    setLayout( new BorderLayout() );
-    add( this.signalView, BorderLayout.CENTER );
+    setLayout(new BorderLayout());
+    add(this.signalView, BorderLayout.CENTER);
   }
 
   /**
@@ -770,24 +770,24 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   private void unconfigureEnclosingScrollPane()
   {
     final Container p = getParent();
-    if ( p instanceof JViewport )
+    if (p instanceof JViewport)
     {
       final Container gp = p.getParent();
-      if ( gp instanceof JScrollPane )
+      if (gp instanceof JScrollPane)
       {
-        final JScrollPane scrollPane = ( JScrollPane )gp;
+        final JScrollPane scrollPane = (JScrollPane) gp;
         // Make certain we are the viewPort's view and not, for
         // example, the rowHeaderView of the scrollPane -
         // an implementor of fixed columns might do this.
         final JViewport viewport = scrollPane.getViewport();
-        if ( ( viewport == null ) || ( viewport.getView() != this ) )
+        if ((viewport == null) || (viewport.getView() != this))
         {
           return;
         }
 
-        scrollPane.setColumnHeaderView( null );
-        scrollPane.setRowHeaderView( null );
-        scrollPane.setCorner( ScrollPaneConstants.UPPER_LEADING_CORNER, null );
+        scrollPane.setColumnHeaderView(null);
+        scrollPane.setRowHeaderView(null);
+        scrollPane.setCorner(ScrollPaneConstants.UPPER_LEADING_CORNER, null);
       }
     }
   }

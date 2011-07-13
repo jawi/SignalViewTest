@@ -25,9 +25,8 @@ import java.awt.*;
 import javax.swing.*;
 import javax.swing.plaf.*;
 
-import nl.lxtreme.test.*;
-import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.view.*;
+import nl.lxtreme.test.view.model.*;
 import nl.lxtreme.test.view.renderer.*;
 import nl.lxtreme.test.view.renderer.Renderer;
 
@@ -39,19 +38,11 @@ public class ChannelLabelsUI extends ComponentUI
 {
   // CONSTANTS
 
-  public static final String COMPONENT_MINIMAL_WIDTH = "channellabels.width.minimal";
-  public static final String COMPONENT_BACKGROUND_COLOR = "channellabels.color.background";
-  public static final String LABEL_BACKGROUND_COLOR = "channellabels.label.color.background";
-  public static final String LABEL_FONT = "channellabels.label.font";
+  private static final String MINIMAL_LABEL = "W88";
 
   // VARIABLES
 
   private final Renderer renderer = new ChannelLabelRenderer();
-
-  private Color backgroundColor;
-  private Color labelBackgroundColor;
-  private Font labelFont;
-  private int minimalWidth;
 
   // METHODS
 
@@ -59,94 +50,61 @@ public class ChannelLabelsUI extends ComponentUI
    * {@inheritDoc}
    */
   @Override
-  public Dimension getMaximumSize( final JComponent aComponent )
+  public Dimension getMaximumSize(final JComponent aComponent)
   {
-    return determineSize( aComponent );
+    final ChannelLabelsView view = (ChannelLabelsView) aComponent;
+    final ChannelLabelsViewModel model = view.getModel();
+
+    return determineSize(view, model);
   }
 
   /**
    * {@inheritDoc}
    */
   @Override
-  public Dimension getMinimumSize( final JComponent aComponent )
+  public Dimension getMinimumSize(final JComponent aComponent)
   {
-    return determineSize( aComponent );
+    final ChannelLabelsView view = (ChannelLabelsView) aComponent;
+    final ChannelLabelsViewModel model = view.getModel();
+
+    return determineSize(view, model);
   }
 
   /**
    * {@inheritDoc}
    */
   @Override
-  public void installUI( final JComponent aComponent )
+  public void paint(final Graphics aGraphics, final JComponent aComponent)
   {
-    final ChannelLabelsView view = ( ChannelLabelsView )aComponent;
+    final ChannelLabelsView view = (ChannelLabelsView) aComponent;
+    final ChannelLabelsViewModel model = view.getModel();
 
-    final IUserInterfaceSettingsProvider settingsProvider = view.getSettingsProvider();
-
-    this.backgroundColor = settingsProvider.getColor( COMPONENT_BACKGROUND_COLOR );
-    if ( this.backgroundColor == null )
-    {
-      this.backgroundColor = Utils.parseColor( "#1E2126" );
-    }
-
-    this.labelBackgroundColor = settingsProvider.getColor( LABEL_BACKGROUND_COLOR );
-    if ( this.labelBackgroundColor == null )
-    {
-      this.labelBackgroundColor = Utils.parseColor( "#2E323B" );
-    }
-
-    this.labelFont = settingsProvider.getFont( LABEL_FONT );
-    if ( this.labelFont == null )
-    {
-      this.labelFont = ( ( Font )UIManager.get( "Label.font" ) ).deriveFont( Font.BOLD );
-    }
-
-    this.minimalWidth = settingsProvider.getInteger( COMPONENT_MINIMAL_WIDTH );
-    if ( this.minimalWidth < 1 )
-    {
-      this.minimalWidth = 40;
-    }
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public void paint( final Graphics aGraphics, final JComponent aComponent )
-  {
-    final ChannelLabelsView view = ( ChannelLabelsView )aComponent;
-
-    final SignalDiagramController controller = view.getController();
-
-    Graphics2D canvas = ( Graphics2D )aGraphics.create();
+    Graphics2D canvas = (Graphics2D) aGraphics.create();
 
     try
     {
       final Rectangle clip = canvas.getClipBounds();
       // Tell Swing how we would like to render ourselves...
-      canvas.setRenderingHints( createRenderingHints() );
+      canvas.setRenderingHints(createRenderingHints());
 
-      canvas.setBackground( this.backgroundColor );
-      canvas.clearRect( clip.x, clip.y, clip.width, clip.height );
+      canvas.setBackground(model.getBackgroundColor());
+      canvas.clearRect(clip.x, clip.y, clip.width, clip.height);
 
-      final SampleDataModel dataModel = controller.getDataModel();
-      final ScreenModel screenModel = controller.getScreenModel();
-
-      final int channelHeight = screenModel.getChannelHeight();
+      final int channelHeight = model.getChannelHeight();
       // Where is the signal to be drawn?
-      final int signalOffset = screenModel.getSignalOffset();
+      final int signalOffset = model.getSignalOffset();
 
       final int compWidth = view.getWidth();
-      final int dataWidth = dataModel.getWidth();
+      final int dataWidth = model.getDataWidth();
 
       // Determine which bits of the actual signal should be drawn...
-      int startBit = ( int )Math.max( 0, Math.floor( clip.y / ( double )channelHeight ) );
-      int endBit = ( int )Math.min( dataWidth, Math.ceil( ( clip.y + clip.height ) / ( double )channelHeight ) );
+      int startBit = (int) Math.max(0, Math.floor(clip.y / (double) channelHeight));
+      int endBit = (int) Math.min(dataWidth, Math.ceil((clip.y + clip.height) / (double) channelHeight));
 
-      for ( int b = 0; b < dataWidth; b++ )
+      for (int b = 0; b < dataWidth; b++)
       {
-        final int virtualRow = screenModel.toVirtualRow( b );
-        if ( ( virtualRow < startBit ) || ( virtualRow > endBit ) )
+        final int virtualRow = model.toVirtualRow(b);
+        if ((virtualRow < startBit) || (virtualRow > endBit))
         {
           // Trivial reject: we don't have to paint this row, as it is not asked
           // from us (due to clip boundaries)!
@@ -156,16 +114,18 @@ public class ChannelLabelsUI extends ComponentUI
         final int yOffset = channelHeight * virtualRow;
         final int textYoffset = signalOffset + yOffset;
 
-        final String label = screenModel.getChannelLabel( b );
+        final String label = model.getChannelLabel(b);
 
-        canvas.setFont( this.labelFont );
-        canvas.setColor( this.labelBackgroundColor );
+        canvas.setFont(model.getLabelFont());
+        canvas.setColor(model.getLabelBackgroundColor());
 
-        canvas.fillRoundRect( clip.x - 10, yOffset + 2, clip.width + 8, channelHeight - 2, 12, 12 );
+        canvas.fillRoundRect(clip.x - 10, yOffset + 2, clip.width + 8, channelHeight - 2, 12, 12);
 
-        this.renderer.setContext( Integer.valueOf( b ), Integer.valueOf( compWidth ), label );
+        this.renderer.setContext(Integer.valueOf(b), Integer.valueOf(compWidth), label);
 
-        this.renderer.render( canvas, 0, textYoffset );
+        canvas.setColor(model.getLabelForegroundColor());
+
+        this.renderer.render(canvas, 0, textYoffset);
       }
     }
     finally
@@ -180,49 +140,49 @@ public class ChannelLabelsUI extends ComponentUI
    */
   private RenderingHints createRenderingHints()
   {
-    RenderingHints hints = new RenderingHints( RenderingHints.KEY_INTERPOLATION,
-        RenderingHints.VALUE_INTERPOLATION_BICUBIC );
-    hints.put( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
-    hints.put( RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY );
-    hints.put( RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED );
-    hints.put( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED );
+    RenderingHints hints = new RenderingHints(RenderingHints.KEY_INTERPOLATION,
+        RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+    hints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    hints.put(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+    hints.put(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED);
+    hints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
     return hints;
   }
 
   /**
-   * @param aComponent
-   * @return
+   * Determines the size of the view.
+   * 
+   * @param aView
+   *          the view to determine the size for;
+   * @param aModel
+   *          the model of the view to determine the size for.
+   * @return a size, never <code>null</code>.
    */
-  private Dimension determineSize( final JComponent aComponent )
+  private Dimension determineSize(ChannelLabelsView aView, ChannelLabelsViewModel aModel)
   {
-    final ChannelLabelsView view = ( ChannelLabelsView )aComponent;
-
-    final SignalDiagramController controller = view.getController();
-
-    Dimension result = super.getMinimumSize( aComponent );
-    if ( result == null )
+    Dimension result = super.getPreferredSize(aView);
+    if (result == null)
     {
       result = new Dimension();
     }
 
-    final SampleDataModel dataModel = controller.getDataModel();
-    final ScreenModel screenModel = controller.getScreenModel();
+    ChannelLabelsViewModel model = aView.getModel();
 
     int minWidth = -1;
 
-    final FontMetrics fm = view.getFontMetrics( this.labelFont );
-    for ( int i = 0; i < dataModel.getWidth(); i++ )
+    final FontMetrics fm = aView.getFontMetrics(model.getLabelFont());
+    for (int i = 0; i < aModel.getDataWidth(); i++)
     {
-      String label = screenModel.getChannelLabel( i );
-      if ( ( label == null ) || label.trim().isEmpty() )
+      String label = aModel.getChannelLabel(i);
+      if ((label == null) || label.trim().isEmpty())
       {
-        label = "W88";
+        label = MINIMAL_LABEL;
       }
-      minWidth = Math.max( minWidth, fm.stringWidth( label ) );
+      minWidth = Math.max(minWidth, fm.stringWidth(label));
     }
 
     // And always ensure we've got at least a minimal width...
-    minWidth = Math.max( minWidth + 12, this.minimalWidth );
+    minWidth = Math.max(minWidth + 12, model.getMinimalWidth());
 
     // Overwrite the preferred width with the one calculated...
     result.width = minWidth;

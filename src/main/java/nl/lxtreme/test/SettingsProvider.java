@@ -31,7 +31,7 @@ public class SettingsProvider implements IUserInterfaceSettingsProvider
 {
   // CONSTANTS
 
-  private static final Logger LOG = Logger.getLogger( SettingsProvider.class.getName() );
+  private static final Logger LOG = Logger.getLogger(SettingsProvider.class.getName());
 
   // METHODS
 
@@ -39,9 +39,9 @@ public class SettingsProvider implements IUserInterfaceSettingsProvider
    * {@inheritDoc}
    */
   @Override
-  public Color getColor( final String aName )
+  public Color getColor(final String aName)
   {
-    LOG.log( Level.INFO, "getColor({0}) called...", aName );
+    LOG.log(Level.FINE, "getColor({0}) called...", aName);
     return null;
   }
 
@@ -49,9 +49,9 @@ public class SettingsProvider implements IUserInterfaceSettingsProvider
    * {@inheritDoc}
    */
   @Override
-  public Font getFont( final String aName )
+  public Font getFont(final String aName)
   {
-    LOG.log( Level.INFO, "getFont({0}) called...", aName );
+    LOG.log(Level.FINE, "getFont({0}) called...", aName);
     return null;
   }
 
@@ -59,9 +59,9 @@ public class SettingsProvider implements IUserInterfaceSettingsProvider
    * {@inheritDoc}
    */
   @Override
-  public int getInteger( final String aName )
+  public Integer getInteger(final String aName)
   {
-    LOG.log( Level.INFO, "getInteger({0}) called...", aName );
-    return -1;
+    LOG.log(Level.FINE, "getInteger({0}) called...", aName);
+    return null;
   }
 }

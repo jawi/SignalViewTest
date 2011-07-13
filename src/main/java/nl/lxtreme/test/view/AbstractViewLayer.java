@@ -27,9 +27,9 @@ import nl.lxtreme.test.dnd.*;
 
 
 /**
- * 
+ * Provides a common base class for view components.
  */
-public abstract class AbstractViewLayer extends JComponent
+abstract class AbstractViewLayer extends JComponent
 {
   // CONSTANTS
 
@@ -44,7 +44,7 @@ public abstract class AbstractViewLayer extends JComponent
   /**
    * Creates a new AbstractViewLayer instance.
    */
-  public AbstractViewLayer( final SignalDiagramController aController )
+  public AbstractViewLayer(final SignalDiagramController aController)
   {
     this.controller = aController;
   }
@@ -52,13 +52,14 @@ public abstract class AbstractViewLayer extends JComponent
   // METHODS
 
   /**
-   * Returns the current component controller.
+   * Adds the given measurement listener to the list of listeners.
    * 
-   * @return the controller, never <code>null</code>.
+   * @param aListener
+   *          the listener to add, cannot be <code>null</code>.
    */
-  public final SignalDiagramController getController()
+  public void addMeasurementListener(final IMeasurementListener aListener)
   {
-    return this.controller;
+    this.controller.addMeasurementListener(aListener);
   }
 
   /**
@@ -72,12 +73,13 @@ public abstract class AbstractViewLayer extends JComponent
   }
 
   /**
-   * Returns the current settings provider.
+   * Removes the given measurement listener from the list of listeners.
    * 
-   * @return the settings provider, never <code>null</code>.
+   * @param aListener
+   *          the listener to remove, cannot be <code>null</code>.
    */
-  public final IUserInterfaceSettingsProvider getSettingsProvider()
+  public void removeMeasurementListener(final IMeasurementListener aListener)
   {
-    return this.controller.getSettingsProvider();
+    this.controller.removeMeasurementListener(aListener);
   }
 }

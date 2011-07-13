@@ -40,7 +40,7 @@ public interface IUserInterfaceSettingsProvider
    * @throws IllegalArgumentException
    *           in case the given name argument was <code>null</code>.
    */
-  Color getColor( final String aName );
+  Color getColor(final String aName);
 
   /**
    * Returns the named setting as {@link Font} instance.
@@ -52,7 +52,7 @@ public interface IUserInterfaceSettingsProvider
    * @throws IllegalArgumentException
    *           in case the given name argument was <code>null</code>.
    */
-  Font getFont( final String aName );
+  Font getFont(final String aName);
 
   /**
    * Returns the named setting as integer value.
@@ -60,9 +60,9 @@ public interface IUserInterfaceSettingsProvider
    * @param aName
    *          the name of the integer value setting to return, cannot be
    *          <code>null</code>.
-   * @return an integer value.
+   * @return an integer value, can be <code>null</code>.
    * @throws IllegalArgumentException
    *           in case the given name arguments was <code>null</code>.
    */
-  int getInteger( final String aName );
+  Integer getInteger(final String aName);
 }

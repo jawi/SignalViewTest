@@ -21,6 +21,7 @@ package nl.lxtreme.test.view;
 
 
 import nl.lxtreme.test.view.laf.*;
+import nl.lxtreme.test.view.model.*;
 
 
 /**
@@ -32,6 +33,10 @@ public class CornerView extends AbstractViewLayer
 
   private static final long serialVersionUID = 1L;
 
+  // VARIABLES
+
+  private CornerViewModel model;
+
   // CONSTRUCTORS
 
   /**
@@ -39,14 +44,26 @@ public class CornerView extends AbstractViewLayer
    * 
    * @param aController
    */
-  public CornerView( final SignalDiagramController aController )
+  public CornerView(final SignalDiagramController aController)
   {
-    super( aController );
+    super(aController);
+
+    this.model = new CornerViewModel(aController);
 
     updateUI();
   }
 
   // METHODS
+
+  /**
+   * Returns the current value of model.
+   * 
+   * @return the model
+   */
+  public CornerViewModel getModel()
+  {
+    return this.model;
+  }
 
   /**
    * Overridden in order to set a custom UI, which not only paints this diagram,
@@ -58,6 +75,6 @@ public class CornerView extends AbstractViewLayer
   @Override
   public final void updateUI()
   {
-    setUI( new CornerUI() );
+    setUI(new CornerUI());
   }
 }

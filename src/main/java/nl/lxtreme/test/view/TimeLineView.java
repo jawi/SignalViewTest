@@ -21,6 +21,7 @@ package nl.lxtreme.test.view;
 
 
 import nl.lxtreme.test.view.laf.*;
+import nl.lxtreme.test.view.model.*;
 
 
 /**
@@ -33,6 +34,10 @@ public class TimeLineView extends AbstractViewLayer
 
   private static final long serialVersionUID = 1L;
 
+  // VARIABLES
+
+  private TimeLineViewModel model;
+
   // CONSTRUCTORS
 
   /**
@@ -41,14 +46,32 @@ public class TimeLineView extends AbstractViewLayer
    * @param aController
    *          the controller to use, cannot be <code>null</code>.
    */
-  public TimeLineView( final SignalDiagramController aController )
+  public TimeLineView(final SignalDiagramController aController)
   {
-    super( aController );
+    super(aController);
+
+    this.model = new TimeLineViewModel(aController);
 
     updateUI();
   }
 
   // METHODS
+
+  /**
+   * @return
+   */
+  public TimeLineViewModel getModel()
+  {
+    return this.model;
+  }
+
+  /**
+   * @return
+   */
+  public int getTimeLineHeight()
+  {
+    return getModel().getTimeLineHeight();
+  }
 
   /**
    * Overridden in order to set a custom UI, which not only paints this diagram,
@@ -60,6 +83,6 @@ public class TimeLineView extends AbstractViewLayer
   @Override
   public final void updateUI()
   {
-    setUI( new TimeLineUI() );
+    setUI(new TimeLineUI());
   }
 }

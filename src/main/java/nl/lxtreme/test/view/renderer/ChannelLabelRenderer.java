@@ -22,8 +22,6 @@ package nl.lxtreme.test.view.renderer;
 
 import java.awt.*;
 
-import nl.lxtreme.test.*;
-
 
 /**
  * Renders the channel label + index.
@@ -47,18 +45,18 @@ public class ChannelLabelRenderer extends BaseRenderer
    * {@inheritDoc}
    */
   @Override
-  public void setContext( final Object... aParameters )
+  public void setContext(final Object... aParameters)
   {
-    if ( ( aParameters == null ) || ( aParameters.length < 3 ) )
+    if ((aParameters == null) || (aParameters.length < 3))
     {
-      throw new IllegalArgumentException( "Expected two Integer & one String parameter!" );
+      throw new IllegalArgumentException("Expected two Integer & one String parameter!");
     }
-    int index = ( ( Integer )aParameters[0] ).intValue();
-    this.width = ( ( Integer )aParameters[1] ).intValue();
-    this.channelLabel = ( String )aParameters[2];
-    this.channelIndex = Integer.toString( index );
+    int index = ((Integer) aParameters[0]).intValue();
+    this.width = ((Integer) aParameters[1]).intValue();
+    this.channelLabel = (String) aParameters[2];
+    this.channelIndex = Integer.toString(index);
 
-    if ( ( this.channelLabel == null ) || this.channelLabel.trim().isEmpty() )
+    if ((this.channelLabel == null) || this.channelLabel.trim().isEmpty())
     {
       this.channelLabel = this.channelIndex;
     }
@@ -68,28 +66,25 @@ public class ChannelLabelRenderer extends BaseRenderer
    * {@inheritDoc}
    */
   @Override
-  protected Rectangle render( final Graphics2D aCanvas )
+  protected Rectangle render(final Graphics2D aCanvas)
   {
     Font labelFont = aCanvas.getFont();
     FontMetrics labelFm = aCanvas.getFontMetrics();
 
     // Derive the index font from the label font...
-    Font indexFont = labelFont.deriveFont( Font.PLAIN, labelFont.getSize() * INDEX_RELATIVE_FONT_SIZE );
-    FontMetrics indexFm = aCanvas.getFontMetrics( indexFont );
+    Font indexFont = labelFont.deriveFont(Font.PLAIN, labelFont.getSize() * INDEX_RELATIVE_FONT_SIZE);
+    FontMetrics indexFm = aCanvas.getFontMetrics(indexFont);
 
-    Color labelBackground = aCanvas.getColor();
+    final int labelYpos = (labelFm.getAscent() + labelFm.getLeading());
+    final int labelXpos = (this.width - labelFm.stringWidth(this.channelLabel) - PADDING_RIGHT);
 
-    final int labelYpos = ( labelFm.getAscent() + labelFm.getLeading() );
-    final int labelXpos = ( this.width - labelFm.stringWidth( this.channelLabel ) - PADDING_RIGHT );
+    aCanvas.drawString(this.channelLabel, labelXpos, labelYpos);
 
-    aCanvas.setColor( Utils.getContrastColor( labelBackground ) );
-    aCanvas.drawString( this.channelLabel, labelXpos, labelYpos );
+    final int indexYpos = (labelFm.getHeight() + indexFm.getAscent() + indexFm.getLeading());
+    final int indexXpos = (this.width - indexFm.stringWidth(this.channelIndex) - PADDING_RIGHT);
 
-    final int indexYpos = ( labelFm.getHeight() + indexFm.getAscent() + indexFm.getLeading() );
-    final int indexXpos = ( this.width - indexFm.stringWidth( this.channelIndex ) - PADDING_RIGHT );
-
-    aCanvas.setFont( indexFont );
-    aCanvas.drawString( this.channelIndex, indexXpos, indexYpos );
+    aCanvas.setFont(indexFont);
+    aCanvas.drawString(this.channelIndex, indexXpos, indexYpos);
 
     return null;
   }

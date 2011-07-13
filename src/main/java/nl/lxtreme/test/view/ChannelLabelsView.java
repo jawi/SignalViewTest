@@ -30,6 +30,7 @@ import javax.swing.*;
 import nl.lxtreme.test.dnd.*;
 import nl.lxtreme.test.dnd.DragAndDropTargetController.DragAndDropHandler;
 import nl.lxtreme.test.view.laf.*;
+import nl.lxtreme.test.view.model.*;
 import nl.lxtreme.test.view.renderer.*;
 
 
@@ -56,7 +57,7 @@ public class ChannelLabelsView extends AbstractViewLayer
     /**
      * @param aController
      */
-    public DragAndDropListener( final SignalDiagramController aController )
+    public DragAndDropListener(final SignalDiagramController aController)
     {
       this.controller = aController;
     }
@@ -67,26 +68,26 @@ public class ChannelLabelsView extends AbstractViewLayer
      * {@inheritDoc}
      */
     @Override
-    public void dragDropEnd( final DragSourceDropEvent aEvent )
+    public void dragDropEnd(final DragSourceDropEvent aEvent)
     {
-      if ( !DragAndDropLock.releaseLock( this ) )
+      if (!DragAndDropLock.releaseLock(this))
       {
         return;
       }
 
-      final GhostGlassPane glassPane = getGlassPane( aEvent.getDragSourceContext().getComponent() );
+      final GhostGlassPane glassPane = getGlassPane(aEvent.getDragSourceContext().getComponent());
 
       glassPane.clearDropPoint();
       glassPane.repaint();
 
-      glassPane.setVisible( false );
+      glassPane.setVisible(false);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void dragEnter( final DragSourceDragEvent aEvent )
+    public void dragEnter(final DragSourceDragEvent aEvent)
     {
       // NO-op
     }
@@ -95,7 +96,7 @@ public class ChannelLabelsView extends AbstractViewLayer
      * {@inheritDoc}
      */
     @Override
-    public void dragExit( final DragSourceEvent aEvent )
+    public void dragExit(final DragSourceEvent aEvent)
     {
       // NO-op
     }
@@ -104,41 +105,42 @@ public class ChannelLabelsView extends AbstractViewLayer
      * {@inheritDoc}
      */
     @Override
-    public void dragGestureRecognized( final DragGestureEvent aEvent )
+    public void dragGestureRecognized(final DragGestureEvent aEvent)
     {
-      if ( DragAndDropLock.isLocked( this ) || !DragAndDropLock.obtainLock( this ) )
+      if (DragAndDropLock.isLocked(this) || !DragAndDropLock.obtainLock(this))
       {
         return;
       }
 
-      final Point coordinate = ( Point )aEvent.getDragOrigin().clone();
+      final Point coordinate = (Point) aEvent.getDragOrigin().clone();
 
-      final int channelRow = this.controller.getChannelRow( coordinate );
-      if ( channelRow < 0 )
+      final int channelRow = this.controller.getChannelRow(coordinate);
+      if (channelRow < 0)
       {
+        DragAndDropLock.releaseLock(this);
         return;
       }
 
-      final ChannelLabelsView sourceComponent = ( ChannelLabelsView )aEvent.getComponent();
-      final GhostGlassPane glassPane = getGlassPane( sourceComponent );
+      final ChannelLabelsView sourceComponent = (ChannelLabelsView) aEvent.getComponent();
+      final GhostGlassPane glassPane = getGlassPane(sourceComponent);
 
-      final Point dropPoint = createChannelDropPoint( coordinate, sourceComponent, glassPane );
+      final Point dropPoint = createChannelDropPoint(coordinate, sourceComponent, glassPane);
 
-      glassPane.setDropPoint( dropPoint, new ChannelInsertionPointRenderer() );
-      glassPane.setVisible( true );
+      glassPane.setDropPoint(dropPoint, new ChannelInsertionPointRenderer());
+      glassPane.setVisible(true);
       glassPane.repaintPartially();
 
-      aEvent.startDrag( DragSource.DefaultMoveDrop, new ChannelRowTransferable( channelRow ) );
+      aEvent.startDrag(DragSource.DefaultMoveDrop, new ChannelRowTransferable(channelRow));
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void dragMouseMoved( final DragSourceDragEvent aEvent )
+    public void dragMouseMoved(final DragSourceDragEvent aEvent)
     {
       final Point coordinate = aEvent.getLocation();
-      if ( !DragAndDropLock.isLocked( this ) || ( coordinate == null ) )
+      if (!DragAndDropLock.isLocked(this) || (coordinate == null))
       {
         return;
       }
@@ -146,13 +148,13 @@ public class ChannelLabelsView extends AbstractViewLayer
       final DragSourceContext dragSourceContext = aEvent.getDragSourceContext();
 
       final Component sourceComponent = dragSourceContext.getComponent();
-      final GhostGlassPane glassPane = getGlassPane( sourceComponent );
+      final GhostGlassPane glassPane = getGlassPane(sourceComponent);
 
-      SwingUtilities.convertPointFromScreen( coordinate, sourceComponent );
+      SwingUtilities.convertPointFromScreen(coordinate, sourceComponent);
 
-      final Point dropPoint = createChannelDropPoint( coordinate, sourceComponent, glassPane );
+      final Point dropPoint = createChannelDropPoint(coordinate, sourceComponent, glassPane);
 
-      glassPane.setDropPoint( dropPoint );
+      glassPane.setDropPoint(dropPoint);
       glassPane.repaintPartially();
     }
 
@@ -160,7 +162,7 @@ public class ChannelLabelsView extends AbstractViewLayer
      * {@inheritDoc}
      */
     @Override
-    public void dragOver( final DragSourceDragEvent aEvent )
+    public void dragOver(final DragSourceDragEvent aEvent)
     {
       // NO-op
     }
@@ -169,7 +171,7 @@ public class ChannelLabelsView extends AbstractViewLayer
      * {@inheritDoc}
      */
     @Override
-    public void dropActionChanged( final DragSourceDragEvent aEvent )
+    public void dropActionChanged(final DragSourceDragEvent aEvent)
     {
       // NO-op
     }
@@ -178,14 +180,14 @@ public class ChannelLabelsView extends AbstractViewLayer
      * @param aDropRow
      * @return
      */
-    private Point createChannelDropPoint( final Point aPoint, final Component aSourceComponent,
-        final Component aTargetComponent )
+    private Point createChannelDropPoint(final Point aPoint, final Component aSourceComponent,
+        final Component aTargetComponent)
     {
-      final Point dropPoint = this.controller.getChannelDropPoint( aPoint );
-      if ( dropPoint != null )
+      final Point dropPoint = this.controller.getChannelDropPoint(aPoint);
+      if (dropPoint != null)
       {
-        SwingUtilities.convertPointToScreen( dropPoint, aSourceComponent );
-        SwingUtilities.convertPointFromScreen( dropPoint, aTargetComponent );
+        SwingUtilities.convertPointToScreen(dropPoint, aSourceComponent);
+        SwingUtilities.convertPointFromScreen(dropPoint, aTargetComponent);
       }
       return dropPoint;
     }
@@ -194,9 +196,9 @@ public class ChannelLabelsView extends AbstractViewLayer
      * @param aComponent
      * @return
      */
-    private GhostGlassPane getGlassPane( final Component aComponent )
+    private GhostGlassPane getGlassPane(final Component aComponent)
     {
-      return ( GhostGlassPane )SwingUtilities.getRootPane( aComponent ).getGlassPane();
+      return (GhostGlassPane) SwingUtilities.getRootPane(aComponent).getGlassPane();
     }
   }
 
@@ -211,32 +213,32 @@ public class ChannelLabelsView extends AbstractViewLayer
      * {@inheritDoc}
      */
     @Override
-    public boolean acceptDrop( final SignalDiagramController aController, final DropTargetDropEvent aEvent )
+    public boolean acceptDrop(final SignalDiagramController aController, final DropTargetDropEvent aEvent)
     {
       try
       {
         final Transferable transferable = aEvent.getTransferable();
 
-        Integer realRowValue = ( Integer )transferable.getTransferData( ChannelRowTransferable.FLAVOR );
-        if ( realRowValue != null )
+        Integer realRowValue = (Integer) transferable.getTransferData(ChannelRowTransferable.FLAVOR);
+        if (realRowValue != null)
         {
           final int oldRealRow = realRowValue.intValue();
-          final int newRealRow = aController.getChannelRow( aEvent.getLocation() );
+          final int newRealRow = aController.getChannelRow(aEvent.getLocation());
 
-          if ( ( oldRealRow >= 0 ) && ( newRealRow >= 0 ) )
+          if ((oldRealRow >= 0) && (newRealRow >= 0))
           {
-            aEvent.acceptDrop( DnDConstants.ACTION_MOVE );
+            aEvent.acceptDrop(DnDConstants.ACTION_MOVE);
 
             // Move the channel rows...
-            aController.moveChannelRows( oldRealRow, newRealRow );
+            aController.moveChannelRows(oldRealRow, newRealRow);
 
             return true;
           }
         }
       }
-      catch ( Exception exception )
+      catch (Exception exception)
       {
-        LOG.log( Level.WARNING, "Getting transfer data failed!", exception );
+        LOG.log(Level.WARNING, "Getting transfer data failed!", exception);
       }
 
       return false;
@@ -245,6 +247,7 @@ public class ChannelLabelsView extends AbstractViewLayer
     /**
      * {@inheritDoc}
      */
+    @Override
     public DataFlavor getFlavor()
     {
       return ChannelRowTransferable.FLAVOR;
@@ -255,25 +258,35 @@ public class ChannelLabelsView extends AbstractViewLayer
 
   private static final long serialVersionUID = 1L;
 
-  private static final Logger LOG = Logger.getLogger( ChannelLabelsView.class.getName() );
+  private static final Logger LOG = Logger.getLogger(ChannelLabelsView.class.getName());
 
   // VARIABLES
 
-  private DragAndDropListener dndListener;
   private final DropHandler dropHandler;
-
-  private DragGestureRecognizer dragGestureRecognizer;
+  private final ChannelLabelsViewModel model;
+  private final DragAndDropListener dndListener;
+  private final DragGestureRecognizer dragGestureRecognizer;
 
   // CONSTRUCTORS
 
   /**
    * Creates a new {@link ChannelLabelsView} instance.
    */
-  public ChannelLabelsView( final SignalDiagramController aController )
+  public ChannelLabelsView(final SignalDiagramController aController)
   {
-    super( aController );
+    super(aController);
+
+    this.model = new ChannelLabelsViewModel(aController);
 
     this.dropHandler = new DropHandler();
+    this.dndListener = new DragAndDropListener(aController);
+
+    final DragSource dragSource = DragSource.getDefaultDragSource();
+    dragSource.addDragSourceMotionListener(this.dndListener);
+    dragSource.addDragSourceListener(this.dndListener);
+
+    this.dragGestureRecognizer = dragSource.createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_MOVE,
+        this.dndListener);
 
     updateUI();
   }
@@ -288,14 +301,22 @@ public class ChannelLabelsView extends AbstractViewLayer
   @Override
   public void addNotify()
   {
-    this.dndListener = createDnDListener();
-
     final DragAndDropTargetController dndTargetController = getDnDTargetController();
-    dndTargetController.addHandler( this.dropHandler );
+    dndTargetController.addHandler(this.dropHandler);
 
-    setDropTarget( new DropTarget( this, dndTargetController ) );
+    setDropTarget(new DropTarget(this, dndTargetController));
 
     super.addNotify();
+  }
+
+  /**
+   * Returns the current value of model.
+   * 
+   * @return the model
+   */
+  public ChannelLabelsViewModel getModel()
+  {
+    return this.model;
   }
 
   /**
@@ -304,21 +325,13 @@ public class ChannelLabelsView extends AbstractViewLayer
   @Override
   public void removeNotify()
   {
-    getDnDTargetController().removeHandler( this.dropHandler );
+    getDnDTargetController().removeHandler(this.dropHandler);
 
-    if ( this.dndListener != null )
+    DragSource dragSource = this.dragGestureRecognizer.getDragSource();
+    if (dragSource != null)
     {
-      DragSource dragSource = null;
-      if ( this.dragGestureRecognizer != null )
-      {
-        dragSource = this.dragGestureRecognizer.getDragSource();
-      }
-      if ( dragSource == null )
-      {
-        dragSource = DragSource.getDefaultDragSource();
-      }
-      dragSource.removeDragSourceListener( this.dndListener );
-      dragSource.removeDragSourceMotionListener( this.dndListener );
+      dragSource.removeDragSourceListener(this.dndListener);
+      dragSource.removeDragSourceMotionListener(this.dndListener);
     }
 
     super.removeNotify();
@@ -334,26 +347,6 @@ public class ChannelLabelsView extends AbstractViewLayer
   @Override
   public final void updateUI()
   {
-    setUI( new ChannelLabelsUI() );
-  }
-
-  /**
-   * Returns the Drag-And-Drop listener that listens for events made by the DnD
-   * framework.
-   * 
-   * @param a
-   *          {@link DragAndDropListener} instance, never <code>null</code>.
-   */
-  private DragAndDropListener createDnDListener()
-  {
-    DragAndDropListener result = new DragAndDropListener( getController() );
-
-    final DragSource dragSource = DragSource.getDefaultDragSource();
-    dragSource.addDragSourceMotionListener( result );
-    dragSource.addDragSourceListener( result );
-
-    this.dragGestureRecognizer = dragSource.createDefaultDragGestureRecognizer( this, DnDConstants.ACTION_MOVE, result );
-
-    return result;
+    setUI(new ChannelLabelsUI());
   }
 }

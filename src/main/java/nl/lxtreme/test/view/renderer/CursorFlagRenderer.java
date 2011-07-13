@@ -22,8 +22,6 @@ package nl.lxtreme.test.view.renderer;
 
 import java.awt.*;
 
-import javax.swing.*;
-
 import nl.lxtreme.test.*;
 
 
@@ -52,17 +50,17 @@ public class CursorFlagRenderer extends BaseRenderer
    * {@inheritDoc}
    */
   @Override
-  public void setContext( final Object... aParameters )
+  public void setContext(final Object... aParameters)
   {
-    if ( ( aParameters == null ) || ( aParameters.length < 1 ) )
+    if ((aParameters == null) || (aParameters.length < 1))
     {
-      throw new IllegalArgumentException( "Expected a String parameter!" );
+      throw new IllegalArgumentException("Expected a String parameter!");
     }
-    this.cursorFlagText = ( ( String )aParameters[0] );
+    this.cursorFlagText = ((String) aParameters[0]);
 
-    if ( aParameters.length > 1 )
+    if (aParameters.length > 1)
     {
-      this.snapCursorPoint = ( Point )( ( Point )aParameters[1] ).clone();
+      this.snapCursorPoint = (Point) ((Point) aParameters[1]).clone();
     }
     else
     {
@@ -74,45 +72,37 @@ public class CursorFlagRenderer extends BaseRenderer
    * {@inheritDoc}
    */
   @Override
-  protected Rectangle render( final Graphics2D aCanvas )
+  protected Rectangle render(final Graphics2D aCanvas)
   {
     final Rectangle clip = aCanvas.getClipBounds();
 
-    final Font baseFont = ( Font )UIManager.get( "Label.font" );
-    Font textFont = baseFont.deriveFont( baseFont.getSize() * 0.8f );
-
-    aCanvas.setFont( textFont );
-
     final FontMetrics fm = aCanvas.getFontMetrics();
-    final int flagWidth = fm.stringWidth( this.cursorFlagText ) + PADDING_WIDTH;
+    final int flagWidth = fm.stringWidth(this.cursorFlagText) + PADDING_WIDTH;
     final int flagHeight = fm.getHeight() + PADDING_HEIGHT;
 
     final Rectangle result = new Rectangle();
     result.width = flagWidth + 2;
-    result.height = clip.height;
+    result.height = clip.height + clip.y;
 
     final Color flagColor = aCanvas.getColor();
 
-    aCanvas.fillRect( result.x, result.y, result.width, flagHeight - 1 );
+    aCanvas.fillRect(result.x, result.y, result.width, flagHeight - 1);
 
     final int textXpos = result.x + PADDING_LEFT;
     final int textYpos = result.y + fm.getLeading() + fm.getAscent() + PADDING_TOP;
 
-    final Color textColor = Utils.getContrastColor( flagColor );
-    aCanvas.setColor( textColor );
+    drawCursorLine(aCanvas, clip, result);
 
-    aCanvas.drawString( this.cursorFlagText, textXpos, textYpos );
-
-    aCanvas.setColor( flagColor );
-
-    drawCursorLine( aCanvas, clip, result );
-
-    if ( this.snapCursorPoint != null )
+    if (this.snapCursorPoint != null)
     {
-      aCanvas.drawOval( result.x - 4, this.snapCursorPoint.y - 4, 8, 8 );
+      aCanvas.drawOval(result.x - 4, this.snapCursorPoint.y - 4, 8, 8);
       // enlarge the affected area with the snap cursor point...
-      result.grow( 4, 4 );
+      result.grow(4, 4);
     }
+
+    aCanvas.setColor(Utils.getContrastColor(flagColor));
+
+    aCanvas.drawString(this.cursorFlagText, textXpos, textYpos);
 
     return result;
   }
@@ -127,21 +117,17 @@ public class CursorFlagRenderer extends BaseRenderer
    * @param aFlagArea
    *          the outer rectangle denoting the cursor boundaries (+ flag).
    */
-  private void drawCursorLine( final Graphics2D aCanvas, final Rectangle aClip, final Rectangle aFlagArea )
+  private void drawCursorLine(final Graphics2D aCanvas, final Rectangle aClip, final Rectangle aFlagArea)
   {
     int x = aFlagArea.x;
 
     int y1 = aFlagArea.y;
-    if ( y1 < aClip.y )
+    if (y1 < aClip.y)
     {
       y1 = aClip.y;
     }
     int y2 = aFlagArea.y + aFlagArea.height;
-    if ( y2 > aClip.y + aClip.height )
-    {
-      y2 = aClip.y + aClip.height;
-    }
 
-    aCanvas.drawLine( x, y1, x, y2 );
+    aCanvas.drawLine(x, y1, x, y2);
   }
 }

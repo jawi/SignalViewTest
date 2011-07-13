@@ -17,37 +17,51 @@
  *
  * Copyright (C) 2010-2011 - J.W. Janssen, <http://www.lxtreme.nl>
  */
-package nl.lxtreme.test.view.laf;
+package nl.lxtreme.test.view.model;
 
 
 import java.awt.*;
 
-import javax.swing.*;
-import javax.swing.plaf.*;
-
 import nl.lxtreme.test.view.*;
-import nl.lxtreme.test.view.model.*;
+import nl.lxtreme.test.view.laf.*;
 
 
 /**
  * 
  */
-public class CornerUI extends ComponentUI
+public class CornerViewModel extends AbstractViewModel
 {
+  // CONSTANTS
+
+  public static final String COMPONENT_BACKGROUND_COLOR = "corner.color.background";
+
+  // CONSTRUCTORS
+
+  /**
+   * Creates a new CornerModel instance.
+   * 
+   * @param aController
+   *          the diagram controller to use, cannot be <code>null</code>.
+   */
+  public CornerViewModel(SignalDiagramController aController)
+  {
+    super(aController);
+  }
+
   // METHODS
 
   /**
-   * {@inheritDoc}
+   * Returns the background color for the channel labels.
+   * 
+   * @return a color, never <code>null</code>.
    */
-  @Override
-  public void paint(final Graphics aGraphics, final JComponent aComponent)
+  public Color getBackgroundColor()
   {
-    final CornerView view = (CornerView) aComponent;
-    final CornerViewModel model = view.getModel();
-
-    ((Graphics2D) aGraphics).setBackground(model.getBackgroundColor());
-
-    final Rectangle clip = aGraphics.getClipBounds();
-    aGraphics.clearRect(clip.x, clip.y, clip.width, clip.height);
+    Color color = getSettingsProvider().getColor(COMPONENT_BACKGROUND_COLOR);
+    if (color == null)
+    {
+      color = LafDefaults.DEFAULT_BACKGROUND_COLOR;
+    }
+    return color;
   }
 }

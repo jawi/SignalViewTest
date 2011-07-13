@@ -25,6 +25,8 @@ import java.awt.*;
 
 import javax.swing.*;
 
+import nl.lxtreme.test.view.model.*;
+
 
 /**
  * Provides a glass pane for use while dragging channels around. This glass pane
@@ -36,9 +38,9 @@ public final class GhostGlassPane extends JPanel
 
   private static final long serialVersionUID = 1L;
 
-  private static final float ALPHA = 0.7f;
-
   // VARIABLES
+
+  private final GhostGlassPaneModel model;
 
   private volatile Rectangle affectedArea;
   private volatile Point dropPoint;
@@ -48,10 +50,15 @@ public final class GhostGlassPane extends JPanel
 
   /**
    * Creates a new {@link GhostGlassPane} instance.
+   * 
+   * @param aController
+   *          the diagram controller to use, cannot be <code>null</code>.
    */
-  public GhostGlassPane()
+  public GhostGlassPane(final SignalDiagramController aController)
   {
-    setOpaque( false );
+    setOpaque(false);
+
+    this.model = new GhostGlassPaneModel(aController);
   }
 
   // METHODS
@@ -72,18 +79,18 @@ public final class GhostGlassPane extends JPanel
    */
   public void repaintPartially()
   {
-    if ( this.affectedArea == null )
+    if (this.affectedArea == null)
     {
       repaint();
     }
     else
     {
-      final Rectangle repaintRect = new Rectangle( this.affectedArea );
+      final Rectangle repaintRect = new Rectangle(this.affectedArea);
       // take a slighter larger area in order to ensure we've repainted
       // everything correctly...
-      repaintRect.grow( 2, 2 );
+      repaintRect.grow(2, 2);
 
-      repaint( repaintRect );
+      repaint(repaintRect);
     }
   }
 
@@ -97,9 +104,9 @@ public final class GhostGlassPane extends JPanel
    * @param aContext
    *          the drag and drop context, cannot be <code>null</code>.
    */
-  public void setDropPoint( final Point aLocation )
+  public void setDropPoint(final Point aLocation)
   {
-    setDropPoint( aLocation, this.renderer );
+    setDropPoint(aLocation, this.renderer);
   }
 
   /**
@@ -112,7 +119,7 @@ public final class GhostGlassPane extends JPanel
    * @param aContext
    *          the drag and drop context, cannot be <code>null</code>.
    */
-  public void setDropPoint( final Point aLocation, final nl.lxtreme.test.view.renderer.Renderer aRenderer )
+  public void setDropPoint(final Point aLocation, final nl.lxtreme.test.view.renderer.Renderer aRenderer)
   {
     this.dropPoint = aLocation;
     this.renderer = aRenderer;
@@ -124,11 +131,11 @@ public final class GhostGlassPane extends JPanel
    * @param aParameters
    *          the rendering context parameters, cannot be <code>null</code>.
    */
-  public void setRenderContext( final Object... aParameters )
+  public void setRenderContext(final Object... aParameters)
   {
-    if ( this.renderer != null )
+    if (this.renderer != null)
     {
-      this.renderer.setContext( aParameters );
+      this.renderer.setContext(aParameters);
     }
   }
 
@@ -136,26 +143,25 @@ public final class GhostGlassPane extends JPanel
    * {@inheritDoc}
    */
   @Override
-  protected void paintComponent( final Graphics aGraphics )
+  protected void paintComponent(final Graphics aGraphics)
   {
-    if ( ( this.dropPoint == null ) || ( this.renderer == null ) || !isVisible() )
+    if ((this.dropPoint == null) || (this.renderer == null) || !isVisible())
     {
       return;
     }
 
-    final Graphics2D g2d = ( Graphics2D )aGraphics.create();
+    final Graphics2D g2d = (Graphics2D) aGraphics.create();
     try
     {
-      g2d.setRenderingHints( createRenderingHints() );
+      g2d.setRenderingHints(createRenderingHints());
 
-      g2d.setComposite( AlphaComposite.getInstance( AlphaComposite.SRC_OVER, GhostGlassPane.ALPHA ) );
-
-      g2d.setColor( Color.YELLOW );
+      g2d.setComposite(this.model.getComposite());
+      g2d.setColor(this.model.getColor());
 
       int x = this.dropPoint.x;
       int y = this.dropPoint.y;
 
-      this.affectedArea = this.renderer.render( g2d, x, y );
+      this.affectedArea = this.renderer.render(g2d, x, y);
     }
     finally
     {
@@ -168,10 +174,10 @@ public final class GhostGlassPane extends JPanel
    */
   private RenderingHints createRenderingHints()
   {
-    RenderingHints hints = new RenderingHints( RenderingHints.KEY_INTERPOLATION,
-        RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR );
-    hints.put( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
-    hints.put( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED );
+    RenderingHints hints = new RenderingHints(RenderingHints.KEY_INTERPOLATION,
+        RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+    hints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    hints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
     return hints;
   }
 

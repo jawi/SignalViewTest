@@ -44,11 +44,11 @@ public class Main
   static class AlternatingDataProvider implements SampleDataProvider
   {
     @Override
-    public int getSampleData( final int[] aValues, final long[] aTimestamps, final int aSize )
+    public int getSampleData(final int[] aValues, final long[] aTimestamps, final int aSize)
     {
-      for ( int i = 0; i < aSize; i++ )
+      for (int i = 0; i < aSize; i++)
       {
-        if ( i > 0 )
+        if (i > 0)
         {
           aValues[i] = aValues[i - 1] == 0xAAAA ? 0x5555 : 0xAAAA;
         }
@@ -56,9 +56,43 @@ public class Main
         {
           aValues[i] = 0xAAAA;
         }
-        aTimestamps[i] = ( i * 10 );
+        aTimestamps[i] = (i * 10);
       }
       return 1000000000; // 1000MHz
+    }
+  }
+
+  /**
+   * Provides only samples with alternating values.
+   */
+  static class OffsetDataProvider implements SampleDataProvider
+  {
+    @Override
+    public int getSampleData(final int[] aValues, final long[] aTimestamps, final int aSize)
+    {
+      boolean on = true;
+      int chunkSize = (aSize / 10);
+
+      for (int i = 0; i < aSize; i++)
+      {
+        if ((i % chunkSize) == 0)
+        {
+          on = !on;
+        }
+        if (!on)
+          continue;
+
+        if (i > 0)
+        {
+          aValues[i] = aValues[i - 1] == 0xAAAA ? 0x5555 : 0xAAAA;
+        }
+        else
+        {
+          aValues[i] = 0xAAAA;
+        }
+        aTimestamps[i] = (i * 10) + 0;
+      }
+      return 200000000; // 200MHz
     }
   }
 
@@ -68,22 +102,24 @@ public class Main
   static class AlternatingDataWithSpacesProvider implements SampleDataProvider
   {
     @Override
-    public int getSampleData( final int[] aValues, final long[] aTimestamps, final int aSize )
+    public int getSampleData(final int[] aValues, final long[] aTimestamps, final int aSize)
     {
       boolean markOrSpace = false; // mark
+      int interval = aSize / 10;
+
       int lastValue = -1;
-      for ( int i = 0; i < aSize; i++ )
+      for (int i = 0; i < aSize; i++)
       {
-        if ( i % 1000000 == 0 )
+        if (i % interval == 0)
         {
           markOrSpace = !markOrSpace;
         }
 
-        if ( markOrSpace )
+        if (markOrSpace)
         {
-          if ( i > 0 )
+          if (i > 0)
           {
-            aValues[i] = ( ( lastValue == 0xAAAA ) ? 0x5555 : 0xAAAA );
+            aValues[i] = ((lastValue == 0xAAAA) ? 0x5555 : 0xAAAA);
           }
           else
           {
@@ -95,7 +131,7 @@ public class Main
         {
           aValues[i] = 0;
         }
-        aTimestamps[i] = 0 + ( i * 10 );
+        aTimestamps[i] = 0 + (i * 10);
       }
       return 1000000000; // 1GHz
     }
@@ -107,9 +143,9 @@ public class Main
   static class CounterDataProvider implements SampleDataProvider
   {
     @Override
-    public int getSampleData( final int[] aValues, final long[] aTimestamps, final int aSize )
+    public int getSampleData(final int[] aValues, final long[] aTimestamps, final int aSize)
     {
-      for ( int i = 0; i < aSize; i++ )
+      for (int i = 0; i < aSize; i++)
       {
         aValues[i] = i % 1024;
         aTimestamps[i] = i;
@@ -124,9 +160,9 @@ public class Main
   static class OneDataProvider implements SampleDataProvider
   {
     @Override
-    public int getSampleData( final int[] aValues, final long[] aTimestamps, final int aSize )
+    public int getSampleData(final int[] aValues, final long[] aTimestamps, final int aSize)
     {
-      for ( int i = 0; i < aSize; i++ )
+      for (int i = 0; i < aSize; i++)
       {
         aValues[i] = 0xFFFF;
         aTimestamps[i] = i;
@@ -141,10 +177,10 @@ public class Main
   static class RandomDataProvider implements SampleDataProvider
   {
     @Override
-    public int getSampleData( final int[] aValues, final long[] aTimestamps, final int aSize )
+    public int getSampleData(final int[] aValues, final long[] aTimestamps, final int aSize)
     {
       final Random rnd = new Random();
-      for ( int i = 0; i < aSize; i++ )
+      for (int i = 0; i < aSize; i++)
       {
         aValues[i] = rnd.nextInt();
         aTimestamps[i] = i;
@@ -159,9 +195,9 @@ public class Main
   static class ZeroDataProvider implements SampleDataProvider
   {
     @Override
-    public int getSampleData( final int[] aValues, final long[] aTimestamps, final int aSize )
+    public int getSampleData(final int[] aValues, final long[] aTimestamps, final int aSize)
     {
-      for ( int i = 0; i < aSize; i++ )
+      for (int i = 0; i < aSize; i++)
       {
         aValues[i] = 0;
         aTimestamps[i] = i;
@@ -182,7 +218,7 @@ public class Main
   /**
    * @param args
    */
-  public static void main( final String[] aArgs ) throws Exception
+  public static void main(final String[] aArgs) throws Exception
   {
     final Runnable runner = new Runnable()
     {
@@ -197,7 +233,7 @@ public class Main
         main.run();
       };
     };
-    SwingUtilities.invokeLater( runner );
+    SwingUtilities.invokeLater(runner);
   }
 
   /**
@@ -205,12 +241,12 @@ public class Main
    */
   private void build()
   {
-    final JScrollPane contentPane = new JScrollPane( this.signalDiagram );
-    contentPane.setHorizontalScrollBarPolicy( ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS );
-    contentPane.setVerticalScrollBarPolicy( ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED );
+    final JScrollPane contentPane = new JScrollPane(this.signalDiagram);
+    contentPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+    contentPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 
-    this.mainFrame.setContentPane( contentPane );
-    this.mainFrame.setJMenuBar( this.menuBar );
+    this.mainFrame.setContentPane(contentPane);
+    this.mainFrame.setJMenuBar(this.menuBar);
 
     this.mainFrame.pack();
   }
@@ -222,93 +258,93 @@ public class Main
   {
     try
     {
-      UIManager.setLookAndFeel( "com.jgoodies.looks.plastic.Plastic3DLookAndFeel" );
+      UIManager.setLookAndFeel("com.jgoodies.looks.plastic.Plastic3DLookAndFeel");
     }
-    catch ( Exception exception )
+    catch (Exception exception)
     {
-      System.err.println( "L&F setting failed! Message = " + exception.getMessage() );
+      System.err.println("L&F setting failed! Message = " + exception.getMessage());
     }
 
-    final Dimension dims = new Dimension( 800, 600 );
+    final Dimension dims = new Dimension(800, 600);
 
-    this.mainFrame = new JFrame( "OLS Signal View Component - v2" );
-    this.mainFrame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
-    this.mainFrame.setPreferredSize( dims );
-    this.mainFrame.setSize( dims );
+    this.mainFrame = new JFrame("OLS Signal View Component - v2");
+    this.mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    this.mainFrame.setPreferredSize(dims);
+    this.mainFrame.setSize(dims);
 
     this.menuBar = new JMenuBar();
 
-    final JMenu fileMenu = new JMenu( "File" );
-    this.menuBar.add( fileMenu );
+    final JMenu fileMenu = new JMenu("File");
+    this.menuBar.add(fileMenu);
 
-    final JMenuItem fileExitItem = new JMenuItem( new AbstractAction( "Exit" )
+    final JMenuItem fileExitItem = new JMenuItem(new AbstractAction("Exit")
     {
       private static final long serialVersionUID = 1L;
 
       @Override
-      public void actionPerformed( final ActionEvent aEvent )
+      public void actionPerformed(final ActionEvent aEvent)
       {
-        Main.this.mainFrame.setVisible( false );
+        Main.this.mainFrame.setVisible(false);
         Main.this.mainFrame.dispose();
       }
-    } );
-    fileMenu.add( fileExitItem );
+    });
+    fileMenu.add(fileExitItem);
 
-    final JMenu diagramMenu = new JMenu( "Diagram" );
-    this.menuBar.add( diagramMenu );
+    final JMenu diagramMenu = new JMenu("Diagram");
+    this.menuBar.add(diagramMenu);
 
-    final JMenuItem diagramSnapCursorsItem = new JCheckBoxMenuItem( new AbstractAction( "Snap Cursors?" )
+    final JMenuItem diagramSnapCursorsItem = new JCheckBoxMenuItem(new AbstractAction("Snap Cursors?")
     {
       private static final long serialVersionUID = 1L;
 
       @Override
-      public void actionPerformed( final ActionEvent aEvent )
+      public void actionPerformed(final ActionEvent aEvent)
       {
-        AbstractButton button = ( AbstractButton )aEvent.getSource();
-        Main.this.controller.setSnapModeEnabled( button.getModel().isSelected() );
+        AbstractButton button = (AbstractButton) aEvent.getSource();
+        Main.this.controller.setSnapModeEnabled(button.getModel().isSelected());
       }
-    } );
-    diagramMenu.add( diagramSnapCursorsItem );
+    });
+    diagramMenu.add(diagramSnapCursorsItem);
 
-    final JMenuItem diagramEnableCursorsItem = new JCheckBoxMenuItem( new AbstractAction( "Cursor mode" )
+    final JMenuItem diagramEnableCursorsItem = new JCheckBoxMenuItem(new AbstractAction("Cursor mode")
     {
       private static final long serialVersionUID = 1L;
 
       @Override
-      public void actionPerformed( final ActionEvent aEvent )
+      public void actionPerformed(final ActionEvent aEvent)
       {
-        AbstractButton button = ( AbstractButton )aEvent.getSource();
-        Main.this.controller.setCursorsVisible( button.getModel().isSelected() );
+        AbstractButton button = (AbstractButton) aEvent.getSource();
+        Main.this.controller.setCursorsVisible(button.getModel().isSelected());
       }
-    } );
-    diagramMenu.add( diagramEnableCursorsItem );
+    });
+    diagramMenu.add(diagramEnableCursorsItem);
 
-    final JMenuItem diagramEnableMeasureModeItem = new JCheckBoxMenuItem( new AbstractAction( "Measurement mode" )
+    final JMenuItem diagramEnableMeasureModeItem = new JCheckBoxMenuItem(new AbstractAction("Measurement mode")
     {
       private static final long serialVersionUID = 1L;
 
       @Override
-      public void actionPerformed( final ActionEvent aEvent )
+      public void actionPerformed(final ActionEvent aEvent)
       {
-        AbstractButton button = ( AbstractButton )aEvent.getSource();
-        Main.this.controller.setMeasurementMode( button.getModel().isSelected() );
+        AbstractButton button = (AbstractButton) aEvent.getSource();
+        Main.this.controller.setMeasurementMode(button.getModel().isSelected());
       }
-    } );
-    diagramMenu.add( diagramEnableMeasureModeItem );
+    });
+    diagramMenu.add(diagramEnableMeasureModeItem);
 
     // final SampleDataModel model = new SampleDataModel( 256 * 1024, new
     // AlternatingDataWithSpacesProvider() );
-    final SampleDataModel model = new SampleDataModel( 512 * 1024, new RandomDataProvider() );
+    final SampleDataModel model = new SampleDataModel(512 * 1024, new RandomDataProvider());
 
-    this.controller = new SignalDiagramController( model );
+    this.controller = new SignalDiagramController(model);
 
-    this.signalDiagram = SignalDiagramComponent.create( this.controller );
+    this.signalDiagram = SignalDiagramComponent.create(this.controller);
   }
 
   /**
    */
   private void run()
   {
-    this.mainFrame.setVisible( true );
+    this.mainFrame.setVisible(true);
   }
 }
