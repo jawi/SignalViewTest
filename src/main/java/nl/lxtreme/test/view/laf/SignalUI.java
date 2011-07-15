@@ -326,16 +326,16 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
   private void renderMeasurementInfo( final SignalViewModel aModel, final Graphics2D aCanvas,
       final SignalHoverInfo aSignalHover )
   {
-    Rectangle signalHoverRect = aSignalHover.getRectangle();
-    if ( signalHoverRect.isEmpty() )
+    if ( aSignalHover.isEmpty() )
     {
       return;
     }
 
+    Rectangle signalHoverRect = aSignalHover.getRectangle();
     int x = signalHoverRect.x;
     int y = ( int )signalHoverRect.getCenterY();
     int w = signalHoverRect.width;
-    int middlePos = aSignalHover.getMidSamplePos() - x;
+    int middlePos = aSignalHover.getMidSamplePos().intValue() - x;
 
     // Tell Swing how we would like to render ourselves...
     aCanvas.setRenderingHints( createArrowRenderingHints() );

@@ -266,10 +266,10 @@ public final class SignalDiagramController
     if ( isSnapModeEnabled() )
     {
       final SignalHoverInfo signalHover = getSignalHover( aCoordinate );
-      if ( signalHover != null )
+      if ( ( signalHover != null ) && !signalHover.isEmpty() )
       {
         final Rectangle rect = signalHover.getRectangle();
-        aCoordinate.x = signalHover.getMidSamplePos();
+        aCoordinate.x = signalHover.getMidSamplePos().intValue();
         aCoordinate.y = rect.y;
       }
     }

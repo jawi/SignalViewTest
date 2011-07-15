@@ -244,6 +244,18 @@ public class Main
   }
 
   /**
+   * Returns whether the current host's operating system is Mac OS X.
+   * 
+   * @return <code>true</code> if running on Mac OS X, <code>false</code>
+   *         otherwise.
+   */
+  private static final boolean isMacOS()
+  {
+    final String osName = System.getProperty( "os.name" );
+    return ( "Mac OS X".equalsIgnoreCase( osName ) );
+  }
+
+  /**
    * 
    */
   private void build()
@@ -278,11 +290,25 @@ public class Main
    */
   private void init()
   {
-    try
+    if ( !isMacOS() )
     {
-      UIManager.setLookAndFeel( "com.jgoodies.looks.plastic.Plastic3DLookAndFeel" );
+      try
+      {
+        UIManager.setLookAndFeel( "com.jgoodies.looks.plastic.Plastic3DLookAndFeel" );
+      }
+      catch ( Exception exception )
+      {
+        try
+        {
+          UIManager.setLookAndFeel( UIManager.getSystemLookAndFeelClassName() );
+        }
+        catch ( Exception exception2 )
+        {
+          System.err.println( "L&F setting failed!" );
+        }
+      }
     }
-    catch ( Exception exception )
+    else
     {
       try
       {

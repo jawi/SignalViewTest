@@ -28,6 +28,7 @@ import java.awt.*;
 /**
  * Provides a small DTO for keeping signal hover information together.
  */
+@SuppressWarnings( "boxing" )
 public class SignalHoverInfo
 {
   // CONSTANTS
@@ -387,6 +388,16 @@ public class SignalHoverInfo
     result = ( prime * result ) + ( int )( temp ^ ( temp >>> 32 ) );
     result = ( prime * result ) + ( ( this.startTimestamp == null ) ? 0 : this.startTimestamp.hashCode() );
     return result;
+  }
+
+  /**
+   * Returns whether or not this signal information is empty.
+   * 
+   * @return
+   */
+  public boolean isEmpty()
+  {
+    return this.rectangle.isEmpty();
   }
 
   /**

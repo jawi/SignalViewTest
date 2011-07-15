@@ -48,9 +48,9 @@ public class ChannelLabelsViewModel extends AbstractViewModel
    * @param aController
    *          the diagram controller to use, cannot be <code>null</code>.
    */
-  public ChannelLabelsViewModel(SignalDiagramController aController)
+  public ChannelLabelsViewModel( final SignalDiagramController aController )
   {
-    super(aController);
+    super( aController );
   }
 
   // METHODS
@@ -62,12 +62,24 @@ public class ChannelLabelsViewModel extends AbstractViewModel
    */
   public Color getBackgroundColor()
   {
-    Color color = getSettingsProvider().getColor(COMPONENT_BACKGROUND_COLOR);
-    if (color == null)
+    Color color = getSettingsProvider().getColor( COMPONENT_BACKGROUND_COLOR );
+    if ( color == null )
     {
       color = LafDefaults.DEFAULT_BACKGROUND_COLOR;
     }
     return color;
+  }
+
+  /**
+   * Returns the label for the channel with the given index.
+   * 
+   * @param aChannelIndex
+   *          the channel index of the channel to get the label for.
+   * @return a channel label, never <code>null</code>.
+   */
+  public String getChannelLabel( final int aChannelIndex )
+  {
+    return this.controller.getScreenModel().getChannelLabel( aChannelIndex );
   }
 
   /**
@@ -77,25 +89,10 @@ public class ChannelLabelsViewModel extends AbstractViewModel
    */
   public Color getLabelBackgroundColor()
   {
-    Color color = getSettingsProvider().getColor(LABEL_BACKGROUND_COLOR);
-    if (color == null)
+    Color color = getSettingsProvider().getColor( LABEL_BACKGROUND_COLOR );
+    if ( color == null )
     {
       color = LafDefaults.DEFAULT_CHANNEL_BACKGROUND_COLOR;
-    }
-    return color;
-  }
-
-  /**
-   * Returns the foreground color for the labels themselves.
-   * 
-   * @return a color, never <code>null</code>.
-   */
-  public Color getLabelForegroundColor()
-  {
-    Color color = getSettingsProvider().getColor(LABEL_FOREGROUND_COLOR);
-    if (color == null)
-    {
-      color = LafDefaults.DEFAULT_CHANNEL_LABEL_COLOR;
     }
     return color;
   }
@@ -107,12 +104,27 @@ public class ChannelLabelsViewModel extends AbstractViewModel
    */
   public Font getLabelFont()
   {
-    Font font = getSettingsProvider().getFont(LABEL_FONT);
-    if (font == null)
+    Font font = getSettingsProvider().getFont( LABEL_FONT );
+    if ( font == null )
     {
       font = LafDefaults.DEFAULT_CHANNEL_LABEL_FONT;
     }
     return font;
+  }
+
+  /**
+   * Returns the foreground color for the labels themselves.
+   * 
+   * @return a color, never <code>null</code>.
+   */
+  public Color getLabelForegroundColor()
+  {
+    Color color = getSettingsProvider().getColor( LABEL_FOREGROUND_COLOR );
+    if ( color == null )
+    {
+      color = LafDefaults.DEFAULT_CHANNEL_LABEL_COLOR;
+    }
+    return color;
   }
 
   /**
@@ -122,23 +134,11 @@ public class ChannelLabelsViewModel extends AbstractViewModel
    */
   public int getMinimalWidth()
   {
-    Integer minWidth = getSettingsProvider().getInteger(COMPONENT_MINIMAL_WIDTH);
-    if (minWidth == null)
+    Integer minWidth = getSettingsProvider().getInteger( COMPONENT_MINIMAL_WIDTH );
+    if ( minWidth == null )
     {
-      minWidth = LafDefaults.DEFAULT_MINIMAL_CHANNEL_WIDTH;
+      return LafDefaults.DEFAULT_MINIMAL_CHANNEL_WIDTH;
     }
     return minWidth.intValue();
-  }
-
-  /**
-   * Returns the label for the channel with the given index.
-   * 
-   * @param aChannelIndex
-   *          the channel index of the channel to get the label for.
-   * @return a channel label, never <code>null</code>.
-   */
-  public String getChannelLabel(int aChannelIndex)
-  {
-    return controller.getScreenModel().getChannelLabel(aChannelIndex);
   }
 }

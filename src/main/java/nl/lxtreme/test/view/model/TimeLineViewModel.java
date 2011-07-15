@@ -63,9 +63,9 @@ public class TimeLineViewModel extends AbstractViewModel
    * @param aController
    *          the diagram controller to use, cannot be <code>null</code>.
    */
-  public TimeLineViewModel(final SignalDiagramController aController)
+  public TimeLineViewModel( final SignalDiagramController aController )
   {
-    super(aController);
+    super( aController );
   }
 
   // METHODS
@@ -77,12 +77,27 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public Color getBackgroundColor()
   {
-    Color color = getSettingsProvider().getColor(COMPONENT_BACKGROUND_COLOR);
-    if (color == null)
+    Color color = getSettingsProvider().getColor( COMPONENT_BACKGROUND_COLOR );
+    if ( color == null )
     {
       color = LafDefaults.DEFAULT_BACKGROUND_COLOR;
     }
     return color;
+  }
+
+  /**
+   * Returns the font for the cursor flags.
+   * 
+   * @return a font, never <code>null</code>.
+   */
+  public Font getCursorFlagFont()
+  {
+    Font font = getSettingsProvider().getFont( CURSOR_FLAG_FONT );
+    if ( font == null )
+    {
+      font = LafDefaults.DEFAULT_CURSOR_FLAG_FONT;
+    }
+    return font;
   }
 
   /**
@@ -94,11 +109,11 @@ public class TimeLineViewModel extends AbstractViewModel
    *          <code>null</code>.
    * @return the ending time stamp, as long value.
    */
-  public long getEndTimestamp(final Rectangle aClip)
+  public long getEndTimestamp( final Rectangle aClip )
   {
-    final Point location = new Point(aClip.x + aClip.width, 0);
-    final int idx = this.controller.locationToSampleIndex(location);
-    if (idx < 0)
+    final Point location = new Point( aClip.x + aClip.width, 0 );
+    final int idx = this.controller.locationToSampleIndex( location );
+    if ( idx < 0 )
     {
       return 0L;
     }
@@ -126,8 +141,8 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public Color getMajorTickColor()
   {
-    Color color = getSettingsProvider().getColor(MAJOR_TICK_COLOR);
-    if (color == null)
+    Color color = getSettingsProvider().getColor( MAJOR_TICK_COLOR );
+    if ( color == null )
     {
       color = LafDefaults.DEFAULT_MAJOR_TICK_COLOR;
     }
@@ -141,10 +156,10 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public int getMajorTickHeight()
   {
-    Integer value = getSettingsProvider().getInteger(MAJOR_TICK_HEIGHT);
-    if (value == null)
+    Integer value = getSettingsProvider().getInteger( MAJOR_TICK_HEIGHT );
+    if ( value == null )
     {
-      value = LafDefaults.DEFAULT_MAJOR_TICK_HEIGHT;
+      return LafDefaults.DEFAULT_MAJOR_TICK_HEIGHT;
     }
     return value.intValue();
   }
@@ -156,25 +171,10 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public Font getMajorTickLabelFont()
   {
-    Font font = getSettingsProvider().getFont(MAJOR_TICK_LABEL_FONT);
-    if (font == null)
+    Font font = getSettingsProvider().getFont( MAJOR_TICK_LABEL_FONT );
+    if ( font == null )
     {
       font = LafDefaults.DEFAULT_MAJOR_TICK_FONT;
-    }
-    return font;
-  }
-
-  /**
-   * Returns the font for the cursor flags.
-   * 
-   * @return a font, never <code>null</code>.
-   */
-  public Font getCursorFlagFont()
-  {
-    Font font = getSettingsProvider().getFont(CURSOR_FLAG_FONT);
-    if (font == null)
-    {
-      font = LafDefaults.DEFAULT_CURSOR_FLAG_FONT;
     }
     return font;
   }
@@ -186,8 +186,8 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public Color getMinorTickColor()
   {
-    Color color = getSettingsProvider().getColor(MINOR_TICK_COLOR);
-    if (color == null)
+    Color color = getSettingsProvider().getColor( MINOR_TICK_COLOR );
+    if ( color == null )
     {
       color = LafDefaults.DEFAULT_MINOR_TICK_COLOR;
     }
@@ -201,10 +201,10 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public int getMinorTickHeight()
   {
-    Integer value = getSettingsProvider().getInteger(MINOR_TICK_HEIGHT);
-    if (value == null)
+    Integer value = getSettingsProvider().getInteger( MINOR_TICK_HEIGHT );
+    if ( value == null )
     {
-      value = LafDefaults.DEFAULT_MINOR_TICK_HEIGHT;
+      return LafDefaults.DEFAULT_MINOR_TICK_HEIGHT;
     }
     return value.intValue();
   }
@@ -216,8 +216,8 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public Font getMinorTickLabelFont()
   {
-    Font font = getSettingsProvider().getFont(MINOR_TICK_LABEL_FONT);
-    if (font == null)
+    Font font = getSettingsProvider().getFont( MINOR_TICK_LABEL_FONT );
+    if ( font == null )
     {
       font = LafDefaults.DEFAULT_MINOR_TICK_FONT;
     }
@@ -243,11 +243,11 @@ public class TimeLineViewModel extends AbstractViewModel
    *          <code>null</code>.
    * @return the starting time stamp, as long value.
    */
-  public long getStartTimestamp(final Rectangle aClip)
+  public long getStartTimestamp( final Rectangle aClip )
   {
     final Point location = aClip.getLocation();
-    final int idx = this.controller.locationToSampleIndex(location) - 1;
-    if (idx < 0)
+    final int idx = this.controller.locationToSampleIndex( location ) - 1;
+    if ( idx < 0 )
     {
       return 0L;
     }
@@ -257,7 +257,7 @@ public class TimeLineViewModel extends AbstractViewModel
 
     // Make sure that if we're at the beginning of the timeline, we're always
     // start at 0...
-    return (idx == 0) ? 0 : timestamps[idx];
+    return ( idx == 0 ) ? 0 : timestamps[idx];
   }
 
   /**
@@ -267,27 +267,12 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public Color getTextColor()
   {
-    Color color = getSettingsProvider().getColor(TEXT_COLOR);
-    if (color == null)
+    Color color = getSettingsProvider().getColor( TEXT_COLOR );
+    if ( color == null )
     {
       color = LafDefaults.DEFAULT_TEXT_COLOR;
     }
     return color;
-  }
-
-  /**
-   * Returns the height of the individual ticks.
-   * 
-   * @return a height, in pixels.
-   */
-  public int getTickHeight()
-  {
-    Integer value = getSettingsProvider().getInteger(TICK_HEIGHT);
-    if (value == null)
-    {
-      value = LafDefaults.DEFAULT_TICK_HEIGHT;
-    }
-    return value;
   }
 
   /**
@@ -297,12 +282,27 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public Color getTickColor()
   {
-    Color value = getSettingsProvider().getColor(TICK_COLOR);
-    if (value == null)
+    Color value = getSettingsProvider().getColor( TICK_COLOR );
+    if ( value == null )
     {
       value = LafDefaults.DEFAULT_TICK_COLOR;
     }
     return value;
+  }
+
+  /**
+   * Returns the height of the individual ticks.
+   * 
+   * @return a height, in pixels.
+   */
+  public int getTickHeight()
+  {
+    Integer value = getSettingsProvider().getInteger( TICK_HEIGHT );
+    if ( value == null )
+    {
+      return LafDefaults.DEFAULT_TICK_HEIGHT;
+    }
+    return value.intValue();
   }
 
   /**
@@ -313,9 +313,9 @@ public class TimeLineViewModel extends AbstractViewModel
    * @return a tick increment, >= 1.0.
    * @see #getTimebase(Rectangle)
    */
-  public double getTickIncrement(final double aTimebase)
+  public double getTickIncrement( final double aTimebase )
   {
-    return Math.max(1.0, aTimebase / TIMELINE_INCREMENT);
+    return Math.max( 1.0, aTimebase / TIMELINE_INCREMENT );
   }
 
   /**
@@ -326,10 +326,10 @@ public class TimeLineViewModel extends AbstractViewModel
    *          the view rectangle to base the time base on.
    * @return a time base, as power of 10.
    */
-  public double getTimebase(final Rectangle aViewRect)
+  public double getTimebase( final Rectangle aViewRect )
   {
     final double absoluteTime = aViewRect.width / getZoomFactor();
-    return Math.pow(10, Math.round(Math.log10(absoluteTime)));
+    return Math.pow( 10, Math.round( Math.log10( absoluteTime ) ) );
   }
 
   /**
@@ -340,9 +340,9 @@ public class TimeLineViewModel extends AbstractViewModel
    * @return a time increment, >= 0.1.
    * @see #getTimebase(Rectangle)
    */
-  public double getTimeIncrement(final double aTimebase)
+  public double getTimeIncrement( final double aTimebase )
   {
-    return Math.max(0.1, aTimebase / (10.0 * TIMELINE_INCREMENT));
+    return Math.max( 0.1, aTimebase / ( 10.0 * TIMELINE_INCREMENT ) );
   }
 
   /**
@@ -352,10 +352,10 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public int getTimeLineHeight()
   {
-    Integer value = getSettingsProvider().getInteger(COMPONENT_HEIGHT);
-    if (value == null)
+    Integer value = getSettingsProvider().getInteger( COMPONENT_HEIGHT );
+    if ( value == null )
     {
-      value = LafDefaults.DEFAULT_TIMELINE_HEIGHT;
+      return LafDefaults.DEFAULT_TIMELINE_HEIGHT;
     }
     return value.intValue();
   }
