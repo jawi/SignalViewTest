@@ -44,7 +44,7 @@ public final class SignalDiagramController
    */
   private static final int CURSOR_SENSITIVITY_AREA = 4;
 
-  private static final Logger LOG = Logger.getLogger(SignalDiagramController.class.getName());
+  private static final Logger LOG = Logger.getLogger( SignalDiagramController.class.getName() );
 
   // VARIABLES
 
@@ -61,13 +61,13 @@ public final class SignalDiagramController
   /**
    * @param aModel
    */
-  public SignalDiagramController(final SampleDataModel aModel)
+  public SignalDiagramController( final SampleDataModel aModel )
   {
     this.dataModel = aModel;
-    this.screenModel = new ScreenModel(aModel.getWidth());
+    this.screenModel = new ScreenModel( aModel.getWidth() );
     this.settingsProvider = new SettingsProvider();
 
-    this.dndTargetController = new DragAndDropTargetController(this);
+    this.dndTargetController = new DragAndDropTargetController( this );
 
     this.eventListeners = new EventListenerList();
   }
@@ -77,9 +77,9 @@ public final class SignalDiagramController
   /**
    * @param aListener
    */
-  public void addMeasurementListener(final IMeasurementListener aListener)
+  public void addMeasurementListener( final IMeasurementListener aListener )
   {
-    this.eventListeners.add(IMeasurementListener.class, aListener);
+    this.eventListeners.add( IMeasurementListener.class, aListener );
   }
 
   /**
@@ -90,17 +90,17 @@ public final class SignalDiagramController
    *          <code>null</code>.
    * @return the cursor index, or -1 if not found.
    */
-  public int findCursor(final Point aPoint)
+  public int findCursor( final Point aPoint )
   {
-    final Point point = convertToPointOf(getSignalView(), aPoint);
-    final long refIdx = locationToTimestamp(point);
+    final Point point = convertToPointOf( getSignalView(), aPoint );
+    final long refIdx = locationToTimestamp( point );
 
     final double snapArea = CURSOR_SENSITIVITY_AREA / this.screenModel.getZoomFactor();
 
     final Long[] cursors = this.dataModel.getCursors();
-    for (int i = 0; i < cursors.length; i++)
+    for ( int i = 0; i < cursors.length; i++ )
     {
-      if (cursors[i] == null)
+      if ( cursors[i] == null )
       {
         continue;
       }
@@ -108,7 +108,7 @@ public final class SignalDiagramController
       final double min = cursors[i].longValue() - snapArea;
       final double max = cursors[i].longValue() + snapArea;
 
-      if ((refIdx >= min) && (refIdx <= max))
+      if ( ( refIdx >= min ) && ( refIdx <= max ) )
       {
         return i;
       }
@@ -120,14 +120,14 @@ public final class SignalDiagramController
   /**
    * @param aPoint
    */
-  public void fireMeasurementEvent(final SignalHoverInfo signalHover)
+  public void fireMeasurementEvent( final SignalHoverInfo signalHover )
   {
-    final IMeasurementListener[] listeners = this.eventListeners.getListeners(IMeasurementListener.class);
-    for (IMeasurementListener listener : listeners)
+    final IMeasurementListener[] listeners = this.eventListeners.getListeners( IMeasurementListener.class );
+    for ( IMeasurementListener listener : listeners )
     {
-      if (listener.isListening())
+      if ( listener.isListening() )
       {
-        listener.handleMeasureEvent(signalHover);
+        listener.handleMeasureEvent( signalHover );
       }
     }
   }
@@ -141,16 +141,16 @@ public final class SignalDiagramController
    * @return a drop point, can be <code>null</code> in case the drop point is
    *         invalid (nowhere near a valid channel).
    */
-  public Point getChannelDropPoint(final Point aCoordinate)
+  public Point getChannelDropPoint( final Point aCoordinate )
   {
-    final int dropRow = getCalculatedChannelRow(aCoordinate);
-    if (dropRow < 0)
+    final int dropRow = getCalculatedChannelRow( aCoordinate );
+    if ( dropRow < 0 )
     {
       return null;
     }
 
     final int channelHeight = this.screenModel.getChannelHeight();
-    return new Point(0, (dropRow + 1) * channelHeight);
+    return new Point( 0, ( dropRow + 1 ) * channelHeight );
   }
 
   /**
@@ -166,15 +166,15 @@ public final class SignalDiagramController
    * @return a channel row index (>= 0), or -1 if the point is nowhere near a
    *         channel row.
    */
-  public int getChannelRow(final Point aCoordinate)
+  public int getChannelRow( final Point aCoordinate )
   {
-    final int row = getCalculatedChannelRow(aCoordinate);
-    if (row < 0)
+    final int row = getCalculatedChannelRow( aCoordinate );
+    if ( row < 0 )
     {
       return -1;
     }
 
-    return this.screenModel.toVirtualRow(row);
+    return this.screenModel.toVirtualRow( row );
   }
 
   /**
@@ -185,13 +185,13 @@ public final class SignalDiagramController
    *          <code>null</code>.
    * @return a drop point, never <code>null</code>.
    */
-  public Point getCursorDropPoint(final Point aCoordinate)
+  public Point getCursorDropPoint( final Point aCoordinate )
   {
-    Point dropPoint = new Point(aCoordinate);
+    Point dropPoint = new Point( aCoordinate );
 
-    if (isSnapModeEnabled())
+    if ( isSnapModeEnabled() )
     {
-      dropPoint = getCursorSnapPoint(aCoordinate);
+      dropPoint = getCursorSnapPoint( aCoordinate );
     }
     dropPoint.y = 0;
 
@@ -206,14 +206,14 @@ public final class SignalDiagramController
    * @return a cursor flag text, or an empty string if the cursor with the given
    *         index is undefined.
    */
-  public String getCursorFlagText(final int aCursorIdx)
+  public String getCursorFlagText( final int aCursorIdx )
   {
-    final Long cursorTimestamp = this.dataModel.getCursor(aCursorIdx);
-    if (cursorTimestamp == null)
+    final Long cursorTimestamp = this.dataModel.getCursor( aCursorIdx );
+    if ( cursorTimestamp == null )
     {
       return "";
     }
-    return getCursorFlagText(aCursorIdx, cursorTimestamp.longValue());
+    return getCursorFlagText( aCursorIdx, cursorTimestamp.longValue() );
   }
 
   /**
@@ -226,14 +226,14 @@ public final class SignalDiagramController
    * @return a cursor flag text, or an empty string if the cursor with the given
    *         index is undefined.
    */
-  public String getCursorFlagText(final int aCursorIdx, final long aCursorTimestamp)
+  public String getCursorFlagText( final int aCursorIdx, final long aCursorTimestamp )
   {
     final double sampleRate = this.dataModel.getSampleRate();
 
-    final String label = this.screenModel.getCursorLabel(aCursorIdx);
-    final String cursorTime = Utils.displayTime(aCursorTimestamp / sampleRate);
+    final String label = this.screenModel.getCursorLabel( aCursorIdx );
+    final String cursorTime = Utils.displayTime( aCursorTimestamp / sampleRate );
 
-    return String.format("%s: %s", label, cursorTime);
+    return String.format( "%s: %s", label, cursorTime );
   }
 
   /**
@@ -245,14 +245,14 @@ public final class SignalDiagramController
    * @return the screen X-position of the cursor with the given index, or -1 if
    *         the cursor is not defined.
    */
-  public int getCursorScreenCoordinate(final int aCursorIdx)
+  public int getCursorScreenCoordinate( final int aCursorIdx )
   {
-    Long cursorTimestamp = this.dataModel.getCursor(aCursorIdx);
-    if (cursorTimestamp == null)
+    Long cursorTimestamp = this.dataModel.getCursor( aCursorIdx );
+    if ( cursorTimestamp == null )
     {
       return -1;
     }
-    return (int) Math.min(Integer.MAX_VALUE, this.screenModel.getZoomFactor() * cursorTimestamp.longValue());
+    return ( int )Math.min( Integer.MAX_VALUE, this.screenModel.getZoomFactor() * cursorTimestamp.longValue() );
   }
 
   /**
@@ -261,15 +261,15 @@ public final class SignalDiagramController
    * @param aCoordinate
    * @return
    */
-  public Point getCursorSnapPoint(final Point aCoordinate)
+  public Point getCursorSnapPoint( final Point aCoordinate )
   {
-    if (isSnapModeEnabled())
+    if ( isSnapModeEnabled() )
     {
-      final SignalHoverInfo signalHover = getSignalHover(aCoordinate);
-      if (signalHover != null)
+      final SignalHoverInfo signalHover = getSignalHover( aCoordinate );
+      if ( signalHover != null )
       {
         final Rectangle rect = signalHover.getRectangle();
-        aCoordinate.x = signalHover.getMiddleXpos();
+        aCoordinate.x = signalHover.getMidSamplePos();
         aCoordinate.y = rect.y;
       }
     }
@@ -329,93 +329,110 @@ public final class SignalDiagramController
    * @return the rectangle of the signal the given coordinate contains,
    *         <code>null</code> if not found.
    */
-  public final SignalHoverInfo getSignalHover(final Point aPoint)
+  public final SignalHoverInfo getSignalHover( final Point aPoint )
   {
+    final double sampleRate = this.dataModel.getSampleRate();
     final int signalWidth = this.dataModel.getWidth();
     final int signalHeight = this.screenModel.getSignalHeight();
     final int channelHeight = this.screenModel.getChannelHeight();
+    final double zoomFactor = this.screenModel.getZoomFactor();
 
-    final int virtualRow = (aPoint.y / channelHeight);
-    if ((virtualRow < 0) || (virtualRow > (signalWidth - 1)))
+    // Calculate the "absolute" time based on the mouse position, use a
+    // "over sampling" factor to allow intermediary (between two time stamps)
+    // time value to be shown...
+    final double refTime = ( ( SignalHoverInfo.TIMESTAMP_FACTOR * aPoint.x ) / zoomFactor )
+        / ( SignalHoverInfo.TIMESTAMP_FACTOR * sampleRate );
+
+    final int virtualChannel = ( aPoint.y / channelHeight );
+    if ( ( virtualChannel < 0 ) || ( virtualChannel > ( signalWidth - 1 ) ) )
     {
-      // Trivial reject: invalid virtual row...
+      // Trivial reject: invalid virtual channel...
       return null;
     }
 
-    final int realRow = this.screenModel.toRealRow(virtualRow);
-    if (!this.screenModel.isChannelVisible(realRow))
+    final int realChannel = this.screenModel.toRealRow( virtualChannel );
+    final String channelLabel = this.screenModel.getChannelLabel( realChannel );
+
+    if ( !this.screenModel.isChannelVisible( realChannel ) )
     {
       // Trivial reject: real channel is invisible...
-      return null;
+      return new SignalHoverInfo( realChannel, channelLabel, refTime );
     }
-
-    final double zoomFactor = this.screenModel.getZoomFactor();
 
     final long[] timestamps = this.dataModel.getTimestamps();
 
-    long startTimestamp = -1L;
-    long middleTimestamp = -1L;
-    long endTimestamp = -1L;
+    long ts = -1L;
+    long tm = -1L;
+    long te = -1L;
+    long th = -1L;
     int middleXpos = -1;
 
     // find the reference time value; which is the "timestamp" under the
     // cursor...
-    final int refIdx = locationToSampleIndex(aPoint);
+    final int refIdx = locationToSampleIndex( aPoint );
     final int[] values = this.dataModel.getValues();
-    if ((refIdx >= 0) && (refIdx < values.length))
+    if ( ( refIdx >= 0 ) && ( refIdx < values.length ) )
     {
-      final int mask = (1 << realRow);
-      final int refValue = (values[refIdx] & mask);
+      final int mask = ( 1 << realChannel );
+      final int refValue = ( values[refIdx] & mask );
 
       int idx = refIdx;
       do
       {
         idx--;
       }
-      while ((idx >= 0) && ((values[idx] & mask) == refValue));
+      while ( ( idx >= 0 ) && ( ( values[idx] & mask ) == refValue ) );
+
       // convert the found index back to "screen" values...
-      int middleSampleIdx = Math.max(0, idx + 1);
-      middleTimestamp = timestamps[middleSampleIdx];
+      final int tm_idx = Math.max( 0, idx + 1 );
+      tm = timestamps[tm_idx];
 
       // Search for the original value again, to complete the pulse...
       do
       {
         idx--;
       }
-      while ((idx >= 0) && ((values[idx] & mask) != refValue));
+      while ( ( idx >= 0 ) && ( ( values[idx] & mask ) != refValue ) );
 
       // convert the found index back to "screen" values...
-      int startSampleIdx = Math.max(0, idx + 1);
-      startTimestamp = timestamps[startSampleIdx];
+      final int ts_idx = Math.max( 0, idx + 1 );
+      ts = timestamps[ts_idx];
 
       idx = refIdx;
       do
       {
         idx++;
       }
-      while ((idx < values.length) && ((values[idx] & mask) == refValue));
+      while ( ( idx < values.length ) && ( ( values[idx] & mask ) == refValue ) );
 
       // convert the found index back to "screen" values...
-      int endSampleIdx = Math.min(idx, timestamps.length - 1);
-      endTimestamp = timestamps[endSampleIdx];
+      final int te_idx = Math.min( idx, timestamps.length - 1 );
+      te = timestamps[te_idx];
+
+      // Determine the width of the "high" part...
+      if ( ( values[ts_idx] & mask ) != 0 )
+      {
+        th = Math.abs( tm - ts );
+      }
+      else
+      {
+        th = Math.abs( te - tm );
+      }
     }
 
     final Rectangle rect = new Rectangle();
-    rect.x = (int) (zoomFactor * startTimestamp);
-    rect.width = (int) (zoomFactor * (endTimestamp - startTimestamp));
-    rect.y = (virtualRow * channelHeight) + this.screenModel.getSignalOffset();
+    rect.x = ( int )( zoomFactor * ts );
+    rect.width = ( int )( zoomFactor * ( te - ts ) );
+    rect.y = ( virtualChannel * channelHeight ) + this.screenModel.getSignalOffset();
     rect.height = signalHeight;
 
     // The position where the "other" signal transition should be...
-    middleXpos = (int) (zoomFactor * middleTimestamp);
+    middleXpos = ( int )( zoomFactor * tm );
 
-    // Calculate the "absolute" time based on the mouse position, use a
-    // "over sampling" factor to allow intermediary (between two time stamps)
-    // time value to be shown...
-    final long timestamp = (long) ((SignalHoverInfo.TIMESTAMP_FACTOR * aPoint.x) / zoomFactor);
+    final double timeHigh = th / sampleRate;
+    final double timeTotal = ( te - ts ) / sampleRate;
 
-    return new SignalHoverInfo(rect, startTimestamp, endTimestamp, middleTimestamp, timestamp, middleXpos, realRow,
-        this.dataModel.getSampleRate());
+    return new SignalHoverInfo( realChannel, channelLabel, rect, ts, te, refTime, timeHigh, timeTotal, middleXpos );
   }
 
   /**
@@ -426,9 +443,9 @@ public final class SignalDiagramController
    * @return <code>true</code> if the cursor with the given index is defined,
    *         <code>false</code> otherwise.
    */
-  public boolean isCursorDefined(final int aCursorIdx)
+  public boolean isCursorDefined( final int aCursorIdx )
   {
-    return getDataModel().getCursor(aCursorIdx) != null;
+    return getDataModel().getCursor( aCursorIdx ) != null;
   }
 
   /**
@@ -472,15 +489,15 @@ public final class SignalDiagramController
    * @return a sample index, >= 0, or -1 if no corresponding sample index could
    *         be found.
    */
-  public int locationToSampleIndex(final Point aCoordinate)
+  public int locationToSampleIndex( final Point aCoordinate )
   {
-    final long timestamp = locationToTimestamp(aCoordinate);
-    final int idx = this.dataModel.getTimestampIndex(timestamp);
-    if (idx < 0)
+    final long timestamp = locationToTimestamp( aCoordinate );
+    final int idx = this.dataModel.getTimestampIndex( timestamp );
+    if ( idx < 0 )
     {
       return -1;
     }
-    return Math.max(0, Math.min(idx, this.dataModel.getSize() - 1));
+    return Math.max( 0, Math.min( idx, this.dataModel.getSize() - 1 ) );
   }
 
   /**
@@ -492,10 +509,10 @@ public final class SignalDiagramController
    * @return a sample index, >= 0, or -1 if no corresponding sample index could
    *         be found.
    */
-  public long locationToTimestamp(final Point aCoordinate)
+  public long locationToTimestamp( final Point aCoordinate )
   {
-    final long timestamp = (long) Math.ceil(Math.abs(aCoordinate.x / this.screenModel.getZoomFactor()));
-    if (timestamp < 0)
+    final long timestamp = ( long )Math.ceil( aCoordinate.x / this.screenModel.getZoomFactor() );
+    if ( timestamp < 0 )
     {
       return -1;
     }
@@ -510,36 +527,36 @@ public final class SignalDiagramController
    * @param aInsertRow
    *          the virtual (screen) row index that the moved row is moved to.
    */
-  public void moveChannelRows(final int aMovedRow, final int aInsertRow)
+  public void moveChannelRows( final int aMovedRow, final int aInsertRow )
   {
-    if (aMovedRow == aInsertRow)
+    if ( aMovedRow == aInsertRow )
     {
       return;
     }
-    if ((aMovedRow < 0) || (aMovedRow >= this.dataModel.getWidth()))
+    if ( ( aMovedRow < 0 ) || ( aMovedRow >= this.dataModel.getWidth() ) )
     {
-      throw new IllegalArgumentException("Moved row invalid!");
+      throw new IllegalArgumentException( "Moved row invalid!" );
     }
-    if ((aInsertRow < 0) || (aInsertRow >= this.dataModel.getWidth()))
+    if ( ( aInsertRow < 0 ) || ( aInsertRow >= this.dataModel.getWidth() ) )
     {
-      throw new IllegalArgumentException("Insert row invalid!");
+      throw new IllegalArgumentException( "Insert row invalid!" );
     }
 
-    final int row = this.screenModel.toRealRow(aMovedRow);
-    final int newRow = this.screenModel.toRealRow(aInsertRow);
+    final int row = this.screenModel.toRealRow( aMovedRow );
+    final int newRow = this.screenModel.toRealRow( aInsertRow );
 
     // Update the screen model...
-    this.screenModel.moveRows(row, newRow);
+    this.screenModel.moveRows( row, newRow );
 
-    final JScrollPane scrollPane = (JScrollPane) SwingUtilities
-        .getAncestorOfClass(JScrollPane.class, getSignalView());
-    if (scrollPane != null)
+    final JScrollPane scrollPane = ( JScrollPane )SwingUtilities
+        .getAncestorOfClass( JScrollPane.class, getSignalView() );
+    if ( scrollPane != null )
     {
       final int signalOffset = this.screenModel.getSignalOffset();
       final int channelHeight = this.screenModel.getChannelHeight();
 
-      final int oldRowY = (row * channelHeight) + signalOffset - 3;
-      final int newRowY = (newRow * channelHeight) + signalOffset - 3;
+      final int oldRowY = ( ( row * channelHeight ) + signalOffset ) - 3;
+      final int newRowY = ( ( newRow * channelHeight ) + signalOffset ) - 3;
       final int rowHeight = channelHeight + 6;
 
       // Update the signal display's view port; only the affected regions...
@@ -549,10 +566,10 @@ public final class SignalDiagramController
       // ...old region...
       rect.y = oldRowY;
       rect.height = rowHeight;
-      viewport.repaint(rect);
+      viewport.repaint( rect );
       // ...new region...
       rect.y = newRowY;
-      viewport.repaint(rect);
+      viewport.repaint( rect );
 
       final JViewport channelLabelsView = scrollPane.getRowHeader();
 
@@ -560,10 +577,10 @@ public final class SignalDiagramController
       // ...old region...
       rect.y = oldRowY;
       rect.height = rowHeight;
-      channelLabelsView.repaint(rect);
+      channelLabelsView.repaint( rect );
       // ...new region...
       rect.y = newRowY;
-      channelLabelsView.repaint(rect);
+      channelLabelsView.repaint( rect );
     }
   }
 
@@ -578,21 +595,21 @@ public final class SignalDiagramController
    *          point to find the nearest signal edge, cannot be <code>null</code>
    *          .
    */
-  public void moveCursor(final int aCursorIdx, final Point aPoint)
+  public void moveCursor( final int aCursorIdx, final Point aPoint )
   {
-    if ((aCursorIdx < 0) || (aCursorIdx >= this.dataModel.getCursors().length))
+    if ( ( aCursorIdx < 0 ) || ( aCursorIdx >= this.dataModel.getCursors().length ) )
     {
-      throw new IllegalArgumentException("Invalid cursor index!");
+      throw new IllegalArgumentException( "Invalid cursor index!" );
     }
 
     final SignalView view = getSignalView();
 
-    final Point point = getCursorDropPoint(convertToPointOf(view, aPoint));
-    final long newCursorTimestamp = locationToTimestamp(point);
+    final Point point = getCursorDropPoint( convertToPointOf( view, aPoint ) );
+    final long newCursorTimestamp = locationToTimestamp( point );
 
-    this.dataModel.setCursor(aCursorIdx, Long.valueOf(newCursorTimestamp));
+    this.dataModel.setCursor( aCursorIdx, Long.valueOf( newCursorTimestamp ) );
 
-    repaintLater(view, getTimeLineView());
+    repaintLater( view, getTimeLineView() );
   }
 
   /**
@@ -600,40 +617,41 @@ public final class SignalDiagramController
    */
   public void recalculateDimensions()
   {
-    final JScrollPane scrollPane = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, getSignalView());
-    if (scrollPane != null)
+    final JScrollPane scrollPane = ( JScrollPane )SwingUtilities
+        .getAncestorOfClass( JScrollPane.class, getSignalView() );
+    if ( scrollPane != null )
     {
       final Rectangle viewPortSize = scrollPane.getViewport().getVisibleRect();
 
-      int width = (int) Math.min(getMaxWidth(), getAbsoluteLength());
-      if (width < viewPortSize.width)
+      int width = ( int )Math.min( getMaxWidth(), getAbsoluteLength() );
+      if ( width < viewPortSize.width )
       {
         width = viewPortSize.width;
       }
 
-      int height = (this.screenModel.getChannelHeight() * this.dataModel.getWidth());
-      if (height < viewPortSize.height)
+      int height = ( this.screenModel.getChannelHeight() * this.dataModel.getWidth() );
+      if ( height < viewPortSize.height )
       {
         height = viewPortSize.height;
       }
 
-      JComponent view = (JComponent) scrollPane.getViewport().getView();
-      view.setPreferredSize(new Dimension(width, height));
+      JComponent view = ( JComponent )scrollPane.getViewport().getView();
+      view.setPreferredSize( new Dimension( width, height ) );
       view.revalidate();
 
-      TimeLineView timeline = (TimeLineView) scrollPane.getColumnHeader().getView();
+      TimeLineView timeline = ( TimeLineView )scrollPane.getColumnHeader().getView();
       // the timeline component always follows the width of the signal view, but
       // with a fixed height...
-      timeline.setPreferredSize(new Dimension(width, timeline.getTimeLineHeight()));
-      timeline.setMinimumSize(view.getPreferredSize());
+      timeline.setPreferredSize( new Dimension( width, timeline.getTimeLineHeight() ) );
+      timeline.setMinimumSize( view.getPreferredSize() );
       timeline.revalidate();
 
-      ChannelLabelsView channelLabels = (ChannelLabelsView) scrollPane.getRowHeader().getView();
+      ChannelLabelsView channelLabels = ( ChannelLabelsView )scrollPane.getRowHeader().getView();
       // the channel label component calculates its own 'optimal' width, but
       // doesn't know squat about the correct height...
       final Dimension minimumSize = channelLabels.getMinimumSize();
-      channelLabels.setMinimumSize(new Dimension(minimumSize.width, height));
-      channelLabels.setPreferredSize(new Dimension(minimumSize.width, height));
+      channelLabels.setMinimumSize( new Dimension( minimumSize.width, height ) );
+      channelLabels.setPreferredSize( new Dimension( minimumSize.width, height ) );
       channelLabels.revalidate();
 
       scrollPane.repaint();
@@ -646,16 +664,16 @@ public final class SignalDiagramController
    * @param aCursorIdx
    *          the index of the cursor to remove.
    */
-  public void removeCursor(final int aCursorIdx)
+  public void removeCursor( final int aCursorIdx )
   {
-    if ((aCursorIdx < 0) || (aCursorIdx >= this.dataModel.getCursors().length))
+    if ( ( aCursorIdx < 0 ) || ( aCursorIdx >= this.dataModel.getCursors().length ) )
     {
-      throw new IllegalArgumentException("Invalid cursor index!");
+      throw new IllegalArgumentException( "Invalid cursor index!" );
     }
 
-    this.dataModel.setCursor(aCursorIdx, null);
+    this.dataModel.setCursor( aCursorIdx, null );
 
-    repaintLater(getSignalView(), getTimeLineView());
+    repaintLater( getSignalView(), getTimeLineView() );
   }
 
   /**
@@ -664,9 +682,9 @@ public final class SignalDiagramController
    * @param aListener
    *          the listener to remove, cannot be <code>null</code>.
    */
-  public void removeMeasurementListener(final IMeasurementListener aListener)
+  public void removeMeasurementListener( final IMeasurementListener aListener )
   {
-    this.eventListeners.remove(IMeasurementListener.class, aListener);
+    this.eventListeners.remove( IMeasurementListener.class, aListener );
   }
 
   /**
@@ -678,7 +696,7 @@ public final class SignalDiagramController
    * @param aTimestamp
    *          the timestamp to make visible, >= 0 and < last timestamp.
    */
-  public void scrollToTimestamp(final int aChannel, final long aTimestamp)
+  public void scrollToTimestamp( final int aChannel, final long aTimestamp )
   {
     final SignalView signalView = this.signalDiagram.getSignalView();
     final Rectangle visibleRect = signalView.getVisibleRect();
@@ -686,10 +704,10 @@ public final class SignalDiagramController
     Rectangle rect = new Rectangle();
     rect.width = visibleRect.width;
     rect.height = visibleRect.height;
-    rect.x = (int) ((aTimestamp * this.screenModel.getZoomFactor()) - rect.getCenterX());
+    rect.x = ( int )( ( aTimestamp * this.screenModel.getZoomFactor() ) - rect.getCenterX() );
     rect.y = 0; // XXX
 
-    signalView.scrollRectToVisible(rect);
+    signalView.scrollRectToVisible( rect );
   }
 
   /**
@@ -703,11 +721,11 @@ public final class SignalDiagramController
    *          <code>true</code> if the cursors should be made visible,
    *          <code>false</code> if the cursors should be made invisible.
    */
-  public void setCursorsVisible(final boolean aVisible)
+  public void setCursorsVisible( final boolean aVisible )
   {
-    this.screenModel.setCursorMode(aVisible);
+    this.screenModel.setCursorMode( aVisible );
 
-    repaintLater(getSignalView(), getTimeLineView());
+    repaintLater( getSignalView(), getTimeLineView() );
   }
 
   /**
@@ -717,11 +735,11 @@ public final class SignalDiagramController
    *          <code>true</code> to enable the measurement mode,
    *          <code>false</code> to disable this mode.
    */
-  public void setMeasurementMode(final boolean aEnabled)
+  public void setMeasurementMode( final boolean aEnabled )
   {
-    this.screenModel.setMeasurementMode(aEnabled);
+    this.screenModel.setMeasurementMode( aEnabled );
 
-    getSignalView().handleMeasureEvent(null);
+    getSignalView().handleMeasureEvent( null );
   }
 
   /**
@@ -730,9 +748,9 @@ public final class SignalDiagramController
    * @param aDataModel
    *          the dataModel to set, cannot be <code>null</code>.
    */
-  public void setSampleDataModel(final SampleDataModel aDataModel)
+  public void setSampleDataModel( final SampleDataModel aDataModel )
   {
-    if (aDataModel == null)
+    if ( aDataModel == null )
     {
       throw new IllegalArgumentException();
     }
@@ -745,9 +763,9 @@ public final class SignalDiagramController
    * @param aScreenModel
    *          the screenModel to set, cannot be <code>null</code>.
    */
-  public void setScreenModel(final ScreenModel aScreenModel)
+  public void setScreenModel( final ScreenModel aScreenModel )
   {
-    if (aScreenModel == null)
+    if ( aScreenModel == null )
     {
       throw new IllegalArgumentException();
     }
@@ -761,9 +779,9 @@ public final class SignalDiagramController
    *          <code>true</code> if the snap mode should be enabled,
    *          <code>false</code> otherwise.
    */
-  public void setSnapModeEnabled(final boolean aSnapMode)
+  public void setSnapModeEnabled( final boolean aSnapMode )
   {
-    this.screenModel.setSnapCursor(aSnapMode);
+    this.screenModel.setSnapCursor( aSnapMode );
   }
 
   /**
@@ -774,11 +792,11 @@ public final class SignalDiagramController
     try
     {
       Dimension viewSize = getVisibleViewSize();
-      this.screenModel.setZoomFactor(viewSize.getWidth() / this.dataModel.getAbsoluteLength());
+      this.screenModel.setZoomFactor( viewSize.getWidth() / this.dataModel.getAbsoluteLength() );
     }
     finally
     {
-      this.screenModel.setZoomAll(true);
+      this.screenModel.setZoomAll( true );
     }
 
     recalculateDimensions();
@@ -789,7 +807,7 @@ public final class SignalDiagramController
    */
   public void zoomIn()
   {
-    zoomRelative(2.0);
+    zoomRelative( 2.0 );
 
     recalculateDimensions();
   }
@@ -799,7 +817,7 @@ public final class SignalDiagramController
    */
   public void zoomOriginal()
   {
-    zoomAbsolute(1.0);
+    zoomAbsolute( 1.0 );
 
     recalculateDimensions();
   }
@@ -809,7 +827,7 @@ public final class SignalDiagramController
    */
   public void zoomOut()
   {
-    zoomRelative(0.5);
+    zoomRelative( 0.5 );
 
     recalculateDimensions();
   }
@@ -817,7 +835,7 @@ public final class SignalDiagramController
   /**
    * @param aComponent
    */
-  final void setSignalDiagram(final SignalDiagramComponent aComponent)
+  final void setSignalDiagram( final SignalDiagramComponent aComponent )
   {
     this.signalDiagram = aComponent;
   }
@@ -833,18 +851,18 @@ public final class SignalDiagramController
    *          the original point to convert, cannot be <code>null</code>.
    * @return the converted point, never <code>null</code>.
    */
-  private Point convertToPointOf(final Component aDestination, final Point aOriginal)
+  private Point convertToPointOf( final Component aDestination, final Point aOriginal )
   {
-    Component view = SwingUtilities.getAncestorOfClass(JScrollPane.class, aDestination);
-    if (view instanceof JScrollPane)
+    Component view = SwingUtilities.getAncestorOfClass( JScrollPane.class, aDestination );
+    if ( view instanceof JScrollPane )
     {
-      view = ((JScrollPane) view).getViewport().getView();
+      view = ( ( JScrollPane )view ).getViewport().getView();
     }
     else
     {
-      view = SwingUtilities.getRootPane(aDestination);
+      view = SwingUtilities.getRootPane( aDestination );
     }
-    return SwingUtilities.convertPoint(view, aOriginal, aDestination);
+    return SwingUtilities.convertPoint( view, aOriginal, aDestination );
   }
 
   /**
@@ -857,7 +875,7 @@ public final class SignalDiagramController
     final long[] timestamps = this.dataModel.getTimestamps();
     final long end = timestamps[timestamps.length - 1] + 1;
     final long start = timestamps[0];
-    return (long) ((end - start) * this.screenModel.getZoomFactor());
+    return ( long )( ( end - start ) * this.screenModel.getZoomFactor() );
   }
 
   /**
@@ -872,13 +890,13 @@ public final class SignalDiagramController
    *          <code>null</code>.
    * @return a signal row, or -1 if the point is nowhere near a signal row.
    */
-  private int getCalculatedChannelRow(final Point aCoordinate)
+  private int getCalculatedChannelRow( final Point aCoordinate )
   {
     final int signalWidth = this.dataModel.getWidth();
     final int channelHeight = this.screenModel.getChannelHeight();
 
-    final int row = (int) (aCoordinate.y / (double) channelHeight);
-    if ((row < 0) || (row >= signalWidth))
+    final int row = ( int )( aCoordinate.y / ( double )channelHeight );
+    if ( ( row < 0 ) || ( row >= signalWidth ) )
     {
       return -1;
     }
@@ -909,7 +927,7 @@ public final class SignalDiagramController
     final long[] timestamps = this.dataModel.getTimestamps();
     final double end = timestamps[timestamps.length - 1] + 1;
     final double start = timestamps[0];
-    return Math.floor(getMaxWidth() / (end - start));
+    return Math.floor( getMaxWidth() / ( end - start ) );
   }
 
   /**
@@ -927,13 +945,13 @@ public final class SignalDiagramController
    */
   private TimeLineView getTimeLineView()
   {
-    JScrollPane scrollPane = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, this.signalDiagram);
-    if (scrollPane == null)
+    JScrollPane scrollPane = ( JScrollPane )SwingUtilities.getAncestorOfClass( JScrollPane.class, this.signalDiagram );
+    if ( scrollPane == null )
     {
       throw new IllegalStateException();
     }
 
-    return (TimeLineView) scrollPane.getColumnHeader().getView();
+    return ( TimeLineView )scrollPane.getColumnHeader().getView();
   }
 
   /**
@@ -946,10 +964,10 @@ public final class SignalDiagramController
   {
     final JComponent component = getSignalView();
 
-    final JScrollPane scrollPane = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, component);
+    final JScrollPane scrollPane = ( JScrollPane )SwingUtilities.getAncestorOfClass( JScrollPane.class, component );
 
     final Rectangle rect;
-    if (scrollPane != null)
+    if ( scrollPane != null )
     {
       rect = scrollPane.getViewport().getVisibleRect();
     }
@@ -964,58 +982,58 @@ public final class SignalDiagramController
   /**
    * @param aComponentList
    */
-  private void repaintLater(final Component... aComponentList)
+  private void repaintLater( final Component... aComponentList )
   {
     final Runnable runner = new Runnable()
     {
       @Override
       public void run()
       {
-        for (Component comp : aComponentList)
+        for ( Component comp : aComponentList )
         {
-          safeRepaint(comp);
+          safeRepaint( comp );
         }
       }
 
       /**
        * @param aComponent
        */
-      private void safeRepaint(final Component aComponent)
+      private void safeRepaint( final Component aComponent )
       {
-        if (aComponent != null)
+        if ( aComponent != null )
         {
           aComponent.repaint();
         }
       }
     };
-    SwingUtilities.invokeLater(runner);
+    SwingUtilities.invokeLater( runner );
   }
 
   /**
    * @param aFactor
    */
-  private void zoomAbsolute(final double aFactor)
+  private void zoomAbsolute( final double aFactor )
   {
     try
     {
-      this.screenModel.setZoomFactor(aFactor);
+      this.screenModel.setZoomFactor( aFactor );
     }
     finally
     {
-      this.screenModel.setZoomAll(false);
+      this.screenModel.setZoomAll( false );
     }
 
-    LOG.log(Level.INFO, "Setting zoom factor to " + this.screenModel.getZoomFactor());
+    LOG.log( Level.INFO, "Setting zoom factor to " + this.screenModel.getZoomFactor() );
   }
 
   /**
    * @param aFactor
    */
-  private void zoomRelative(final double aFactor)
+  private void zoomRelative( final double aFactor )
   {
     final double maxFactor = getMaxZoomLevel();
-    System.out.println("MAX zoom level = " + maxFactor);
-    final double newFactor = Math.min(maxFactor, aFactor * this.screenModel.getZoomFactor());
-    zoomAbsolute(newFactor);
+    System.out.println( "MAX zoom level = " + maxFactor );
+    final double newFactor = Math.min( maxFactor, aFactor * this.screenModel.getZoomFactor() );
+    zoomAbsolute( newFactor );
   }
 }

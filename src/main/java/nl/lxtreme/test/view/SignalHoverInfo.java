@@ -28,7 +28,7 @@ import java.awt.*;
 /**
  * Provides a small DTO for keeping signal hover information together.
  */
-public class SignalHoverInfo implements Cloneable
+public class SignalHoverInfo
 {
   // CONSTANTS
 
@@ -36,21 +36,48 @@ public class SignalHoverInfo implements Cloneable
 
   // VARIABLES
 
-  private final long startTimestamp;
-  private final long endTimestamp;
-  private final Rectangle rectangle;
-  private final double timestamp;
-  private final double pulseWidth;
-  private final double totalPulseWidth;
   private final int channelIdx;
-  private final int sampleRate;
-  private final int middleXpos;
+  private final String channelLabel;
+  private final double refTime;
+  private final Long startTimestamp;
+  private final Long endTimestamp;
+  private final Rectangle rectangle;
+  private final Double highTime;
+  private final Double totalTime;
+  private final Integer midSamplePos;
 
   // CONSTRUCTORS
 
   /**
    * Creates a new SignalHoverInfo instance.
    * 
+   * @param aChannelIdx
+   *          the channel index on which the hover information is based;
+   * @param aChannelLabel
+   *          the label of the channel;
+   * @param aRefTime
+   *          the time stamp of this hover, based on the mouse position.
+   */
+  public SignalHoverInfo( final int aChannelIdx, final String aChannelLabel, final double aRefTime )
+  {
+    this.channelIdx = aChannelIdx;
+    this.channelLabel = aChannelLabel;
+    this.rectangle = new Rectangle();
+    this.startTimestamp = null;
+    this.endTimestamp = null;
+    this.refTime = aRefTime;
+    this.totalTime = null;
+    this.highTime = null;
+    this.midSamplePos = null;
+  }
+
+  /**
+   * Creates a new SignalHoverInfo instance.
+   * 
+   * @param aChannelIdx
+   *          the channel index on which the hover information is based;
+   * @param aChannelLabel
+   *          the label of the channel;
    * @param aRectangle
    *          the UI coordinates defining the hover on screen, cannot be
    *          <code>null</code>;
@@ -58,68 +85,31 @@ public class SignalHoverInfo implements Cloneable
    *          the time stamp that makes up the left side of the hover;
    * @param aEndTimestamp
    *          the time stamp that makes up the right side of the hover;
-   * @param aReferenceSample
-   *          the reference sample that is used to calculate the hover
-   *          information;
-   * @param aTimestamp
+   * @param aRefTime
    *          the time stamp of this hover, based on the mouse position;
-   * @param aMiddleXpos
-   *          the screen coordinate of the middle X position;
-   * @param aChannelIdx
-   *          the channel index on which the hover information is based;
-   * @param aSampleRate
-   *          the sample rate on which the timing information should be based.
+   * @param aHighTime
+   *          the time the signal is non-zero (high);
+   * @param aTotalTime
+   *          the total time of the signal (high + low);
+   * @param aMidSamplePos
+   *          the screen coordinate of the middle X position.
    */
-  public SignalHoverInfo( final Rectangle aRectangle, final long aStartTimestamp, final long aEndTimestamp,
-      final long aMiddleTimestamp, final long aTimestamp, final int aMiddleXpos, final int aChannelIdx,
-      final int aSampleRate )
+  public SignalHoverInfo( final int aChannelIdx, final String aChannelLabel, final Rectangle aRectangle,
+      final long aStartTimestamp, final long aEndTimestamp, final double aRefTime, final double aHighTime,
+      final double aTotalTime, final int aMidSamplePos )
   {
+    this.channelIdx = aChannelIdx;
+    this.channelLabel = aChannelLabel;
     this.rectangle = aRectangle;
-    this.middleXpos = aMiddleXpos;
     this.startTimestamp = aStartTimestamp;
     this.endTimestamp = aEndTimestamp;
-
-    this.totalPulseWidth = ( aEndTimestamp - aStartTimestamp ) / ( double )aSampleRate;
-
-    // Determine the smallest pulse width we're going to display...
-    double pw = this.totalPulseWidth;
-    if ( aMiddleTimestamp > 0 )
-    {
-      if ( ( aEndTimestamp - aMiddleTimestamp ) < ( aMiddleTimestamp - aStartTimestamp ) )
-      {
-        pw = ( aEndTimestamp - aMiddleTimestamp ) / ( double )aSampleRate;
-      }
-      else
-      {
-        pw = ( aMiddleTimestamp - aStartTimestamp ) / ( double )aSampleRate;
-      }
-    }
-
-    this.pulseWidth = pw;
-
-    this.timestamp = aTimestamp / ( TIMESTAMP_FACTOR * aSampleRate );
-    this.channelIdx = aChannelIdx;
-
-    this.sampleRate = aSampleRate;
+    this.refTime = aRefTime;
+    this.totalTime = aTotalTime;
+    this.highTime = aHighTime;
+    this.midSamplePos = aMidSamplePos;
   }
 
   // METHODS
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public SignalHoverInfo clone()
-  {
-    try
-    {
-      return ( SignalHoverInfo )super.clone();
-    }
-    catch ( CloneNotSupportedException exception )
-    {
-      throw new RuntimeException( exception );
-    }
-  }
 
   /**
    * {@inheritDoc}
@@ -131,7 +121,7 @@ public class SignalHoverInfo implements Cloneable
     {
       return true;
     }
-    if ( ( aObject == null ) || !( aObject instanceof SignalHoverInfo ) )
+    if ( ( aObject == null ) || ( getClass() != aObject.getClass() ) )
     {
       return false;
     }
@@ -142,14 +132,43 @@ public class SignalHoverInfo implements Cloneable
       return false;
     }
 
-    if ( this.rectangle == null )
+    if ( this.endTimestamp == null )
     {
-      if ( other.rectangle != null )
+      if ( other.endTimestamp != null )
       {
         return false;
       }
     }
-    else if ( !this.rectangle.equals( other.rectangle ) )
+    else if ( !this.endTimestamp.equals( other.endTimestamp ) )
+    {
+      return false;
+    }
+
+    if ( this.midSamplePos == null )
+    {
+      if ( other.midSamplePos != null )
+      {
+        return false;
+      }
+    }
+    else if ( !this.midSamplePos.equals( other.midSamplePos ) )
+    {
+      return false;
+    }
+
+    if ( Double.doubleToLongBits( this.refTime ) != Double.doubleToLongBits( other.refTime ) )
+    {
+      return false;
+    }
+
+    if ( this.startTimestamp == null )
+    {
+      if ( other.startTimestamp != null )
+      {
+        return false;
+      }
+    }
+    else if ( !this.startTimestamp.equals( other.startTimestamp ) )
     {
       return false;
     }
@@ -168,13 +187,113 @@ public class SignalHoverInfo implements Cloneable
   }
 
   /**
+   * Returns the channel index.
+   * 
+   * @return a channel index, >= 0, never <code>null</code>.
+   */
+  public String getChannelIndexAsString()
+  {
+    StringBuilder sb = new StringBuilder();
+    sb.append( this.channelIdx );
+    if ( this.channelLabel != null )
+    {
+      sb.append( ", " ).append( this.channelLabel );
+    }
+    return sb.toString();
+  }
+
+  /**
+   * Returns the duty cycle, or the ratio in which the signal is high to the
+   * total time of the signal.
+   * 
+   * @return a duty cycle, as percentage.
+   */
+  public Double getDutyCycle()
+  {
+    if ( ( this.highTime == null ) || ( this.totalTime == null ) )
+    {
+      return null;
+    }
+    return ( ( 100.0 * this.highTime ) / this.totalTime );
+  }
+
+  /**
+   * Returns the duty cycle as formatted String value.
+   * 
+   * @return a String representation, never <code>null</code>.
+   */
+  public String getDutyCycleAsString()
+  {
+    Double dc = getDutyCycle();
+    if ( dc != null )
+    {
+      return String.format( "%.1f %%", dc.doubleValue() );
+    }
+    return "-";
+  }
+
+  /**
    * Returns the current value of endTimestamp.
    * 
    * @return the endTimestamp
    */
-  public long getEndTimestamp()
+  public Long getEndTimestamp()
   {
     return this.endTimestamp;
+  }
+
+  /**
+   * Returns the time the signal is in a non-zero (or high) state.
+   * 
+   * @return a pulse high time, in seconds.
+   */
+  public Double getHighTime()
+  {
+    return this.highTime;
+  }
+
+  /**
+   * Returns the time the signal is in a non-zero (or high) state.
+   * 
+   * @return a pulse high time, in seconds.
+   */
+  public String getHighTimeAsString()
+  {
+    Double ht = getHighTime();
+    if ( ht != null )
+    {
+      return displayTime( ht.doubleValue() );
+    }
+    return "-";
+  }
+
+  /**
+   * Returns the time the signal is in a zero (or low) state.
+   * 
+   * @return a pulse low time, in seconds.
+   */
+  public Double getLowTime()
+  {
+    if ( ( this.totalTime == null ) || ( this.highTime == null ) )
+    {
+      return null;
+    }
+    return this.totalTime - this.highTime;
+  }
+
+  /**
+   * Returns the time the signal is in a non-zero (or high) state.
+   * 
+   * @return a pulse high time, in seconds.
+   */
+  public String getLowTimeAsString()
+  {
+    Double lt = getLowTime();
+    if ( lt != null )
+    {
+      return displayTime( lt.doubleValue() );
+    }
+    return "-";
   }
 
   /**
@@ -182,19 +301,9 @@ public class SignalHoverInfo implements Cloneable
    * 
    * @return the middleXpos
    */
-  public int getMiddleXpos()
+  public Integer getMidSamplePos()
   {
-    return this.middleXpos;
-  }
-
-  /**
-   * Returns the width of the (first half of) pulse, in seconds.
-   * 
-   * @return a pulse width, in seconds.
-   */
-  public double getPulseWidth()
-  {
-    return this.pulseWidth;
+    return this.midSamplePos;
   }
 
   /**
@@ -208,33 +317,58 @@ public class SignalHoverInfo implements Cloneable
   }
 
   /**
+   * Returns the time value where the mouse cursor is.
+   * 
+   * @return a reference time value, in seconds.
+   */
+  public double getReferenceTime()
+  {
+    return this.refTime;
+  }
+
+  /**
+   * Returns the time value where the mouse cursor is.
+   * 
+   * @return a reference time value, in seconds.
+   */
+  public String getReferenceTimeAsString()
+  {
+    return displayTime( getReferenceTime() );
+  }
+
+  /**
    * Returns the current value of startTimestamp.
    * 
    * @return the startTimestamp
    */
-  public long getStartTimestamp()
+  public Long getStartTimestamp()
   {
     return this.startTimestamp;
   }
 
   /**
-   * Returns the time value where the mouse cursor is, in seconds.
-   * 
-   * @return a time value, in seconds.
-   */
-  public double getTimeValue()
-  {
-    return this.timestamp;
-  }
-
-  /**
-   * Returns the width of the total pulse, in seconds.
+   * Returns the width of the total pulse.
    * 
    * @return a total pulse width, in seconds.
    */
-  public double getTotalPulseWidth()
+  public Double getTotalTime()
   {
-    return this.totalPulseWidth;
+    return this.totalTime;
+  }
+
+  /**
+   * Returns the width of the total pulse.
+   * 
+   * @return a total pulse width, in seconds.
+   */
+  public String getTotalTimeAsString()
+  {
+    Double tt = getTotalTime();
+    if ( tt != null )
+    {
+      return displayTime( tt.doubleValue() );
+    }
+    return "-";
   }
 
   /**
@@ -245,14 +379,13 @@ public class SignalHoverInfo implements Cloneable
   {
     final int prime = 31;
     int result = 1;
-    result = prime * result + this.channelIdx;
+    result = ( prime * result ) + this.channelIdx;
+    result = ( prime * result ) + ( ( this.endTimestamp == null ) ? 0 : this.endTimestamp.hashCode() );
+    result = ( prime * result ) + ( ( this.midSamplePos == null ) ? 0 : this.midSamplePos.hashCode() );
     long temp;
-    temp = Double.doubleToLongBits( this.totalPulseWidth );
-    result = prime * result + ( int )( temp ^ ( temp >>> 32 ) );
-    result = prime * result + ( ( this.rectangle == null ) ? 0 : this.rectangle.hashCode() );
-    result = prime * result + this.sampleRate;
-    temp = Double.doubleToLongBits( this.timestamp );
-    result = prime * result + ( int )( temp ^ ( temp >>> 32 ) );
+    temp = Double.doubleToLongBits( this.refTime );
+    result = ( prime * result ) + ( int )( temp ^ ( temp >>> 32 ) );
+    result = ( prime * result ) + ( ( this.startTimestamp == null ) ? 0 : this.startTimestamp.hashCode() );
     return result;
   }
 
@@ -263,25 +396,10 @@ public class SignalHoverInfo implements Cloneable
   {
     final StringBuilder sb = new StringBuilder();
     sb.append( "<html>" );
-    sb.append( "Width: " ).append( displayTime( getPulseWidth() ) ).append( "<br>" );
-    sb.append( "Period: " ).append( displayTime( getTotalPulseWidth() ) ).append( "<br>" );
-    sb.append( "Time: " ).append( displayTime( getTimeValue() ) ).append( "<br>" );
-    sb.append( "Channel: " ).append( getChannelIndex() );
+    sb.append( "Channel: " ).append( getChannelIndexAsString() ).append( "<br>" );
+    sb.append( "Time: " ).append( getReferenceTimeAsString() ).append( "<br>" );
+    sb.append( "Period: " ).append( getTotalTimeAsString() ).append( "<br>" );
     sb.append( "</html>" );
-    return sb.toString();
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public String toString()
-  {
-    final StringBuilder sb = new StringBuilder();
-    sb.append( "Width: " ).append( displayTime( getPulseWidth() ) ).append( '\n' );
-    sb.append( "Period: " ).append( displayTime( getTotalPulseWidth() ) ).append( '\n' );
-    sb.append( "Time: " ).append( displayTime( getTimeValue() ) ).append( '\n' );
-    sb.append( "Channel: " ).append( getChannelIndex() );
     return sb.toString();
   }
 }

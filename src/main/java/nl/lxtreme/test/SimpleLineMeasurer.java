@@ -62,7 +62,10 @@ public final class SimpleLineMeasurer implements Iterator<TextLayout>
    */
   public SimpleLineMeasurer( final String aText, final FontRenderContext aRenderContext )
   {
-    this.text = new AttributedString( aText ).getIterator();
+    final AttributedString attributedString = new AttributedString( aText );
+    attributedString.addAttribute( TextAttribute.LIGATURES, TextAttribute.LIGATURES_ON );
+
+    this.text = attributedString.getIterator();
     this.pos = this.text.getBeginIndex();
     this.limit = this.text.getEndIndex();
     this.measurer = new TextMeasurer( this.text, aRenderContext );
