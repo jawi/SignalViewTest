@@ -335,7 +335,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     private JComponent getDeepestComponentAt( final MouseEvent aEvent )
     {
       JComponent view = SwingUtils.getDeepestComponentAt( aEvent );
-      if ( !SwingUtilities.isDescendingFrom( view, getComponentRoot() ) )
+      if ( ( view != null ) && !SwingUtilities.isDescendingFrom( view, getComponentRoot() ) )
       {
         view = null;
       }

@@ -21,8 +21,8 @@ package nl.lxtreme.test.view;
 
 
 import java.awt.*;
+import java.beans.*;
 import java.util.logging.*;
-
 import javax.swing.*;
 import javax.swing.event.*;
 
@@ -51,6 +51,7 @@ public final class SignalDiagramController
   private final DragAndDropTargetController dndTargetController;
   private final SettingsProvider settingsProvider;
   private final EventListenerList eventListeners;
+  private final PropertyChangeSupport propertyChangeSupport;
 
   private SampleDataModel dataModel;
   private ScreenModel screenModel;
@@ -61,11 +62,10 @@ public final class SignalDiagramController
   /**
    * @param aModel
    */
-  public SignalDiagramController( final SampleDataModel aModel )
+  public SignalDiagramController()
   {
-    this.dataModel = aModel;
-    this.screenModel = new ScreenModel( aModel.getWidth() );
     this.settingsProvider = new SettingsProvider();
+    this.propertyChangeSupport = new PropertyChangeSupport( this );
 
     this.dndTargetController = new DragAndDropTargetController( this );
 
@@ -80,6 +80,14 @@ public final class SignalDiagramController
   public void addMeasurementListener( final IMeasurementListener aListener )
   {
     this.eventListeners.add( IMeasurementListener.class, aListener );
+  }
+
+  /**
+   * @param aListener
+   */
+  public void addPropertyChangeListener( final PropertyChangeListener aListener )
+  {
+    this.propertyChangeSupport.addPropertyChangeListener( aListener );
   }
 
   /**
@@ -688,6 +696,14 @@ public final class SignalDiagramController
   }
 
   /**
+   * @param aListener
+   */
+  public void removePropertyChangeListener( final PropertyChangeListener aListener )
+  {
+    this.propertyChangeSupport.removePropertyChangeListener( aListener );
+  }
+
+  /**
    * Scrolls the signal diagram component so that the given timestamp for the
    * given channel becomes visible.
    * 
@@ -729,6 +745,27 @@ public final class SignalDiagramController
   }
 
   /**
+   * Sets the data model for this controller.
+   * 
+   * @param aDataModel
+   *          the dataModel to set, cannot be <code>null</code>.
+   */
+  public void setDataModel( final SampleDataModel aDataModel )
+  {
+    if ( aDataModel == null )
+    {
+      throw new IllegalArgumentException();
+    }
+    SampleDataModel oldModel = this.dataModel;
+
+    this.dataModel = aDataModel;
+
+    this.screenModel = new ScreenModel( aDataModel.getWidth() );
+
+    this.propertyChangeSupport.firePropertyChange( "dataModel", oldModel, aDataModel );
+  }
+
+  /**
    * Enables or disables the measurement mode.
    * 
    * @param aEnabled
@@ -740,21 +777,6 @@ public final class SignalDiagramController
     this.screenModel.setMeasurementMode( aEnabled );
 
     getSignalView().handleMeasureEvent( null );
-  }
-
-  /**
-   * Sets the data model for this controller.
-   * 
-   * @param aDataModel
-   *          the dataModel to set, cannot be <code>null</code>.
-   */
-  public void setSampleDataModel( final SampleDataModel aDataModel )
-  {
-    if ( aDataModel == null )
-    {
-      throw new IllegalArgumentException();
-    }
-    this.dataModel = aDataModel;
   }
 
   /**

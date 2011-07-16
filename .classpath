@@ -4,8 +4,11 @@
 	<classpathentry kind="src" path="src/test/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
-	<classpathentry kind="lib" path="flexdock-0.5.3.jar" sourcepath="/flexdock-svn"/>
 	<classpathentry kind="lib" path="commons-logging-1.1.jar"/>
 	<classpathentry kind="lib" path="looks-2.2.2.jar"/>
+	<classpathentry kind="lib" path="mydoggy-api-1.5.0.jar"/>
+	<classpathentry kind="lib" path="mydoggy-plaf-1.5.0.jar"/>
+	<classpathentry kind="lib" path="mydoggy-res-1.5.0.jar"/>
+	<classpathentry kind="lib" path="TableLayout-20050920.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

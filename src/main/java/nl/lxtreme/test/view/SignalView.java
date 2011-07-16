@@ -24,6 +24,7 @@ import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.dnd.*;
 import java.awt.event.*;
+import java.awt.image.*;
 import java.util.logging.*;
 
 import javax.swing.*;
@@ -60,7 +61,7 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
     /**
      * @param aController
      */
-    public DragAndDropListener(final SignalDiagramController aController)
+    public DragAndDropListener( final SignalDiagramController aController )
     {
       this.controller = aController;
     }
@@ -71,26 +72,26 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
      * {@inheritDoc}
      */
     @Override
-    public void dragDropEnd(final DragSourceDropEvent aEvent)
+    public void dragDropEnd( final DragSourceDropEvent aEvent )
     {
-      if (!DragAndDropLock.releaseLock(this))
+      if ( !DragAndDropLock.releaseLock( this ) )
       {
         return;
       }
 
-      final GhostGlassPane glassPane = getGlassPane(aEvent.getDragSourceContext().getComponent());
+      final GhostGlassPane glassPane = getGlassPane( aEvent.getDragSourceContext().getComponent() );
 
       glassPane.clearDropPoint();
       glassPane.repaint();
 
-      glassPane.setVisible(false);
+      glassPane.setVisible( false );
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void dragEnter(final DragSourceDragEvent aEvent)
+    public void dragEnter( final DragSourceDragEvent aEvent )
     {
       // NO-op
     }
@@ -99,7 +100,7 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
      * {@inheritDoc}
      */
     @Override
-    public void dragExit(final DragSourceEvent aEvent)
+    public void dragExit( final DragSourceEvent aEvent )
     {
       // NO-op
     }
@@ -108,47 +109,57 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
      * {@inheritDoc}
      */
     @Override
-    public void dragGestureRecognized(final DragGestureEvent aEvent)
+    public void dragGestureRecognized( final DragGestureEvent aEvent )
     {
-      if (DragAndDropLock.isLocked(this) || !DragAndDropLock.obtainLock(this))
+      if ( DragAndDropLock.isLocked( this ) || !DragAndDropLock.obtainLock( this ) )
       {
         return;
       }
 
-      final Point coordinate = (Point) aEvent.getDragOrigin().clone();
+      final Point coordinate = ( Point )aEvent.getDragOrigin().clone();
 
-      int cursorIdx = this.controller.findCursor(coordinate);
-      if (!this.controller.isCursorMode() || (cursorIdx < 0))
+      int cursorIdx = this.controller.findCursor( coordinate );
+      if ( !this.controller.isCursorMode() || ( cursorIdx < 0 ) )
       {
-        DragAndDropLock.releaseLock(this);
+        DragAndDropLock.releaseLock( this );
         return;
       }
 
       final Component sourceComponent = aEvent.getComponent();
-      final GhostGlassPane glassPane = getGlassPane(sourceComponent);
+      final GhostGlassPane glassPane = getGlassPane( sourceComponent );
 
-      final Point dropPoint = createCursorDropPoint(coordinate, sourceComponent, glassPane);
+      final Point dropPoint = createCursorDropPoint( coordinate, sourceComponent, glassPane );
 
       // We're starting to drag a cursor...
       final Renderer renderer = new CursorFlagRenderer();
-      renderer.setContext(this.controller.getCursorFlagText(cursorIdx));
+      renderer.setContext( this.controller.getCursorFlagText( cursorIdx ) );
 
-      glassPane.setDropPoint(dropPoint, renderer);
-      glassPane.setVisible(true);
+      glassPane.setDropPoint( dropPoint, renderer );
+      glassPane.setVisible( true );
       glassPane.repaintPartially();
 
-      aEvent.startDrag(DragSource.DefaultMoveDrop, new CursorTransferable(cursorIdx));
+      // Use this version of the startDrag method as to avoid a potential error
+      // on MacOS: without the explicit image, it will try to create one from
+      // the component itself (= this SignalView), which can be as wide as
+      // Integer.MAX_VALUE pixels. This can cause a numeric overflow in the
+      // image routines causing a NegativeArraySizeException. By giving it
+      // explicitly an image, it will use that one instead. This is not a
+      // problem for this component, as the dragged cursor will be drawn on the
+      // glasspane, not by the DnD routines of Java...
+      final BufferedImage stubImage = new BufferedImage( 1, 1, BufferedImage.TYPE_INT_ARGB );
+      aEvent.startDrag( DragSource.DefaultMoveDrop, stubImage, new Point( 0, 0 ), new CursorTransferable( cursorIdx ),
+          null /* dsl */);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void dragMouseMoved(final DragSourceDragEvent aEvent)
+    public void dragMouseMoved( final DragSourceDragEvent aEvent )
     {
-      final Point coordinate = (Point) aEvent.getLocation();
+      final Point coordinate = aEvent.getLocation();
 
-      if (!DragAndDropLock.isLocked(this) || (coordinate == null))
+      if ( !DragAndDropLock.isLocked( this ) || ( coordinate == null ) )
       {
         return;
       }
@@ -156,28 +167,28 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
       final DragSourceContext dragSourceContext = aEvent.getDragSourceContext();
 
       final Component sourceComponent = dragSourceContext.getComponent();
-      final GhostGlassPane glassPane = getGlassPane(sourceComponent);
+      final GhostGlassPane glassPane = getGlassPane( sourceComponent );
 
-      SwingUtilities.convertPointFromScreen(coordinate, sourceComponent);
+      SwingUtilities.convertPointFromScreen( coordinate, sourceComponent );
 
-      final int cursorIdx = ((CursorTransferable) dragSourceContext.getTransferable()).getCursorIdx();
-      final long timestamp = this.controller.locationToTimestamp(coordinate);
-      final String cursorFlag = this.controller.getCursorFlagText(cursorIdx, timestamp);
+      final int cursorIdx = ( ( CursorTransferable )dragSourceContext.getTransferable() ).getCursorIdx();
+      final long timestamp = this.controller.locationToTimestamp( coordinate );
+      final String cursorFlag = this.controller.getCursorFlagText( cursorIdx, timestamp );
 
-      final Point dropPoint = createCursorDropPoint(coordinate, sourceComponent, glassPane);
+      final Point dropPoint = createCursorDropPoint( coordinate, sourceComponent, glassPane );
 
-      if (this.controller.isSnapModeEnabled())
+      if ( this.controller.isSnapModeEnabled() )
       {
-        Point cursorSnapPoint = createCursorSnapPoint(coordinate, sourceComponent, glassPane);
+        Point cursorSnapPoint = createCursorSnapPoint( coordinate, sourceComponent, glassPane );
 
-        glassPane.setRenderContext(cursorFlag, cursorSnapPoint);
+        glassPane.setRenderContext( cursorFlag, cursorSnapPoint );
       }
       else
       {
-        glassPane.setRenderContext(cursorFlag);
+        glassPane.setRenderContext( cursorFlag );
       }
 
-      glassPane.setDropPoint(dropPoint);
+      glassPane.setDropPoint( dropPoint );
       glassPane.repaintPartially();
     }
 
@@ -185,7 +196,7 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
      * {@inheritDoc}
      */
     @Override
-    public void dragOver(final DragSourceDragEvent aEvent)
+    public void dragOver( final DragSourceDragEvent aEvent )
     {
       // NO-op
     }
@@ -194,9 +205,9 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
      * {@inheritDoc}
      */
     @Override
-    public void dropActionChanged(final DragSourceDragEvent aEvent)
+    public void dropActionChanged( final DragSourceDragEvent aEvent )
     {
-      this.controller.setSnapModeEnabled(isSnapModeKeyEvent(aEvent));
+      this.controller.setSnapModeEnabled( isSnapModeKeyEvent( aEvent ) );
     }
 
     /**
@@ -204,11 +215,11 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
      * @param aTargetComponent
      * @return
      */
-    private Point createCursorDropPoint(final Point aPoint, final Component aSourceComponent,
-        final Component aTargetComponent)
+    private Point createCursorDropPoint( final Point aPoint, final Component aSourceComponent,
+        final Component aTargetComponent )
     {
-      final Point dropPoint = this.controller.getCursorDropPoint(aPoint);
-      return SwingUtilities.convertPoint(aSourceComponent, dropPoint, aTargetComponent);
+      final Point dropPoint = this.controller.getCursorDropPoint( aPoint );
+      return SwingUtilities.convertPoint( aSourceComponent, dropPoint, aTargetComponent );
     }
 
     /**
@@ -217,29 +228,29 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
      * @param aTargetComponent
      * @return
      */
-    private Point createCursorSnapPoint(final Point aPoint, final Component aSourceComponent,
-        final Component aTargetComponent)
+    private Point createCursorSnapPoint( final Point aPoint, final Component aSourceComponent,
+        final Component aTargetComponent )
     {
-      Point cursorSnapPoint = this.controller.getCursorSnapPoint(aPoint);
-      return SwingUtilities.convertPoint(aSourceComponent, cursorSnapPoint, aTargetComponent);
+      Point cursorSnapPoint = this.controller.getCursorSnapPoint( aPoint );
+      return SwingUtilities.convertPoint( aSourceComponent, cursorSnapPoint, aTargetComponent );
     }
 
     /**
      * @param aComponent
      * @return
      */
-    private GhostGlassPane getGlassPane(final Component aComponent)
+    private GhostGlassPane getGlassPane( final Component aComponent )
     {
-      return (GhostGlassPane) SwingUtilities.getRootPane(aComponent).getGlassPane();
+      return ( GhostGlassPane )SwingUtilities.getRootPane( aComponent ).getGlassPane();
     }
 
     /**
      * @param aEvent
      * @return
      */
-    private boolean isSnapModeKeyEvent(final DragSourceDragEvent aEvent)
+    private boolean isSnapModeKeyEvent( final DragSourceDragEvent aEvent )
     {
-      return (aEvent.getGestureModifiersEx() & InputEvent.SHIFT_DOWN_MASK) == InputEvent.SHIFT_DOWN_MASK;
+      return ( aEvent.getGestureModifiersEx() & InputEvent.SHIFT_DOWN_MASK ) == InputEvent.SHIFT_DOWN_MASK;
     }
   }
 
@@ -254,29 +265,29 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
      * {@inheritDoc}
      */
     @Override
-    public boolean acceptDrop(final SignalDiagramController aController, final DropTargetDropEvent aEvent)
+    public boolean acceptDrop( final SignalDiagramController aController, final DropTargetDropEvent aEvent )
     {
       try
       {
         final Transferable transferable = aEvent.getTransferable();
 
-        Integer cursorValue = (Integer) transferable.getTransferData(CursorTransferable.FLAVOR);
-        if (cursorValue != null)
+        Integer cursorValue = ( Integer )transferable.getTransferData( CursorTransferable.FLAVOR );
+        if ( cursorValue != null )
         {
-          aEvent.acceptDrop(DnDConstants.ACTION_MOVE);
+          aEvent.acceptDrop( DnDConstants.ACTION_MOVE );
 
           final int cursorIdx = cursorValue.intValue();
           final Point newLocation = aEvent.getLocation();
 
           // Move the cursor position...
-          aController.moveCursor(cursorIdx, newLocation);
+          aController.moveCursor( cursorIdx, newLocation );
 
           return true;
         }
       }
-      catch (Exception exception)
+      catch ( Exception exception )
       {
-        LOG.log(Level.WARNING, "Getting transfer data failed!", exception);
+        LOG.log( Level.WARNING, "Getting transfer data failed!", exception );
       }
 
       return false;
@@ -296,7 +307,7 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
 
   private static final long serialVersionUID = 1L;
 
-  private static final Logger LOG = Logger.getLogger(SignalView.class.getName());
+  private static final Logger LOG = Logger.getLogger( SignalView.class.getName() );
 
   // VARIABLES
 
@@ -313,26 +324,44 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
    * @param aController
    *          the controller to use, cannot be <code>null</code>.
    */
-  public SignalView(final SignalDiagramController aController)
+  public SignalView( final SignalDiagramController aController )
   {
-    super(aController);
+    super( aController );
 
-    this.model = new SignalViewModel(aController);
+    this.model = new SignalViewModel( aController );
 
     this.dropHandler = new DropHandler();
-    this.dndListener = new DragAndDropListener(aController);
+    this.dndListener = new DragAndDropListener( aController );
 
     final DragSource dragSource = DragSource.getDefaultDragSource();
-    dragSource.addDragSourceMotionListener(this.dndListener);
-    dragSource.addDragSourceListener(this.dndListener);
+    dragSource.addDragSourceMotionListener( this.dndListener );
+    dragSource.addDragSourceListener( this.dndListener );
 
-    this.dragGestureRecognizer = dragSource.createDefaultDragGestureRecognizer(this, DnDConstants.ACTION_MOVE,
-        this.dndListener);
+    this.dragGestureRecognizer = dragSource.createDefaultDragGestureRecognizer( this, DnDConstants.ACTION_MOVE,
+        this.dndListener );
 
     updateUI();
   }
 
   // METHODS
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void addNotify()
+  {
+    final DragAndDropTargetController dndTargetController = getDnDTargetController();
+    dndTargetController.addHandler( this.dropHandler );
+
+    setDropTarget( new DropTarget( this, dndTargetController ) );
+
+    updateUI();
+
+    addMeasurementListener( this );
+
+    super.addNotify();
+  }
 
   /**
    * Returns the current value of model.
@@ -348,50 +377,32 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
    * {@inheritDoc}
    */
   @Override
-  public void addNotify()
+  public void handleMeasureEvent( final SignalHoverInfo aEvent )
   {
-    final DragAndDropTargetController dndTargetController = getDnDTargetController();
-    dndTargetController.addHandler(this.dropHandler);
-
-    setDropTarget(new DropTarget(this, dndTargetController));
-
-    updateUI();
-
-    addMeasurementListener(this);
-
-    super.addNotify();
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public void handleMeasureEvent(final SignalHoverInfo aEvent)
-  {
-    final SignalUI signalUI = (SignalUI) this.ui;
+    final SignalUI signalUI = ( SignalUI )this.ui;
 
     final Rectangle oldRect = signalUI.getMeasurementRect();
 
-    signalUI.handleMeasureEvent(aEvent);
+    signalUI.handleMeasureEvent( aEvent );
 
     final Rectangle newRect = signalUI.getMeasurementRect();
 
-    if (aEvent != null)
+    if ( aEvent != null )
     {
-      setToolTipText(aEvent.toHtmlString());
+      setToolTipText( aEvent.toHtmlString() );
     }
     else
     {
-      setToolTipText(null);
+      setToolTipText( null );
     }
 
-    if (oldRect != null)
+    if ( oldRect != null )
     {
-      repaint(oldRect);
+      repaint( oldRect );
     }
-    if (newRect != null)
+    if ( newRect != null )
     {
-      repaint(newRect);
+      repaint( newRect );
     }
   }
 
@@ -401,7 +412,7 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
   @Override
   public boolean isListening()
   {
-    return ((SignalUI) this.ui).isListening();
+    return ( ( SignalUI )this.ui ).isListening();
   }
 
   /**
@@ -412,16 +423,16 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
   {
     final DragAndDropTargetController dndTargetController = getDnDTargetController();
 
-    dndTargetController.removeHandler(this.dropHandler);
+    dndTargetController.removeHandler( this.dropHandler );
 
     DragSource dragSource = this.dragGestureRecognizer.getDragSource();
-    if (dragSource != null)
+    if ( dragSource != null )
     {
-      dragSource.removeDragSourceListener(this.dndListener);
-      dragSource.removeDragSourceMotionListener(this.dndListener);
+      dragSource.removeDragSourceListener( this.dndListener );
+      dragSource.removeDragSourceMotionListener( this.dndListener );
     }
 
-    removeMeasurementListener(this);
+    removeMeasurementListener( this );
 
     super.removeNotify();
   }
@@ -436,6 +447,6 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
   @Override
   public final void updateUI()
   {
-    setUI(new SignalUI());
+    setUI( new SignalUI() );
   }
 }

@@ -30,8 +30,8 @@ import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.model.SampleDataModel.SampleDataProvider;
 import nl.lxtreme.test.view.*;
 
-import org.flexdock.docking.*;
-import org.flexdock.view.*;
+import org.noos.xing.mydoggy.*;
+import org.noos.xing.mydoggy.plaf.*;
 
 
 /**
@@ -256,30 +256,41 @@ public class Main
   }
 
   /**
+   * @param aWindow
+   */
+  private static void tweakToolWindow( final ToolWindow aWindow )
+  {
+    final ToolWindowType[] types = ToolWindowType.values();
+    for ( ToolWindowType type : types )
+    {
+      ToolWindowTypeDescriptor desc = aWindow.getTypeDescriptor( type );
+      desc.setHideRepresentativeButtonOnVisible( true );
+      desc.setIdVisibleOnTitleBar( false );
+    }
+    aWindow.setActive( true );
+  }
+
+  /**
    * 
    */
   private void build()
   {
-    DockingManager.setFloatingEnabled( true );
+    MyDoggyToolWindowManager wm = new MyDoggyToolWindowManager();
 
     final JScrollPane contentPane = new JScrollPane( this.signalDiagram );
     contentPane.setHorizontalScrollBarPolicy( ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS );
     contentPane.setVerticalScrollBarPolicy( ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED );
 
-    final View signalView = new View( "SDC", "Signal view", null );
-    signalView.setContentPane( contentPane );
+    wm.setMainContent( contentPane );
 
-    final View detailView = new View( "DV", "Signal details", null );
-    detailView.addAction( DockingConstants.PIN_ACTION );
-    detailView.setContentPane( this.signalDetails );
+    ToolWindow tw = wm.registerToolWindow( "Details", // Id
+        "Signal Details", // Title
+        null, // Icon
+        this.signalDetails, // Component
+        ToolWindowAnchor.RIGHT ); // Anchor
+    tweakToolWindow( tw );
 
-    Viewport port = new Viewport();
-    port.clear(); //
-
-    port.dock( signalView );
-    signalView.dock( detailView, DockingConstants.EAST_REGION, 0.825f );
-
-    this.mainFrame.setContentPane( port );
+    this.mainFrame.setContentPane( wm );
     this.mainFrame.setJMenuBar( this.menuBar );
 
     this.mainFrame.pack();
@@ -391,11 +402,11 @@ public class Main
     // AlternatingDataWithSpacesProvider() );
     final SampleDataModel model = new SampleDataModel( 512 * 1024, new RandomDataProvider() );
 
-    this.controller = new SignalDiagramController( model );
-
+    this.controller = new SignalDiagramController();
     this.signalDiagram = SignalDiagramComponent.create( this.controller );
-
     this.signalDetails = SignalDetailsView.create( this.controller );
+
+    this.controller.setDataModel( model );
   }
 
   /**
