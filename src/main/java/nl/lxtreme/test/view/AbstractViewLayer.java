@@ -22,7 +22,6 @@ package nl.lxtreme.test.view;
 
 import javax.swing.*;
 
-import nl.lxtreme.test.*;
 import nl.lxtreme.test.dnd.*;
 
 
@@ -44,23 +43,12 @@ abstract class AbstractViewLayer extends JComponent
   /**
    * Creates a new AbstractViewLayer instance.
    */
-  public AbstractViewLayer(final SignalDiagramController aController)
+  public AbstractViewLayer( final SignalDiagramController aController )
   {
     this.controller = aController;
   }
 
   // METHODS
-
-  /**
-   * Adds the given measurement listener to the list of listeners.
-   * 
-   * @param aListener
-   *          the listener to add, cannot be <code>null</code>.
-   */
-  public void addMeasurementListener(final IMeasurementListener aListener)
-  {
-    this.controller.addMeasurementListener(aListener);
-  }
 
   /**
    * Returns the drag-and-drop target controller of this component.
@@ -73,13 +61,13 @@ abstract class AbstractViewLayer extends JComponent
   }
 
   /**
-   * Removes the given measurement listener from the list of listeners.
+   * Returns the {@link SignalDiagramController} instance.
    * 
-   * @param aListener
-   *          the listener to remove, cannot be <code>null</code>.
+   * @return a {@link SignalDiagramController} instance, never <code>null</code>
+   *         .
    */
-  public void removeMeasurementListener(final IMeasurementListener aListener)
+  protected final SignalDiagramController getController()
   {
-    this.controller.removeMeasurementListener(aListener);
+    return this.controller;
   }
 }

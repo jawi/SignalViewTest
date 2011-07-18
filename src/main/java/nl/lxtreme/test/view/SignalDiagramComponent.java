@@ -426,10 +426,11 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
     this.controller = aController;
 
-    this.signalView = new SignalView( this.controller );
+    this.signalView = SignalView.create( this.controller );
 
     this.awtListener = new TransparentAWTListener( this.controller );
 
+    initComponent();
   }
 
   // METHODS
@@ -446,8 +447,9 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   public static SignalDiagramComponent create( final SignalDiagramController aController )
   {
     final SignalDiagramComponent result = new SignalDiagramComponent( aController );
-    result.initComponent();
+
     aController.setSignalDiagram( result );
+
     return result;
   }
 
@@ -619,10 +621,10 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
         return;
       }
 
-      final TimeLineView timelineView = new TimeLineView( this.controller );
+      final TimeLineView timelineView = TimeLineView.create( this.controller );
       scrollPane.setColumnHeaderView( timelineView );
 
-      final ChannelLabelsView channelLabelsView = new ChannelLabelsView( this.controller );
+      final ChannelLabelsView channelLabelsView = ChannelLabelsView.create( this.controller );
       scrollPane.setRowHeaderView( channelLabelsView );
 
       scrollPane.setCorner( ScrollPaneConstants.UPPER_LEADING_CORNER, new CornerView( this.controller ) );
@@ -760,6 +762,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   private void initComponent()
   {
     setLayout( new BorderLayout() );
+
     add( this.signalView, BorderLayout.CENTER );
   }
 

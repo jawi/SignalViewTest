@@ -25,7 +25,6 @@ import java.awt.*;
 import javax.swing.*;
 import javax.swing.plaf.*;
 
-import nl.lxtreme.test.*;
 import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.view.*;
 import nl.lxtreme.test.view.model.*;
@@ -36,7 +35,7 @@ import nl.lxtreme.test.view.renderer.Renderer;
 /**
  * 
  */
-public class SignalUI extends ComponentUI implements IMeasurementListener
+public class SignalUI extends ComponentUI
 {
   // CONSTANTS
 
@@ -70,7 +69,6 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
   /**
    * {@inheritDoc}
    */
-  @Override
   public void handleMeasureEvent( final SignalHoverInfo aEvent )
   {
     this.signalHoverInfo = aEvent;
@@ -89,7 +87,6 @@ public class SignalUI extends ComponentUI implements IMeasurementListener
   /**
    * {@inheritDoc}
    */
-  @Override
   public boolean isListening()
   {
     return this.listening;

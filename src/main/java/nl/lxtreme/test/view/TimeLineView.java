@@ -20,6 +20,7 @@
 package nl.lxtreme.test.view;
 
 
+import nl.lxtreme.test.*;
 import nl.lxtreme.test.view.laf.*;
 import nl.lxtreme.test.view.model.*;
 
@@ -28,7 +29,7 @@ import nl.lxtreme.test.view.model.*;
  * Provides a time line view, displaying ticks at regular intervals along with
  * timing information.
  */
-public class TimeLineView extends AbstractViewLayer
+public class TimeLineView extends AbstractViewLayer implements ICursorChangeListener
 {
   // CONSTANTS
 
@@ -36,7 +37,7 @@ public class TimeLineView extends AbstractViewLayer
 
   // VARIABLES
 
-  private TimeLineViewModel model;
+  private final TimeLineViewModel model;
 
   // CONSTRUCTORS
 
@@ -46,16 +47,78 @@ public class TimeLineView extends AbstractViewLayer
    * @param aController
    *          the controller to use, cannot be <code>null</code>.
    */
-  public TimeLineView(final SignalDiagramController aController)
+  private TimeLineView( final SignalDiagramController aController )
   {
-    super(aController);
+    super( aController );
 
-    this.model = new TimeLineViewModel(aController);
+    this.model = new TimeLineViewModel( aController );
 
     updateUI();
   }
 
   // METHODS
+
+  /**
+   * Factory method for creating new {@link TimeLineView} instances.
+   * 
+   * @param aController
+   *          the controller to use, cannot be <code>null</code>.
+   * @return a {@link TimeLineView} instance, never <code>null</code>.
+   */
+  public static TimeLineView create( final SignalDiagramController aController )
+  {
+    TimeLineView result = new TimeLineView( aController );
+    aController.addCursorChangeListener( result );
+    return result;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void cursorAdded( final int aCursorIdx, final long aCursorTimestamp )
+  {
+    // TODO this could be a bit smarter...
+    repaint( 25L );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void cursorChanged( final int aCursorIdx, final long aCursorTimestamp )
+  {
+    // TODO this could be a bit smarter...
+    repaint( 25L );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void cursorRemoved( final int aCursorIdx )
+  {
+    // TODO this could be a bit smarter...
+    repaint( 25L );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void cursorsInvisible()
+  {
+    repaint( 50L );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void cursorsVisible()
+  {
+    repaint( 50L );
+  }
 
   /**
    * @return
@@ -83,6 +146,6 @@ public class TimeLineView extends AbstractViewLayer
   @Override
   public final void updateUI()
   {
-    setUI(new TimeLineUI());
+    setUI( new TimeLineUI() );
   }
 }

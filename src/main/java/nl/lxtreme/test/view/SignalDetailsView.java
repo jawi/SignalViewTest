@@ -1,23 +1,36 @@
 /*
+ * OpenBench LogicSniffer / SUMP project 
  *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or (at
+ * your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin St, Fifth Floor, Boston, MA 02110, USA
+ *
+ * Copyright (C) 2010-2011 - J.W. Janssen, <http://www.lxtreme.nl>
  */
 package nl.lxtreme.test.view;
 
 
-import static nl.lxtreme.test.Utils.*;
 import java.awt.*;
-import java.beans.*;
 
 import javax.swing.*;
 
 import nl.lxtreme.test.*;
-import nl.lxtreme.test.model.*;
 
 
 /**
  * 
  */
-public class SignalDetailsView extends AbstractViewLayer implements IMeasurementListener, PropertyChangeListener
+public class SignalDetailsView extends AbstractViewLayer implements IMeasurementListener
 {
   // CONSTANTS
 
@@ -26,7 +39,6 @@ public class SignalDetailsView extends AbstractViewLayer implements IMeasurement
   // VARIABLES
 
   private final JLabel measureInfoField;
-  private final JLabel captureInfoField;
 
   // CONSTRUCTORS
 
@@ -40,10 +52,9 @@ public class SignalDetailsView extends AbstractViewLayer implements IMeasurement
   {
     super( aController );
 
-    this.measureInfoField = new JLabel( asText( ( SignalHoverInfo )null ) );
-    this.captureInfoField = new JLabel( asText( ( PropertyChangeEvent )null ) );
+    this.measureInfoField = new JLabel();
 
-    aController.addPropertyChangeListener( this );
+    initComponent();
   }
 
   // METHODS
@@ -59,11 +70,28 @@ public class SignalDetailsView extends AbstractViewLayer implements IMeasurement
   public static SignalDetailsView create( final SignalDiagramController aController )
   {
     final SignalDetailsView result = new SignalDetailsView( aController );
-    result.initComponent();
 
     aController.addMeasurementListener( result );
 
     return result;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void disableMeasurementMode()
+  {
+    updateViewText();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void enableMeasurementMode()
+  {
+    updateViewText();
   }
 
   /**
@@ -83,48 +111,6 @@ public class SignalDetailsView extends AbstractViewLayer implements IMeasurement
   public boolean isListening()
   {
     return true;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public void propertyChange( final PropertyChangeEvent aEvent )
-  {
-    final String propertyName = aEvent.getPropertyName();
-    if ( "dataModel".equals( propertyName ) )
-    {
-      this.captureInfoField.setText( asText( aEvent ) );
-      repaint( 50L );
-    }
-  }
-
-  /**
-   * @param aEvent
-   * @return
-   */
-  private String asText( final PropertyChangeEvent aEvent )
-  {
-    String sampleRate = "-", sampleCount = "-", totalWidth = "-";
-
-    if ( aEvent != null )
-    {
-      final SampleDataModel dataModel = ( SampleDataModel )aEvent.getNewValue();
-      final long[] timestamps = dataModel.getTimestamps();
-      final double end = ( timestamps[timestamps.length - 1] + 1 ) - timestamps[0];
-
-      sampleRate = displayFrequency( dataModel.getSampleRate() );
-      sampleCount = Integer.toString( dataModel.getSize() );
-      totalWidth = Utils.displayTime( end / dataModel.getSampleRate() );
-    }
-
-    final StringBuilder sb = new StringBuilder( "<html><table>" );
-    sb.append( "<tr><th align='right'>Sample rate:</th><td>" ).append( sampleRate ).append( "</td>" );
-    sb.append( "<tr><th align='right'>Sample count:</th><td>" ).append( sampleCount ).append( "</td>" );
-    sb.append( "<tr><th align='right'>Sample time:</th><td>" ).append( totalWidth ).append( "</td>" );
-    sb.append( "</table></html>" );
-
-    return sb.toString();
   }
 
   /**
@@ -167,6 +153,16 @@ public class SignalDetailsView extends AbstractViewLayer implements IMeasurement
     setLayout( new BorderLayout() );
 
     add( this.measureInfoField, BorderLayout.NORTH );
-    add( this.captureInfoField, BorderLayout.SOUTH );
+
+    updateViewText();
+  }
+
+  /**
+   * 
+   */
+  private void updateViewText()
+  {
+    this.measureInfoField.setText( asText( null ) );
+    repaint( 50L );
   }
 }

@@ -216,6 +216,8 @@ public class Main
   private SignalDiagramController controller;
   private SignalDiagramComponent signalDiagram;
   private SignalDetailsView signalDetails;
+  private CaptureDetailsView captureDetails;
+  private CursorDetailsView cursorDetails;
   private JFrame mainFrame;
   private JMenuBar menuBar;
 
@@ -260,6 +262,9 @@ public class Main
    */
   private static void tweakToolWindow( final ToolWindow aWindow )
   {
+    RepresentativeAnchorDescriptor<?> anchorDesc = aWindow.getRepresentativeAnchorDescriptor();
+    anchorDesc.setPreviewEnabled( false );
+
     final ToolWindowType[] types = ToolWindowType.values();
     for ( ToolWindowType type : types )
     {
@@ -267,7 +272,14 @@ public class Main
       desc.setHideRepresentativeButtonOnVisible( true );
       desc.setIdVisibleOnTitleBar( false );
     }
-    aWindow.setActive( true );
+
+    DockedTypeDescriptor desc = ( DockedTypeDescriptor )aWindow.getTypeDescriptor( ToolWindowType.DOCKED );
+    desc.setDockLength( 600 ); // XXX
+    desc.setHideRepresentativeButtonOnVisible( true );
+    desc.setPopupMenuEnabled( true );
+
+    aWindow.setAvailable( true );
+    aWindow.setHideOnZeroTabs( true );
   }
 
   /**
@@ -281,14 +293,36 @@ public class Main
     contentPane.setHorizontalScrollBarPolicy( ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS );
     contentPane.setVerticalScrollBarPolicy( ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED );
 
-    wm.setMainContent( contentPane );
+    ToolWindowGroup group = wm.getToolWindowGroup( "Main" );
+    group.setVisible( false );
+    group.setImplicit( true );
 
-    ToolWindow tw = wm.registerToolWindow( "Details", // Id
+    ToolWindow tw1 = wm.registerToolWindow( "Acquisition", // Id
+        "Acquisition Details", // Title
+        null, // Icon
+        this.captureDetails, // Component
+        ToolWindowAnchor.RIGHT ); // Anchor
+    group.addToolWindow( tw1 );
+
+    ToolWindow tw2 = wm.registerToolWindow( "Signal", // Id
         "Signal Details", // Title
         null, // Icon
         this.signalDetails, // Component
         ToolWindowAnchor.RIGHT ); // Anchor
-    tweakToolWindow( tw );
+    group.addToolWindow( tw2 );
+
+    ToolWindow tw3 = wm.registerToolWindow( "Cursor", // Id
+        "Cursor Details", // Title
+        null, // Icon
+        this.cursorDetails, // Component
+        ToolWindowAnchor.RIGHT ); // Anchor
+    group.addToolWindow( tw3 );
+
+    tweakToolWindow( tw1 );
+    tweakToolWindow( tw2 );
+    tweakToolWindow( tw3 );
+
+    wm.setMainContent( contentPane );
 
     this.mainFrame.setContentPane( wm );
     this.mainFrame.setJMenuBar( this.menuBar );
@@ -403,8 +437,11 @@ public class Main
     final SampleDataModel model = new SampleDataModel( 512 * 1024, new RandomDataProvider() );
 
     this.controller = new SignalDiagramController();
+
     this.signalDiagram = SignalDiagramComponent.create( this.controller );
     this.signalDetails = SignalDetailsView.create( this.controller );
+    this.captureDetails = CaptureDetailsView.create( this.controller );
+    this.cursorDetails = CursorDetailsView.create( this.controller );
 
     this.controller.setDataModel( model );
   }

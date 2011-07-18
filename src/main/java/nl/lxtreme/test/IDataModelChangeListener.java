@@ -15,42 +15,25 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St, Fifth Floor, Boston, MA 02110, USA
  *
- * Copyright (C) 2006-2010 Michael Poppitz, www.sump.org
- * Copyright (C) 2010 J.W. Janssen, www.lxtreme.nl
+ * Copyright (C) 2010-2011 - J.W. Janssen, <http://www.lxtreme.nl>
  */
 package nl.lxtreme.test;
 
 
 import java.util.*;
 
-import nl.lxtreme.test.view.*;
+import nl.lxtreme.test.model.*;
 
 
 /**
- * Provides a listener for measurement events.
+ * 
  */
-public interface IMeasurementListener extends EventListener
+public interface IDataModelChangeListener extends EventListener
 {
   // METHODS
 
   /**
-   * Called when measurement mode is disabled.
+   * @param aDataModel
    */
-  void disableMeasurementMode();
-
-  /**
-   * Called when measurement mode is enabled.
-   */
-  void enableMeasurementMode();
-
-  /**
-   * @param aEvent
-   */
-  void handleMeasureEvent( final SignalHoverInfo aEvent );
-
-  /**
-   * @return
-   */
-  boolean isListening();
-
+  void dataModelChanged( SampleDataModel aDataModel );
 }

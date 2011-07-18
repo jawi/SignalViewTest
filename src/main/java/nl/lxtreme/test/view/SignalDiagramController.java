@@ -21,8 +21,8 @@ package nl.lxtreme.test.view;
 
 
 import java.awt.*;
-import java.beans.*;
 import java.util.logging.*;
+
 import javax.swing.*;
 import javax.swing.event.*;
 
@@ -51,7 +51,6 @@ public final class SignalDiagramController
   private final DragAndDropTargetController dndTargetController;
   private final SettingsProvider settingsProvider;
   private final EventListenerList eventListeners;
-  private final PropertyChangeSupport propertyChangeSupport;
 
   private SampleDataModel dataModel;
   private ScreenModel screenModel;
@@ -65,7 +64,6 @@ public final class SignalDiagramController
   public SignalDiagramController()
   {
     this.settingsProvider = new SettingsProvider();
-    this.propertyChangeSupport = new PropertyChangeSupport( this );
 
     this.dndTargetController = new DragAndDropTargetController( this );
 
@@ -75,19 +73,36 @@ public final class SignalDiagramController
   // METHODS
 
   /**
+   * Adds a cursor change listener.
+   * 
    * @param aListener
+   *          the listener to add, cannot be <code>null</code>.
+   */
+  public void addCursorChangeListener( final ICursorChangeListener aListener )
+  {
+    this.eventListeners.add( ICursorChangeListener.class, aListener );
+  }
+
+  /**
+   * Adds a data model change listener.
+   * 
+   * @param aListener
+   *          the listener to add, cannot be <code>null</code>.
+   */
+  public void addDataModelChangeListener( final IDataModelChangeListener aListener )
+  {
+    this.eventListeners.add( IDataModelChangeListener.class, aListener );
+  }
+
+  /**
+   * Adds a measurement listener.
+   * 
+   * @param aListener
+   *          the listener to add, cannot be <code>null</code>.
    */
   public void addMeasurementListener( final IMeasurementListener aListener )
   {
     this.eventListeners.add( IMeasurementListener.class, aListener );
-  }
-
-  /**
-   * @param aListener
-   */
-  public void addPropertyChangeListener( final PropertyChangeListener aListener )
-  {
-    this.propertyChangeSupport.addPropertyChangeListener( aListener );
   }
 
   /**
@@ -183,6 +198,15 @@ public final class SignalDiagramController
     }
 
     return this.screenModel.toVirtualRow( row );
+  }
+
+  /**
+   * @param aCursorIdx
+   * @return
+   */
+  public Long getCursor( final int aCursorIdx )
+  {
+    return this.dataModel.getCursor( aCursorIdx );
   }
 
   /**
@@ -453,7 +477,11 @@ public final class SignalDiagramController
    */
   public boolean isCursorDefined( final int aCursorIdx )
   {
-    return getDataModel().getCursor( aCursorIdx ) != null;
+    if ( this.dataModel == null )
+    {
+      return false;
+    }
+    return this.dataModel.getCursor( aCursorIdx ) != null;
   }
 
   /**
@@ -615,9 +643,20 @@ public final class SignalDiagramController
     final Point point = getCursorDropPoint( convertToPointOf( view, aPoint ) );
     final long newCursorTimestamp = locationToTimestamp( point );
 
-    this.dataModel.setCursor( aCursorIdx, Long.valueOf( newCursorTimestamp ) );
+    Long oldValue = this.dataModel.setCursor( aCursorIdx, Long.valueOf( newCursorTimestamp ) );
 
-    repaintLater( view, getTimeLineView() );
+    ICursorChangeListener[] listeners = this.eventListeners.getListeners( ICursorChangeListener.class );
+    for ( ICursorChangeListener listener : listeners )
+    {
+      if ( oldValue == null )
+      {
+        listener.cursorAdded( aCursorIdx, newCursorTimestamp );
+      }
+      else
+      {
+        listener.cursorChanged( aCursorIdx, newCursorTimestamp );
+      }
+    }
   }
 
   /**
@@ -681,7 +720,33 @@ public final class SignalDiagramController
 
     this.dataModel.setCursor( aCursorIdx, null );
 
-    repaintLater( getSignalView(), getTimeLineView() );
+    ICursorChangeListener[] listeners = this.eventListeners.getListeners( ICursorChangeListener.class );
+    for ( ICursorChangeListener listener : listeners )
+    {
+      listener.cursorRemoved( aCursorIdx );
+    }
+  }
+
+  /**
+   * Removes a cursor change listener.
+   * 
+   * @param aListener
+   *          the listener to remove, cannot be <code>null</code>.
+   */
+  public void removeCursorChangeListener( final ICursorChangeListener aListener )
+  {
+    this.eventListeners.remove( ICursorChangeListener.class, aListener );
+  }
+
+  /**
+   * Removes a data model change listener.
+   * 
+   * @param aListener
+   *          the listener to remove, cannot be <code>null</code>.
+   */
+  public void removeDataModelChangeListener( final IDataModelChangeListener aListener )
+  {
+    this.eventListeners.remove( IDataModelChangeListener.class, aListener );
   }
 
   /**
@@ -693,14 +758,6 @@ public final class SignalDiagramController
   public void removeMeasurementListener( final IMeasurementListener aListener )
   {
     this.eventListeners.remove( IMeasurementListener.class, aListener );
-  }
-
-  /**
-   * @param aListener
-   */
-  public void removePropertyChangeListener( final PropertyChangeListener aListener )
-  {
-    this.propertyChangeSupport.removePropertyChangeListener( aListener );
   }
 
   /**
@@ -741,7 +798,18 @@ public final class SignalDiagramController
   {
     this.screenModel.setCursorMode( aVisible );
 
-    repaintLater( getSignalView(), getTimeLineView() );
+    ICursorChangeListener[] listeners = this.eventListeners.getListeners( ICursorChangeListener.class );
+    for ( ICursorChangeListener listener : listeners )
+    {
+      if ( aVisible )
+      {
+        listener.cursorsVisible();
+      }
+      else
+      {
+        listener.cursorsInvisible();
+      }
+    }
   }
 
   /**
@@ -756,13 +824,16 @@ public final class SignalDiagramController
     {
       throw new IllegalArgumentException();
     }
-    SampleDataModel oldModel = this.dataModel;
 
     this.dataModel = aDataModel;
 
     this.screenModel = new ScreenModel( aDataModel.getWidth() );
 
-    this.propertyChangeSupport.firePropertyChange( "dataModel", oldModel, aDataModel );
+    final IDataModelChangeListener[] listeners = this.eventListeners.getListeners( IDataModelChangeListener.class );
+    for ( IDataModelChangeListener listener : listeners )
+    {
+      listener.dataModelChanged( aDataModel );
+    }
   }
 
   /**
@@ -776,7 +847,18 @@ public final class SignalDiagramController
   {
     this.screenModel.setMeasurementMode( aEnabled );
 
-    getSignalView().handleMeasureEvent( null );
+    IMeasurementListener[] listeners = this.eventListeners.getListeners( IMeasurementListener.class );
+    for ( IMeasurementListener listener : listeners )
+    {
+      if ( aEnabled )
+      {
+        listener.enableMeasurementMode();
+      }
+      else
+      {
+        listener.disableMeasurementMode();
+      }
+    }
   }
 
   /**
@@ -963,20 +1045,6 @@ public final class SignalDiagramController
   }
 
   /**
-   * @return
-   */
-  private TimeLineView getTimeLineView()
-  {
-    JScrollPane scrollPane = ( JScrollPane )SwingUtilities.getAncestorOfClass( JScrollPane.class, this.signalDiagram );
-    if ( scrollPane == null )
-    {
-      throw new IllegalStateException();
-    }
-
-    return ( TimeLineView )scrollPane.getColumnHeader().getView();
-  }
-
-  /**
    * Returns the dimensions of the visible view, taking care of viewports (such
    * as used in {@link JScrollPane}).
    * 
@@ -999,36 +1067,6 @@ public final class SignalDiagramController
     }
 
     return rect.getSize();
-  }
-
-  /**
-   * @param aComponentList
-   */
-  private void repaintLater( final Component... aComponentList )
-  {
-    final Runnable runner = new Runnable()
-    {
-      @Override
-      public void run()
-      {
-        for ( Component comp : aComponentList )
-        {
-          safeRepaint( comp );
-        }
-      }
-
-      /**
-       * @param aComponent
-       */
-      private void safeRepaint( final Component aComponent )
-      {
-        if ( aComponent != null )
-        {
-          aComponent.repaint();
-        }
-      }
-    };
-    SwingUtilities.invokeLater( runner );
   }
 
   /**

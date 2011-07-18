@@ -41,7 +41,7 @@ import nl.lxtreme.test.view.renderer.Renderer;
 /**
  * Provides a view for the signal data as individual channels.
  */
-public class SignalView extends AbstractViewLayer implements IMeasurementListener
+public class SignalView extends AbstractViewLayer implements IMeasurementListener, ICursorChangeListener
 {
   // INNER TYPES
 
@@ -319,12 +319,12 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
   // CONSTRUCTORS
 
   /**
-   * Creates a new ModelView instance.
+   * Creates a new {@link SignalView} instance.
    * 
    * @param aController
    *          the controller to use, cannot be <code>null</code>.
    */
-  public SignalView( final SignalDiagramController aController )
+  private SignalView( final SignalDiagramController aController )
   {
     super( aController );
 
@@ -346,6 +346,23 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
   // METHODS
 
   /**
+   * Creates a new {@link SignalView} instance.
+   * 
+   * @param aController
+   *          the controller to use, cannot be <code>null</code>.
+   * @return a {@link SignalView} instance, never <code>null</code>.
+   */
+  public static SignalView create( final SignalDiagramController aController )
+  {
+    SignalView result = new SignalView( aController );
+
+    aController.addCursorChangeListener( result );
+    aController.addMeasurementListener( result );
+
+    return result;
+  }
+
+  /**
    * {@inheritDoc}
    */
   @Override
@@ -358,9 +375,76 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
 
     updateUI();
 
-    addMeasurementListener( this );
-
     super.addNotify();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void cursorAdded( final int aCursorIdx, final long aCursorTimestamp )
+  {
+    // TODO Auto-generated method stub
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void cursorChanged( final int aCursorIdx, final long aCursorTimestamp )
+  {
+    // TODO Auto-generated method stub
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void cursorRemoved( final int aCursorIdx )
+  {
+    // TODO Auto-generated method stub
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void cursorsInvisible()
+  {
+    // TODO Auto-generated method stub
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void cursorsVisible()
+  {
+    // TODO Auto-generated method stub
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void disableMeasurementMode()
+  {
+    final SignalUI signalUI = ( SignalUI )this.ui;
+
+    final Rectangle oldRect = signalUI.getMeasurementRect();
+    if ( oldRect != null )
+    {
+      repaint( oldRect );
+    }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void enableMeasurementMode()
+  {
+    // Nothing special to do for this event...
   }
 
   /**
@@ -431,8 +515,6 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
       dragSource.removeDragSourceListener( this.dndListener );
       dragSource.removeDragSourceMotionListener( this.dndListener );
     }
-
-    removeMeasurementListener( this );
 
     super.removeNotify();
   }

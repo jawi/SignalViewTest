@@ -15,42 +15,46 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin St, Fifth Floor, Boston, MA 02110, USA
  *
- * Copyright (C) 2006-2010 Michael Poppitz, www.sump.org
- * Copyright (C) 2010 J.W. Janssen, www.lxtreme.nl
+ * Copyright (C) 2010-2011 - J.W. Janssen, <http://www.lxtreme.nl>
  */
 package nl.lxtreme.test;
 
 
 import java.util.*;
 
-import nl.lxtreme.test.view.*;
-
 
 /**
- * Provides a listener for measurement events.
+ * Denotes a listener for cursor changes, such as setting, removing or moving
+ * cursors.
  */
-public interface IMeasurementListener extends EventListener
+public interface ICursorChangeListener extends EventListener
 {
   // METHODS
 
   /**
-   * Called when measurement mode is disabled.
+   * @param aCursorIdx
+   * @param aCursorTimestamp
    */
-  void disableMeasurementMode();
+  void cursorAdded( int aCursorIdx, long aCursorTimestamp );
 
   /**
-   * Called when measurement mode is enabled.
+   * @param aCursorIdx
+   * @param aCursorTimestamp
    */
-  void enableMeasurementMode();
+  void cursorChanged( int aCursorIdx, long aCursorTimestamp );
 
   /**
-   * @param aEvent
+   * @param aCursorIdx
    */
-  void handleMeasureEvent( final SignalHoverInfo aEvent );
+  void cursorRemoved( int aCursorIdx );
 
   /**
-   * @return
+   * Called when the cursors are made invisible.
    */
-  boolean isListening();
+  void cursorsInvisible();
 
+  /**
+   * Called when the cursors are made visible.
+   */
+  void cursorsVisible();
 }
