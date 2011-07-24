@@ -20,6 +20,7 @@
 package nl.lxtreme.test.view;
 
 
+import static nl.lxtreme.test.Utils.*;
 import java.awt.*;
 
 import javax.swing.*;
@@ -155,25 +156,36 @@ public class CursorDetailsView extends AbstractViewLayer implements ICursorChang
    */
   private String asText()
   {
-    final StringBuilder sb = new StringBuilder( "<html><table>" );
-
     final SignalDiagramController ctrl = getController();
 
+    final SampleDataModel dataModel = ctrl.getDataModel();
+    if ( dataModel == null )
+    {
+      return "";
+    }
+
+    final ScreenModel screenModel = ctrl.getScreenModel();
+
+    final Font labelFont = UIManager.getFont( "Label.font" );
+
+    final StringBuilder sb = new StringBuilder( "<html><head><style>td, th {" );
+    sb.append( toCssString( labelFont ) ).append( "} th { font-weight: bold; }</style></head><body><table>" );
     for ( int c = 0; c < SampleDataModel.MAX_CURSORS; c++ )
     {
-      if ( !ctrl.isCursorDefined( c ) )
+      Long cursor = dataModel.getCursor( c );
+      if ( cursor == null )
       {
         continue;
       }
 
       sb.append( "<tr><th align='right'>" );
-      sb.append( c + 1 ).append( ":" );
-      sb.append( "</th><td align='right'><a href='#" ).append( ctrl.getCursor( c ) ).append( "'>" );
-      sb.append( ctrl.getCursorFlagText( c ) );
+      sb.append( c + 1 ).append( ":" ).append( "</th>" );
+      sb.append( "<td>" ).append( screenModel.getCursorLabel( c ) ).append( "</td>" );
+      sb.append( "<td align='right'><a href='#" ).append( cursor.longValue() ).append( "'>" );
+      sb.append( displayTime( cursor.doubleValue() / dataModel.getSampleRate() ) );
       sb.append( "</a></td></tr>" );
     }
-
-    sb.append( "</table></html>" );
+    sb.append( "</table></body></html>" );
     return sb.toString();
   }
 

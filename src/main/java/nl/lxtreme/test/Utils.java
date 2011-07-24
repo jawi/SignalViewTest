@@ -207,7 +207,7 @@ public final class Utils
   {
     final float[] rgb = aColor.getRGBComponents( null );
     // (0.299*R + 0.587*G + 0.114*B)
-    return ( 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2] );
+    return ( ( 0.299 * rgb[0] ) + ( 0.587 * rgb[1] ) + ( 0.114 * rgb[2] ) );
   }
 
   /**
@@ -222,7 +222,7 @@ public final class Utils
   {
     final float[] rgb = aColor.getRGBComponents( null );
     // (0.2126*R) + (0.7152*G) + (0.0722*B)
-    return ( 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2] );
+    return ( ( 0.2126 * rgb[0] ) + ( 0.7152 * rgb[1] ) + ( 0.0722 * rgb[2] ) );
   }
 
   /**
@@ -240,9 +240,9 @@ public final class Utils
   {
     final int width = 127;
     final int center = 128;
-    final int red = ( int )( Math.sin( aFreq1 * aI + aPhase1 ) * width + center );
-    final int grn = ( int )( Math.sin( aFreq2 * aI + aPhase2 ) * width + center );
-    final int blu = ( int )( Math.sin( aFreq3 * aI + aPhase3 ) * width + center );
+    final int red = ( int )( ( Math.sin( ( aFreq1 * aI ) + aPhase1 ) * width ) + center );
+    final int grn = ( int )( ( Math.sin( ( aFreq2 * aI ) + aPhase2 ) * width ) + center );
+    final int blu = ( int )( ( Math.sin( ( aFreq3 * aI ) + aPhase3 ) * width ) + center );
     return new Color( red, grn, blu );
   }
 
@@ -251,7 +251,7 @@ public final class Utils
    */
   public static void makeColorPalette( final Color[] aResult, final int aSteps )
   {
-    final double freq = 2 * Math.PI / aSteps;
+    final double freq = ( 2 * Math.PI ) / aSteps;
     for ( int i = 0; i < aResult.length; i++ )
     {
       // aResult[i] = makeColorGradient( i, freq, freq, freq, 2.7, 2.4, 4.6 );
@@ -302,6 +302,37 @@ public final class Utils
     {
       throw new IllegalArgumentException( "Given string does NOT represent a valid color!" );
     }
+  }
+
+  /**
+   * Converts a given font to a font-clause that can be used in a CSS-file.
+   * 
+   * @param aFont
+   *          the font convert to CSS, cannot be <code>null</code>.
+   * @return a CSS clause for the given font, never <code>null</code>.
+   * @throws IllegalArgumentException
+   *           in case the given font was <code>null</code>.
+   */
+  public static String toCssString( final Font aFont )
+  {
+    if ( aFont == null )
+    {
+      throw new IllegalArgumentException( "Parameter Font cannot be null!" );
+    }
+
+    final StringBuilder sb = new StringBuilder( "font: " );
+    if ( aFont.isItalic() )
+    {
+      sb.append( "italic " );
+    }
+    if ( aFont.isBold() )
+    {
+      sb.append( "bold " );
+    }
+    sb.append( aFont.getSize() ).append( "pt " );
+    sb.append( '"' ).append( aFont.getFontName() ).append( "\", " );
+    sb.append('"').append( aFont.getPSName() ).append( "\";" );
+    return sb.toString();
   }
 
   /**
