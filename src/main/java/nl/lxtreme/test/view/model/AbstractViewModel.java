@@ -23,6 +23,7 @@ package nl.lxtreme.test.view.model;
 import java.awt.*;
 
 import nl.lxtreme.test.*;
+import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.view.*;
 
 
@@ -43,7 +44,7 @@ abstract class AbstractViewModel
    * @param aController
    *          the diagram controller to use, cannot be <code>null</code>.
    */
-  protected AbstractViewModel(final SignalDiagramController aController)
+  protected AbstractViewModel( final SignalDiagramController aController )
   {
     this.controller = aController;
   }
@@ -54,9 +55,9 @@ abstract class AbstractViewModel
    * @param aChannelIndex
    * @return
    */
-  public Color getChannelColor(final int aChannelIndex)
+  public Color getChannelColor( final int aChannelIndex )
   {
-    return this.controller.getScreenModel().getChannelColor(aChannelIndex);
+    return getScreenModel().getChannelColor( aChannelIndex );
   }
 
   /**
@@ -64,7 +65,7 @@ abstract class AbstractViewModel
    */
   public int getChannelHeight()
   {
-    return this.controller.getScreenModel().getChannelHeight();
+    return getScreenModel().getChannelHeight();
   }
 
   /**
@@ -74,9 +75,9 @@ abstract class AbstractViewModel
    *          the index of the cursor to retrieve the color for.
    * @return a cursor color, never <code>null</code>.
    */
-  public Color getCursorColor(final int aCursorIndex)
+  public Color getCursorColor( final int aCursorIndex )
   {
-    return this.controller.getScreenModel().getCursorColor(aCursorIndex);
+    return getScreenModel().getCursorColor( aCursorIndex );
   }
 
   /**
@@ -86,22 +87,40 @@ abstract class AbstractViewModel
    *          the index of the cursor to retrieve the flag text for.
    * @return a cursor flag text, never <code>null</code>.
    */
-  public String getCursorFlagText(final int aCursorIndex)
+  public String getCursorFlagText( final int aCursorIndex )
   {
-    return this.controller.getCursorFlagText(aCursorIndex);
+    return this.controller.getCursorFlagText( aCursorIndex );
   }
 
   /**
-   * Returns the screen coordinate the cursor with a given index should be
-   * displayed.
+   * Returns the X-position of the cursor with the given index, for displaying
+   * purposes on screen.
+   * 
+   * @param aCursorIdx
+   *          the index of the cursor to retrieve the X-position for, >= 0.
+   * @return the screen X-position of the cursor with the given index, or -1 if
+   *         the cursor is not defined.
+   */
+  public int getCursorScreenCoordinate( final int aCursorIndex )
+  {
+    Long cursorTimestamp = getDataModel().getCursor( aCursorIndex );
+    if ( cursorTimestamp == null )
+    {
+      return -1;
+    }
+    return this.controller.timestampToCoordinate( cursorTimestamp.longValue() );
+  }
+
+  /**
+   * Returns the text color for a cursor with the given index.
    * 
    * @param aCursorIndex
-   *          the index of the cursor to retrieve the screen coordinate for.
-   * @return a screen X-position.
+   *          the index of the cursor to retrieve the color for.
+   * @return a cursor text color, never <code>null</code>.
    */
-  public int getCursorScreenCoordinate(final int aCursorIndex)
+  public Color getCursorTextColor( final int aCursorIndex )
   {
-    return this.controller.getCursorScreenCoordinate(aCursorIndex);
+    return Utils.getContrastColor( getCursorColor( aCursorIndex ) );
   }
 
   /**
@@ -109,17 +128,7 @@ abstract class AbstractViewModel
    */
   public int getDataWidth()
   {
-    return this.controller.getDataModel().getWidth();
-  }
-
-  /**
-   * Returns the current settings provider.
-   * 
-   * @return the settings provider, never <code>null</code>.
-   */
-  public final IUserInterfaceSettingsProvider getSettingsProvider()
-  {
-    return this.controller.getSettingsProvider();
+    return getDataModel().getWidth();
   }
 
   /**
@@ -127,7 +136,7 @@ abstract class AbstractViewModel
    */
   public int getSignalHeight()
   {
-    return this.controller.getScreenModel().getSignalHeight();
+    return getScreenModel().getSignalHeight();
   }
 
   /**
@@ -137,7 +146,7 @@ abstract class AbstractViewModel
    */
   public int getSignalOffset()
   {
-    return this.controller.getScreenModel().getSignalOffset();
+    return getScreenModel().getSignalOffset();
   }
 
   /**
@@ -147,16 +156,16 @@ abstract class AbstractViewModel
    */
   public double getZoomFactor()
   {
-    return this.controller.getScreenModel().getZoomFactor();
+    return getScreenModel().getZoomFactor();
   }
 
   /**
    * @param aB
    * @return
    */
-  public boolean isChannelVisible(final int aChannelIndex)
+  public boolean isChannelVisible( final int aChannelIndex )
   {
-    return this.controller.getScreenModel().isChannelVisible(aChannelIndex);
+    return getScreenModel().isChannelVisible( aChannelIndex );
   }
 
   /**
@@ -179,9 +188,24 @@ abstract class AbstractViewModel
    * @param aB
    * @return
    */
-  public int toVirtualRow(final int aChannelIndex)
+  public int toVirtualRow( final int aChannelIndex )
   {
-    return this.controller.getScreenModel().toVirtualRow(aChannelIndex);
+    return getScreenModel().toVirtualRow( aChannelIndex );
   }
 
+  /**
+   * @return
+   */
+  protected final SampleDataModel getDataModel()
+  {
+    return this.controller.getDataModel();
+  }
+
+  /**
+   * @return
+   */
+  protected final ScreenModel getScreenModel()
+  {
+    return this.controller.getScreenModel();
+  }
 }

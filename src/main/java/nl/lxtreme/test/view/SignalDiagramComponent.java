@@ -48,10 +48,20 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
    */
   final class TransparentAWTListener implements AWTEventListener
   {
+    // CONSTANTS
+
+    /**
+     * Defines the area around each cursor in which the mouse cursor should be
+     * in before the cursor can be moved.
+     */
+    private static final int CURSOR_SENSITIVITY_AREA = 4;
+
     // VARIABLES
 
-    private JComponent compRoot;
     private final SignalDiagramController controller;
+    private JComponent compRoot;
+
+    private volatile int movingCursor;
 
     // CONSTRUCTORS
 
@@ -98,6 +108,10 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
         else if ( id == MouseEvent.MOUSE_MOVED )
         {
           mouseMoved( event );
+        }
+        else if ( id == MouseEvent.MOUSE_DRAGGED )
+        {
+          mouseDragged( event );
         }
       }
       else if ( aEvent instanceof KeyEvent )
@@ -254,16 +268,33 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     /**
      * {@inheritDoc}
      */
-    protected void mouseMoved( final MouseEvent aEvent )
+    protected void mouseDragged( final MouseEvent aEvent )
     {
       final JComponent view = getDeepestComponentAt( aEvent );
-      if ( ( view == null ) || !SwingUtilities.isDescendingFrom( view, SignalDiagramComponent.this ) )
+      if ( ( view == null ) || !SwingUtilities.isDescendingFrom( view, getComponentRoot() ) )
       {
         return;
       }
 
-      view.getRootPane().setCursor( DEFAULT );
-      view.setCursor( null );
+      if ( this.controller.isCursorMode() && ( this.movingCursor >= 0 ) )
+      {
+        final Point point = SwingUtilities.convertPoint( aEvent.getComponent(), aEvent.getPoint(), view );
+        this.controller.moveCursor( this.movingCursor, point );
+      }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void mouseMoved( final MouseEvent aEvent )
+    {
+      final JComponent view = getDeepestComponentAt( aEvent );
+      if ( ( view == null ) || !SwingUtilities.isDescendingFrom( view, getComponentRoot() ) )
+      {
+        return;
+      }
+
+      view.setCursor( DEFAULT );
 
       if ( this.controller.isCursorMode() || this.controller.isMeasurementMode() )
       {
@@ -276,9 +307,9 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
           view.setCursor( signalHover == null ? DEFAULT : CURSOR_HOVER );
         }
 
-        if ( this.controller.isCursorMode() && ( this.controller.findCursor( point ) >= 0 ) )
+        if ( this.controller.isCursorMode() && ( findCursor( point ) >= 0 ) )
         {
-          view.getRootPane().setCursor( CURSOR_MOVE_CURSOR );
+          view.setCursor( CURSOR_MOVE_CURSOR );
         }
       }
     }
@@ -288,9 +319,17 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
      */
     protected void mousePressed( final MouseEvent aEvent )
     {
+      final JComponent view = getDeepestComponentAt( aEvent );
+
       if ( !handlePopupTrigger( aEvent ) )
       {
-        // NO-op
+        if ( ( view != null ) && this.controller.isCursorMode() )
+        {
+          final Point point = SwingUtilities.convertPoint( aEvent.getComponent(), aEvent.getPoint(), view );
+
+          int hoveredCursor = findCursor( point );
+          this.movingCursor = hoveredCursor >= 0 ? hoveredCursor : -1;
+        }
       }
     }
 
@@ -299,17 +338,36 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
      */
     protected void mouseReleased( final MouseEvent aEvent )
     {
-      if ( !handlePopupTrigger( aEvent ) )
-      {
-        // NO-op
-      }
-
       final JComponent view = getDeepestComponentAt( aEvent );
       if ( view != null )
       {
-        view.getRootPane().setCursor( DEFAULT );
-        view.setCursor( null );
+        view.setCursor( DEFAULT );
       }
+
+      if ( !handlePopupTrigger( aEvent ) )
+      {
+        if ( this.controller.isCursorMode() )
+        {
+          this.movingCursor = -1;
+        }
+      }
+    }
+
+    /**
+     * Finds the cursor under the given point.
+     * 
+     * @param aPoint
+     *          the coordinate of the potential cursor, cannot be
+     *          <code>null</code>.
+     * @return the cursor index, or -1 if not found.
+     */
+    private int findCursor( final Point aPoint )
+    {
+      final long refIdx = this.controller.locationToTimestamp( aPoint );
+
+      final double snapArea = CURSOR_SENSITIVITY_AREA / this.controller.getScreenModel().getZoomFactor();
+
+      return this.controller.getDataModel().findCursor( refIdx, snapArea );
     }
 
     /**
@@ -351,7 +409,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       if ( popupTrigger )
       {
         final JComponent view = getDeepestComponentAt( aEvent );
-        if ( ( view == null ) || !SwingUtilities.isDescendingFrom( view, SignalDiagramComponent.this ) )
+        if ( ( view == null ) || !SwingUtilities.isDescendingFrom( view, getComponentRoot() ) )
         {
           return false;
         }
@@ -359,7 +417,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
         final JPopupMenu contextMenu;
 
-        int cursor = this.controller.findCursor( point );
+        int cursor = findCursor( point );
         if ( cursor >= 0 )
         {
           // Hovering above existing cursor, show remove menu...
@@ -391,6 +449,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       }
       return popupTrigger;
     }
+
   }
 
   // CONSTANTS

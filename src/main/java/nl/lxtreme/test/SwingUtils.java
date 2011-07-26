@@ -23,6 +23,7 @@ package nl.lxtreme.test;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.*;
 
 import javax.swing.*;
 
@@ -32,6 +33,11 @@ import javax.swing.*;
  */
 public final class SwingUtils
 {
+  // CONSTANTS
+
+  /** The key for the default label font as used by Swing. */
+  public static final String SWING_LABEL_FONT = "Label.font";
+
   // METHODS
 
   /**
@@ -85,4 +91,55 @@ public final class SwingUtils
     return getDeepestComponentAt( aEvent.getComponent(), aEvent.getX(), aEvent.getY() );
   }
 
+  /**
+   * Returns the string width for a given {@link Font} and string.
+   * 
+   * @param aFont
+   *          the font to create the string width;
+   * @param aString
+   *          the string to get the width for.
+   * @return a string width, >= 0.
+   */
+  public static int getStringWidth( final Font aFont, final String aString )
+  {
+    final FontMetrics frc = createFontMetrics( aFont );
+    return SwingUtilities.computeStringWidth( frc, aString );
+  }
+
+  /**
+   * Returns the string width for the default label font and string.
+   * 
+   * @param aString
+   *          the string to get the width for.
+   * @return a string width, >= 0.
+   */
+  public static int getStringWidth( final String aString )
+  {
+    return getStringWidth( UIManager.getFont( SWING_LABEL_FONT ), aString );
+  }
+
+  /**
+   * Creates (in a rather clumsy way) the font metrics for a given {@link Font}.
+   * 
+   * @param aFont
+   *          the font instance to create the font metrics for, cannot be
+   *          <code>null</code>.
+   * @return a font metrics, never <code>null</code>.
+   */
+  private static FontMetrics createFontMetrics( final Font aFont )
+  {
+    BufferedImage img = new BufferedImage( 1, 1, BufferedImage.TYPE_INT_ARGB );
+    Graphics canvas = img.getGraphics();
+
+    try
+    {
+      return canvas.getFontMetrics( aFont );
+    }
+    finally
+    {
+      canvas.dispose();
+      canvas = null;
+      img = null;
+    }
+  }
 }

@@ -22,6 +22,8 @@ package nl.lxtreme.test.view.model;
 
 import java.awt.*;
 
+import javax.swing.*;
+
 import nl.lxtreme.test.view.*;
 import nl.lxtreme.test.view.laf.*;
 
@@ -43,9 +45,9 @@ public class CornerViewModel extends AbstractViewModel
    * @param aController
    *          the diagram controller to use, cannot be <code>null</code>.
    */
-  public CornerViewModel(SignalDiagramController aController)
+  public CornerViewModel( final SignalDiagramController aController )
   {
-    super(aController);
+    super( aController );
   }
 
   // METHODS
@@ -57,8 +59,8 @@ public class CornerViewModel extends AbstractViewModel
    */
   public Color getBackgroundColor()
   {
-    Color color = getSettingsProvider().getColor(COMPONENT_BACKGROUND_COLOR);
-    if (color == null)
+    Color color = UIManager.getColor( COMPONENT_BACKGROUND_COLOR );
+    if ( color == null )
     {
       color = LafDefaults.DEFAULT_BACKGROUND_COLOR;
     }

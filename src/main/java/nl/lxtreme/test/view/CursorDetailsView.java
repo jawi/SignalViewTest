@@ -21,6 +21,7 @@ package nl.lxtreme.test.view;
 
 
 import static nl.lxtreme.test.Utils.*;
+
 import java.awt.*;
 
 import javax.swing.*;
@@ -92,7 +93,7 @@ public class CursorDetailsView extends AbstractViewLayer implements ICursorChang
    * {@inheritDoc}
    */
   @Override
-  public void cursorChanged( final int aCursorIdx, final long aCursorTimestamp )
+  public void cursorChanged( final int aCursorIdx, final long aOldCursorTimestamp, final long aNewCursorTimestamp )
   {
     updateViewText();
   }
@@ -101,7 +102,7 @@ public class CursorDetailsView extends AbstractViewLayer implements ICursorChang
    * {@inheritDoc}
    */
   @Override
-  public void cursorRemoved( final int aCursorIdx )
+  public void cursorRemoved( final int aCursorIdx, final long aOldCursorTimestamp )
   {
     updateViewText();
   }
@@ -159,14 +160,14 @@ public class CursorDetailsView extends AbstractViewLayer implements ICursorChang
     final SignalDiagramController ctrl = getController();
 
     final SampleDataModel dataModel = ctrl.getDataModel();
-    if ( dataModel == null )
+    if ( ( dataModel == null ) || !ctrl.isCursorMode() )
     {
       return "";
     }
 
     final ScreenModel screenModel = ctrl.getScreenModel();
 
-    final Font labelFont = UIManager.getFont( "Label.font" );
+    final Font labelFont = UIManager.getFont( SwingUtils.SWING_LABEL_FONT );
 
     final StringBuilder sb = new StringBuilder( "<html><head><style>td, th {" );
     sb.append( toCssString( labelFont ) ).append( "} th { font-weight: bold; }</style></head><body><table>" );

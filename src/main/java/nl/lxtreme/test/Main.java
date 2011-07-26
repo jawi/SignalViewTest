@@ -260,7 +260,7 @@ public class Main
   /**
    * @param aWindow
    */
-  private static void tweakToolWindow( final ToolWindow aWindow )
+  private static void tweakToolWindow( final ToolWindow aWindow, final int aDockLength )
   {
     RepresentativeAnchorDescriptor<?> anchorDesc = aWindow.getRepresentativeAnchorDescriptor();
     anchorDesc.setPreviewEnabled( false );
@@ -274,7 +274,7 @@ public class Main
     }
 
     DockedTypeDescriptor desc = ( DockedTypeDescriptor )aWindow.getTypeDescriptor( ToolWindowType.DOCKED );
-    desc.setDockLength( 600 ); // XXX
+    desc.setDockLength( aDockLength );
     desc.setHideRepresentativeButtonOnVisible( true );
     desc.setPopupMenuEnabled( true );
 
@@ -287,12 +287,7 @@ public class Main
    */
   private void build()
   {
-    MyDoggyToolWindowManager wm = new MyDoggyToolWindowManager();
-
-    final JScrollPane contentPane = new JScrollPane( this.signalDiagram );
-    contentPane.setHorizontalScrollBarPolicy( ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS );
-    contentPane.setVerticalScrollBarPolicy( ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED );
-
+    final MyDoggyToolWindowManager wm = new MyDoggyToolWindowManager();
     ToolWindowGroup group = wm.getToolWindowGroup( "Main" );
     group.setVisible( false );
     group.setImplicit( true );
@@ -318,9 +313,17 @@ public class Main
         ToolWindowAnchor.RIGHT ); // Anchor
     group.addToolWindow( tw3 );
 
-    tweakToolWindow( tw1 );
-    tweakToolWindow( tw2 );
-    tweakToolWindow( tw3 );
+    // Given string is based on some experiments with the best "default"
+    // length...
+    final int dockLength = SwingUtils.getStringWidth( "XXXXXXXXXXXXXXXXXXXXXXXXXXXX" );
+
+    tweakToolWindow( tw1, dockLength );
+    tweakToolWindow( tw2, dockLength );
+    tweakToolWindow( tw3, dockLength );
+
+    final JScrollPane contentPane = new JScrollPane( this.signalDiagram );
+    contentPane.setHorizontalScrollBarPolicy( ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS );
+    contentPane.setVerticalScrollBarPolicy( ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED );
 
     wm.setMainContent( contentPane );
 

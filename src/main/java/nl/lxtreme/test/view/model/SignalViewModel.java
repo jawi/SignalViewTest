@@ -22,6 +22,8 @@ package nl.lxtreme.test.view.model;
 
 import java.awt.*;
 
+import javax.swing.*;
+
 import nl.lxtreme.test.view.*;
 import nl.lxtreme.test.view.laf.*;
 
@@ -45,9 +47,9 @@ public class SignalViewModel extends AbstractViewModel
    * @param aController
    *          the diagram controller to use, cannot be <code>null</code>.
    */
-  public SignalViewModel(final SignalDiagramController aController)
+  public SignalViewModel( final SignalDiagramController aController )
   {
-    super(aController);
+    super( aController );
   }
 
   // METHODS
@@ -59,8 +61,8 @@ public class SignalViewModel extends AbstractViewModel
    */
   public Color getBackgroundColor()
   {
-    Color color = getSettingsProvider().getColor(COMPONENT_BACKGROUND_COLOR);
-    if (color == null)
+    Color color = UIManager.getColor( COMPONENT_BACKGROUND_COLOR );
+    if ( color == null )
     {
       color = LafDefaults.DEFAULT_BACKGROUND_COLOR;
     }
@@ -74,27 +76,12 @@ public class SignalViewModel extends AbstractViewModel
    */
   public Font getCursorFlagFont()
   {
-    Font font = getSettingsProvider().getFont(CURSOR_FLAG_FONT);
-    if (font == null)
+    Font font = UIManager.getFont( CURSOR_FLAG_FONT );
+    if ( font == null )
     {
       font = LafDefaults.DEFAULT_CURSOR_FLAG_FONT;
     }
     return font;
-  }
-
-  /**
-   * Returns the color for the arrows shown in the measurement view.
-   * 
-   * @return a color, never <code>null</code>.
-   */
-  public Color getMeasurementArrowColor()
-  {
-    Color color = getSettingsProvider().getColor(MEASUREMENT_ARROW_COLOR);
-    if (color == null)
-    {
-      color = LafDefaults.DEFAULT_ARROW_COLOR;
-    }
-    return color;
   }
 
   /**
@@ -109,22 +96,37 @@ public class SignalViewModel extends AbstractViewModel
    * @param aClip
    * @return
    */
-  public int getEndIndex(final Rectangle aClip, final int aLength)
+  public int getEndIndex( final Rectangle aClip, final int aLength )
   {
-    final Point location = new Point(aClip.x + aClip.width, 0);
-    int index = this.controller.locationToSampleIndex(location);
-    return Math.min(index + 1, aLength - 1);
+    final Point location = new Point( aClip.x + aClip.width, 0 );
+    int index = this.controller.locationToSampleIndex( location );
+    return Math.min( index + 1, aLength - 1 );
+  }
+
+  /**
+   * Returns the color for the arrows shown in the measurement view.
+   * 
+   * @return a color, never <code>null</code>.
+   */
+  public Color getMeasurementArrowColor()
+  {
+    Color color = UIManager.getColor( MEASUREMENT_ARROW_COLOR );
+    if ( color == null )
+    {
+      color = LafDefaults.DEFAULT_ARROW_COLOR;
+    }
+    return color;
   }
 
   /**
    * @param aClip
    * @return
    */
-  public int getStartIndex(final Rectangle aClip)
+  public int getStartIndex( final Rectangle aClip )
   {
     final Point location = aClip.getLocation();
-    int index = this.controller.locationToSampleIndex(location);
-    return Math.max(index - 1, 0);
+    int index = this.controller.locationToSampleIndex( location );
+    return Math.max( index - 1, 0 );
   }
 
   /**

@@ -34,40 +34,27 @@ abstract class BaseRenderer implements Renderer
    * {@inheritDoc}
    */
   @Override
-  public final Rectangle render(final Graphics2D aCanvas, final int aXpos, final int aYpos)
+  public final Rectangle render( final Graphics2D aCanvas, final int aXpos, final int aYpos )
   {
     // Move the canvas to the requested position...
-    aCanvas.translate(aXpos, aYpos);
-    translate(aXpos, aYpos);
+    aCanvas.translate( aXpos, aYpos );
 
     try
     {
-      final Rectangle result = render(aCanvas);
-      if (result != null)
+      final Rectangle result = render( aCanvas );
+      if ( result != null )
       {
         // the resulting rectangle is in the (0, 0) coordinate space, while
         // we're actually at the (aXpos, aYpos) coordinate space...
-        result.translate(aXpos, aYpos);
+        result.translate( aXpos, aYpos );
       }
       return result;
     }
     finally
     {
       // Move the canvas back from the requested position...
-      aCanvas.translate(-aXpos, -aYpos);
-      translate(-aXpos, -aYpos);
+      aCanvas.translate( -aXpos, -aYpos );
     }
-  }
-
-  /**
-   * Allows implementations to perform specific translations.
-   * 
-   * @param aXpos
-   * @param aYpos
-   */
-  protected void translate(int aXpos, int aYpos)
-  {
-    // NO-op
   }
 
   /**
@@ -86,5 +73,5 @@ abstract class BaseRenderer implements Renderer
    *         given canvas, or <code>null</code> if the entire canvas is
    *         affected.
    */
-  protected abstract Rectangle render(final Graphics2D aCanvas);
+  protected abstract Rectangle render( final Graphics2D aCanvas );
 }

@@ -20,6 +20,10 @@
 package nl.lxtreme.test.view;
 
 
+import static nl.lxtreme.test.SwingUtils.*;
+
+import java.awt.*;
+
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.view.laf.*;
 import nl.lxtreme.test.view.model.*;
@@ -78,28 +82,47 @@ public class TimeLineView extends AbstractViewLayer implements ICursorChangeList
   @Override
   public void cursorAdded( final int aCursorIdx, final long aCursorTimestamp )
   {
-    // TODO this could be a bit smarter...
-    repaint( 25L );
+    final int visibleHeight = getVisibleRect().height;
+
+    final SignalDiagramController ctrl = getController();
+
+    int cursorPos = ctrl.timestampToCoordinate( aCursorTimestamp );
+    int width = getStringWidth( ctrl.getCursorFlagText( aCursorIdx, aCursorTimestamp ) ) + 10;
+    repaint( cursorPos - 1, 0, width, visibleHeight );
   }
 
   /**
    * {@inheritDoc}
    */
   @Override
-  public void cursorChanged( final int aCursorIdx, final long aCursorTimestamp )
+  public void cursorChanged( final int aCursorIdx, final long aOldCursorTimestamp, final long aNewCursorTimestamp )
   {
-    // TODO this could be a bit smarter...
-    repaint( 25L );
+    final int visibleHeight = getVisibleRect().height;
+
+    final SignalDiagramController ctrl = getController();
+
+    int cursorPos = ctrl.timestampToCoordinate( aOldCursorTimestamp );
+    int width = getStringWidth( ctrl.getCursorFlagText( aCursorIdx, aOldCursorTimestamp ) ) + 10;
+    repaint( new Rectangle( cursorPos - 1, 0, width, visibleHeight ) );
+
+    cursorPos = ctrl.timestampToCoordinate( aNewCursorTimestamp );
+    width = getStringWidth( ctrl.getCursorFlagText( aCursorIdx, aNewCursorTimestamp ) ) + 10;
+    repaint( 0, cursorPos - 1, 0, width, visibleHeight );
   }
 
   /**
    * {@inheritDoc}
    */
   @Override
-  public void cursorRemoved( final int aCursorIdx )
+  public void cursorRemoved( final int aCursorIdx, final long aOldCursorTimestamp )
   {
-    // TODO this could be a bit smarter...
-    repaint( 25L );
+    final int visibleHeight = getVisibleRect().height;
+
+    final SignalDiagramController ctrl = getController();
+
+    int cursorPos = ctrl.timestampToCoordinate( aOldCursorTimestamp );
+    int width = getStringWidth( ctrl.getCursorFlagText( aCursorIdx, aOldCursorTimestamp ) ) + 10;
+    repaint( cursorPos - 1, 0, width, visibleHeight );
   }
 
   /**

@@ -22,6 +22,8 @@ package nl.lxtreme.test.view.model;
 
 import java.awt.*;
 
+import javax.swing.*;
+
 import nl.lxtreme.test.view.*;
 import nl.lxtreme.test.view.laf.*;
 
@@ -56,13 +58,64 @@ public class ChannelLabelsViewModel extends AbstractViewModel
   // METHODS
 
   /**
+   * Determines the channel row corresponding to the given X,Y-coordinate.
+   * <p>
+   * This method returns the <em>virtual</em> channel row, not the actual
+   * channel row.
+   * </p>
+   * 
+   * @param aCoordinate
+   *          the coordinate to return the channel row for, cannot be
+   *          <code>null</code>.
+   * @return a channel row index (>= 0), or -1 if the point is nowhere near a
+   *         channel row.
+   */
+  public int findChannelRow( final Point aCoordinate )
+  {
+    final int dataWidth = getDataWidth();
+    final int channelHeight = getChannelHeight();
+
+    final int row = ( int )( aCoordinate.y / ( double )channelHeight );
+    if ( ( row < 0 ) || ( row >= dataWidth ) )
+    {
+      return -1;
+    }
+
+    return row;
+  }
+
+  /**
+   * Determines the channel row corresponding to the given X,Y-coordinate.
+   * <p>
+   * This method returns the <em>virtual</em> channel row, not the actual
+   * channel row.
+   * </p>
+   * 
+   * @param aCoordinate
+   *          the coordinate to return the channel row for, cannot be
+   *          <code>null</code>.
+   * @return a channel row index (>= 0), or -1 if the point is nowhere near a
+   *         channel row.
+   */
+  public int findVirtualChannelRow( final Point aCoordinate )
+  {
+    final int row = findChannelRow( aCoordinate );
+    if ( row < 0 )
+    {
+      return -1;
+    }
+
+    return getScreenModel().toVirtualRow( row );
+  }
+
+  /**
    * Returns the background color for the channel labels.
    * 
    * @return a color, never <code>null</code>.
    */
   public Color getBackgroundColor()
   {
-    Color color = getSettingsProvider().getColor( COMPONENT_BACKGROUND_COLOR );
+    Color color = UIManager.getColor( COMPONENT_BACKGROUND_COLOR );
     if ( color == null )
     {
       color = LafDefaults.DEFAULT_BACKGROUND_COLOR;
@@ -79,7 +132,7 @@ public class ChannelLabelsViewModel extends AbstractViewModel
    */
   public String getChannelLabel( final int aChannelIndex )
   {
-    return this.controller.getScreenModel().getChannelLabel( aChannelIndex );
+    return getScreenModel().getChannelLabel( aChannelIndex );
   }
 
   /**
@@ -89,7 +142,7 @@ public class ChannelLabelsViewModel extends AbstractViewModel
    */
   public Color getLabelBackgroundColor()
   {
-    Color color = getSettingsProvider().getColor( LABEL_BACKGROUND_COLOR );
+    Color color = UIManager.getColor( LABEL_BACKGROUND_COLOR );
     if ( color == null )
     {
       color = LafDefaults.DEFAULT_CHANNEL_BACKGROUND_COLOR;
@@ -104,7 +157,7 @@ public class ChannelLabelsViewModel extends AbstractViewModel
    */
   public Font getLabelFont()
   {
-    Font font = getSettingsProvider().getFont( LABEL_FONT );
+    Font font = UIManager.getFont( LABEL_FONT );
     if ( font == null )
     {
       font = LafDefaults.DEFAULT_CHANNEL_LABEL_FONT;
@@ -119,7 +172,7 @@ public class ChannelLabelsViewModel extends AbstractViewModel
    */
   public Color getLabelForegroundColor()
   {
-    Color color = getSettingsProvider().getColor( LABEL_FOREGROUND_COLOR );
+    Color color = UIManager.getColor( LABEL_FOREGROUND_COLOR );
     if ( color == null )
     {
       color = LafDefaults.DEFAULT_CHANNEL_LABEL_COLOR;
@@ -134,11 +187,25 @@ public class ChannelLabelsViewModel extends AbstractViewModel
    */
   public int getMinimalWidth()
   {
-    Integer minWidth = getSettingsProvider().getInteger( COMPONENT_MINIMAL_WIDTH );
-    if ( minWidth == null )
+    int minWidth = UIManager.getInt( COMPONENT_MINIMAL_WIDTH );
+    if ( minWidth <= 0 )
     {
       return LafDefaults.DEFAULT_MINIMAL_CHANNEL_WIDTH;
     }
-    return minWidth.intValue();
+    return minWidth;
+  }
+
+  /**
+   * Moves a given channel row to another position.
+   * 
+   * @param aMovedRow
+   *          the virtual (screen) row index that is to be moved;
+   * @param aInsertRow
+   *          the virtual (screen) row index that the moved row is moved to.
+   */
+  public void moveChannelRows( final int aMovedRow, final int aInsertRow )
+  {
+    // Update the screen model...
+    getScreenModel().moveRows( aMovedRow, aInsertRow );
   }
 }

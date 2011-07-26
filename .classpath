@@ -6,9 +6,9 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="lib" path="commons-logging-1.1.jar"/>
 	<classpathentry kind="lib" path="looks-2.2.2.jar"/>
-	<classpathentry kind="lib" path="mydoggy-api-1.5.0.jar"/>
-	<classpathentry kind="lib" path="mydoggy-plaf-1.5.0.jar"/>
-	<classpathentry kind="lib" path="mydoggy-res-1.5.0.jar"/>
+	<classpathentry kind="lib" path="mydoggy-api-1.5.0.jar" sourcepath="D:/Quintor/tools/mydoggy-1.5.0-b1/mydoggy-api/src/main/java"/>
+	<classpathentry kind="lib" path="mydoggy-plaf-1.5.0.jar" sourcepath="D:/Quintor/tools/mydoggy-1.5.0-b1/mydoggy-plaf/src/main/java"/>
+	<classpathentry kind="lib" path="mydoggy-res-1.5.0.jar" sourcepath="D:/Quintor/tools/mydoggy-1.5.0-b1/mydoggy-res/src/main/resources"/>
 	<classpathentry kind="lib" path="TableLayout-20050920.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

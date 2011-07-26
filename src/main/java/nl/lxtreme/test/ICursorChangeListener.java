@@ -39,14 +39,15 @@ public interface ICursorChangeListener extends EventListener
 
   /**
    * @param aCursorIdx
-   * @param aCursorTimestamp
+   * @param aOldCursorTimestamp
+   * @param aNewCursorTimestamp
    */
-  void cursorChanged( int aCursorIdx, long aCursorTimestamp );
+  void cursorChanged( int aCursorIdx, long aOldCursorTimestamp, long aNewCursorTimestamp );
 
   /**
    * @param aCursorIdx
    */
-  void cursorRemoved( int aCursorIdx );
+  void cursorRemoved( int aCursorIdx, long aOldCursorTimestamp );
 
   /**
    * Called when the cursors are made invisible.

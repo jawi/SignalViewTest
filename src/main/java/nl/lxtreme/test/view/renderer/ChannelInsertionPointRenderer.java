@@ -34,6 +34,10 @@ public class ChannelInsertionPointRenderer extends BaseRenderer
 
   private static final Stroke INDICATOR_STROKE = new BasicStroke( 1.5f );
 
+  // VARIABLES
+
+  private String channelLabel;
+
   // METHODS
 
   /**
@@ -42,7 +46,11 @@ public class ChannelInsertionPointRenderer extends BaseRenderer
   @Override
   public void setContext( final Object... aParameters )
   {
-    // NO-op
+    if ( ( aParameters == null ) || ( aParameters.length < 1 ) )
+    {
+      throw new IllegalArgumentException( "Expected one String parameter!" );
+    }
+    this.channelLabel = ( String )aParameters[0];
   }
 
   /**
@@ -51,10 +59,17 @@ public class ChannelInsertionPointRenderer extends BaseRenderer
   @Override
   protected Rectangle render( final Graphics2D aCanvas )
   {
+    final FontMetrics fm = aCanvas.getFontMetrics();
+
+    int yPos = fm.getLeading() + fm.getAscent();
+    int labelWidth = fm.stringWidth( this.channelLabel );
+
+    aCanvas.drawString( this.channelLabel, CHANNEL_ROW_MARKER_WIDTH - labelWidth, yPos );
+
     aCanvas.setStroke( INDICATOR_STROKE );
 
     aCanvas.drawLine( 0, 0, CHANNEL_ROW_MARKER_WIDTH, 0 );
 
-    return new Rectangle( -2, -2, CHANNEL_ROW_MARKER_WIDTH + 4, 4 );
+    return new Rectangle( -2, -2, Math.max( labelWidth, CHANNEL_ROW_MARKER_WIDTH ) + 4, yPos + 4 );
   }
 }

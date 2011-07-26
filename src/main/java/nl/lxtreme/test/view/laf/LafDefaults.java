@@ -4,6 +4,8 @@
 package nl.lxtreme.test.view.laf;
 
 
+import static nl.lxtreme.test.SwingUtils.*;
+
 import java.awt.*;
 
 import javax.swing.*;
@@ -28,7 +30,7 @@ public final class LafDefaults
   /** Foreground color for the channel labels. */
   public static final Color DEFAULT_CHANNEL_LABEL_COLOR = Color.WHITE;
   /** Channel label font. */
-  public static final Font DEFAULT_CHANNEL_LABEL_FONT = deriveFont( "Label.font", Font.BOLD );
+  public static final Font DEFAULT_CHANNEL_LABEL_FONT = deriveFont( SWING_LABEL_FONT, Font.BOLD );
   /** Minimal width of all channel labels. */
   public static final int DEFAULT_MINIMAL_CHANNEL_WIDTH = 40;
 
@@ -57,20 +59,20 @@ public final class LafDefaults
   /** The color of the major ticks. */
   public static final Color DEFAULT_MAJOR_TICK_COLOR = Color.LIGHT_GRAY;
   /** The font of the major tick time labels. */
-  public static final Font DEFAULT_MAJOR_TICK_FONT = deriveFont( "Label.font", 0.9f, Font.PLAIN );
+  public static final Font DEFAULT_MAJOR_TICK_FONT = deriveFont( SWING_LABEL_FONT, 0.9f, Font.PLAIN );
   /** The height (in px) of the major timeline ticks. */
   public static final int DEFAULT_MAJOR_TICK_HEIGHT = 3 * DEFAULT_TICK_HEIGHT;
   /** The color of the minor ticks. */
   public static final Color DEFAULT_MINOR_TICK_COLOR = Color.LIGHT_GRAY;
   /** The font of the minor tick time labels. */
-  public static final Font DEFAULT_MINOR_TICK_FONT = deriveFont( "Label.font", 0.8f, Font.PLAIN );
+  public static final Font DEFAULT_MINOR_TICK_FONT = deriveFont( SWING_LABEL_FONT, 0.8f, Font.PLAIN );
   /** The height (in px) of the minor timeline ticks. */
   public static final int DEFAULT_MINOR_TICK_HEIGHT = 2 * DEFAULT_TICK_HEIGHT;
 
   // CURSORS
 
   /** The font of the cursor flags. */
-  public static final Font DEFAULT_CURSOR_FLAG_FONT = deriveFont( "Label.font", 0.8f, Font.PLAIN );
+  public static final Font DEFAULT_CURSOR_FLAG_FONT = deriveFont( SWING_LABEL_FONT, 0.8f, Font.PLAIN );
 
   // CONSTRUCTORS
 

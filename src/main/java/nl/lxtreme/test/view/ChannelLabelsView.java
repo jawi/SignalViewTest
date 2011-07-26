@@ -23,10 +23,12 @@ package nl.lxtreme.test.view;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.dnd.*;
+import java.awt.image.*;
 import java.util.logging.*;
 
 import javax.swing.*;
 
+import nl.lxtreme.test.*;
 import nl.lxtreme.test.dnd.*;
 import nl.lxtreme.test.dnd.DragAndDropTargetController.DragAndDropHandler;
 import nl.lxtreme.test.view.laf.*;
@@ -50,16 +52,17 @@ public class ChannelLabelsView extends AbstractViewLayer
   {
     // VARIABLES
 
-    private final SignalDiagramController controller;
+    // See #dragGestureRecognized for details about why this image exists...
+    private final BufferedImage stubImage;
 
     // CONSTRUCTORS
 
     /**
-     * @param aController
+     * Creates a new DragAndDropListener instance.
      */
-    public DragAndDropListener( final SignalDiagramController aController )
+    public DragAndDropListener()
     {
-      this.controller = aController;
+      this.stubImage = new BufferedImage( 1, 1, BufferedImage.TYPE_INT_ARGB );
     }
 
     // METHODS
@@ -114,23 +117,37 @@ public class ChannelLabelsView extends AbstractViewLayer
 
       final Point coordinate = ( Point )aEvent.getDragOrigin().clone();
 
-      final int channelRow = this.controller.getChannelRow( coordinate );
+      final ChannelLabelsView sourceComponent = ( ChannelLabelsView )aEvent.getComponent();
+      final ChannelLabelsViewModel model = sourceComponent.getModel();
+
+      final int channelRow = model.findVirtualChannelRow( coordinate );
       if ( channelRow < 0 )
       {
         DragAndDropLock.releaseLock( this );
         return;
       }
 
-      final ChannelLabelsView sourceComponent = ( ChannelLabelsView )aEvent.getComponent();
       final GhostGlassPane glassPane = getGlassPane( sourceComponent );
 
       final Point dropPoint = createChannelDropPoint( coordinate, sourceComponent, glassPane );
 
-      glassPane.setDropPoint( dropPoint, new ChannelInsertionPointRenderer() );
+      final ChannelInsertionPointRenderer renderer = new ChannelInsertionPointRenderer();
+      renderer.setContext( model.getChannelLabel( channelRow ) );
+
+      glassPane.setDropPoint( dropPoint, renderer );
       glassPane.setVisible( true );
       glassPane.repaintPartially();
 
-      aEvent.startDrag( DragSource.DefaultMoveDrop, new ChannelRowTransferable( channelRow ) );
+      // Use this version of the startDrag method as to avoid a potential error
+      // on MacOS: without the explicit image, it will try to create one from
+      // the component itself (= this SignalView), which can be as wide as
+      // Integer.MAX_VALUE pixels. This can cause a numeric overflow in the
+      // image routines causing a NegativeArraySizeException. By giving it
+      // explicitly an image, it will use that one instead. This is not a
+      // problem for this component, as the dragged cursor will be drawn on the
+      // glasspane, not by the DnD routines of Java...
+      aEvent.startDrag( DragSource.DefaultMoveDrop, this.stubImage, new Point( 0, 0 ), new ChannelRowTransferable(
+          channelRow ), null /* dsl */);
     }
 
     /**
@@ -147,7 +164,7 @@ public class ChannelLabelsView extends AbstractViewLayer
 
       final DragSourceContext dragSourceContext = aEvent.getDragSourceContext();
 
-      final Component sourceComponent = dragSourceContext.getComponent();
+      final ChannelLabelsView sourceComponent = ( ChannelLabelsView )dragSourceContext.getComponent();
       final GhostGlassPane glassPane = getGlassPane( sourceComponent );
 
       SwingUtilities.convertPointFromScreen( coordinate, sourceComponent );
@@ -180,15 +197,17 @@ public class ChannelLabelsView extends AbstractViewLayer
      * @param aDropRow
      * @return
      */
-    private Point createChannelDropPoint( final Point aPoint, final Component aSourceComponent,
+    private Point createChannelDropPoint( final Point aPoint, final ChannelLabelsView aView,
         final Component aTargetComponent )
     {
-      final Point dropPoint = this.controller.getChannelDropPoint( aPoint );
-      if ( dropPoint != null )
-      {
-        SwingUtilities.convertPointToScreen( dropPoint, aSourceComponent );
-        SwingUtilities.convertPointFromScreen( dropPoint, aTargetComponent );
-      }
+      final int row = aView.getModel().findChannelRow( aPoint );
+
+      final int channelHeight = aView.getModel().getChannelHeight();
+      final Point dropPoint = new Point( 0, ( row + 1 ) * channelHeight );
+
+      SwingUtilities.convertPointToScreen( dropPoint, aView );
+      SwingUtilities.convertPointFromScreen( dropPoint, aTargetComponent );
+
       return dropPoint;
     }
 
@@ -205,7 +224,7 @@ public class ChannelLabelsView extends AbstractViewLayer
   /**
    * Provides the D&D drop handler for accepting dropped channels.
    */
-  static class DropHandler implements DragAndDropHandler
+  final class DropHandler implements DragAndDropHandler
   {
     // METHODS
 
@@ -223,14 +242,19 @@ public class ChannelLabelsView extends AbstractViewLayer
         if ( realRowValue != null )
         {
           final int oldRealRow = realRowValue.intValue();
-          final int newRealRow = aController.getChannelRow( aEvent.getLocation() );
+
+          final ChannelLabelsViewModel model = getModel();
+          final int newRealRow = model.findVirtualChannelRow( aEvent.getLocation() );
 
           if ( ( oldRealRow >= 0 ) && ( newRealRow >= 0 ) )
           {
             aEvent.acceptDrop( DnDConstants.ACTION_MOVE );
 
             // Move the channel rows...
-            aController.moveChannelRows( oldRealRow, newRealRow );
+            model.moveChannelRows( oldRealRow, newRealRow );
+
+            // Update the screen accordingly...
+            repaintAffectedAreas( aController, oldRealRow, newRealRow );
 
             return true;
           }
@@ -251,6 +275,53 @@ public class ChannelLabelsView extends AbstractViewLayer
     public DataFlavor getFlavor()
     {
       return ChannelRowTransferable.FLAVOR;
+    }
+
+    /**
+     * Repaints the areas affected by the movement of the channels.
+     * 
+     * @param aController
+     *          the {@link SignalDiagramController} to use;
+     * @param aOldRow
+     *          the old row;
+     * @param aNewRow
+     *          the new row.
+     */
+    private void repaintAffectedAreas( final SignalDiagramController aController, final int aOldRow, final int aNewRow )
+    {
+      final JScrollPane scrollPane = SwingUtils.getAncestorOfClass( JScrollPane.class, aController.getSignalDiagram() );
+      if ( scrollPane != null )
+      {
+        final int signalOffset = getModel().getSignalOffset();
+        final int channelHeight = getModel().getChannelHeight();
+
+        final int oldRowY = ( ( aOldRow * channelHeight ) + signalOffset ) - 3;
+        final int newRowY = ( ( aNewRow * channelHeight ) + signalOffset ) - 3;
+        final int rowHeight = channelHeight + 6;
+
+        // Update the signal display's view port; only the affected regions...
+        final JViewport viewport = scrollPane.getViewport();
+
+        Rectangle rect = viewport.getVisibleRect();
+        // ...old region...
+        rect.y = oldRowY;
+        rect.height = rowHeight;
+        viewport.repaint( rect );
+        // ...new region...
+        rect.y = newRowY;
+        viewport.repaint( rect );
+
+        final JViewport channelLabelsView = scrollPane.getRowHeader();
+
+        rect = channelLabelsView.getVisibleRect();
+        // ...old region...
+        rect.y = oldRowY;
+        rect.height = rowHeight;
+        channelLabelsView.repaint( rect );
+        // ...new region...
+        rect.y = newRowY;
+        channelLabelsView.repaint( rect );
+      }
     }
   }
 
@@ -279,7 +350,7 @@ public class ChannelLabelsView extends AbstractViewLayer
     this.model = new ChannelLabelsViewModel( aController );
 
     this.dropHandler = new DropHandler();
-    this.dndListener = new DragAndDropListener( aController );
+    this.dndListener = new DragAndDropListener();
 
     final DragSource dragSource = DragSource.getDefaultDragSource();
     dragSource.addDragSourceMotionListener( this.dndListener );

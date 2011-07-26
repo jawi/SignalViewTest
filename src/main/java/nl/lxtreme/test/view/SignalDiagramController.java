@@ -38,18 +38,11 @@ public final class SignalDiagramController
 {
   // CONSTANTS
 
-  /**
-   * Defines the area around each cursor in which the mouse cursor should be in
-   * before the cursor can be moved.
-   */
-  private static final int CURSOR_SENSITIVITY_AREA = 4;
-
   private static final Logger LOG = Logger.getLogger( SignalDiagramController.class.getName() );
 
   // VARIABLES
 
   private final DragAndDropTargetController dndTargetController;
-  private final SettingsProvider settingsProvider;
   private final EventListenerList eventListeners;
 
   private SampleDataModel dataModel;
@@ -63,8 +56,6 @@ public final class SignalDiagramController
    */
   public SignalDiagramController()
   {
-    this.settingsProvider = new SettingsProvider();
-
     this.dndTargetController = new DragAndDropTargetController( this );
 
     this.eventListeners = new EventListenerList();
@@ -106,41 +97,6 @@ public final class SignalDiagramController
   }
 
   /**
-   * Finds the cursor under the given point.
-   * 
-   * @param aPoint
-   *          the coordinate of the potential cursor, cannot be
-   *          <code>null</code>.
-   * @return the cursor index, or -1 if not found.
-   */
-  public int findCursor( final Point aPoint )
-  {
-    final Point point = convertToPointOf( getSignalView(), aPoint );
-    final long refIdx = locationToTimestamp( point );
-
-    final double snapArea = CURSOR_SENSITIVITY_AREA / this.screenModel.getZoomFactor();
-
-    final Long[] cursors = this.dataModel.getCursors();
-    for ( int i = 0; i < cursors.length; i++ )
-    {
-      if ( cursors[i] == null )
-      {
-        continue;
-      }
-
-      final double min = cursors[i].longValue() - snapArea;
-      final double max = cursors[i].longValue() + snapArea;
-
-      if ( ( refIdx >= min ) && ( refIdx <= max ) )
-      {
-        return i;
-      }
-    }
-
-    return -1;
-  }
-
-  /**
    * @param aPoint
    */
   public void fireMeasurementEvent( final SignalHoverInfo signalHover )
@@ -153,81 +109,6 @@ public final class SignalDiagramController
         listener.handleMeasureEvent( signalHover );
       }
     }
-  }
-
-  /**
-   * Calculates the drop point for the channel under the given coordinate.
-   * 
-   * @param aCoordinate
-   *          the coordinate to return the channel drop point for, cannot be
-   *          <code>null</code>.
-   * @return a drop point, can be <code>null</code> in case the drop point is
-   *         invalid (nowhere near a valid channel).
-   */
-  public Point getChannelDropPoint( final Point aCoordinate )
-  {
-    final int dropRow = getCalculatedChannelRow( aCoordinate );
-    if ( dropRow < 0 )
-    {
-      return null;
-    }
-
-    final int channelHeight = this.screenModel.getChannelHeight();
-    return new Point( 0, ( dropRow + 1 ) * channelHeight );
-  }
-
-  /**
-   * Determines the channel row corresponding to the given X,Y-coordinate.
-   * <p>
-   * This method returns the <em>virtual</em> channel row, not the actual
-   * channel row.
-   * </p>
-   * 
-   * @param aCoordinate
-   *          the coordinate to return the channel row for, cannot be
-   *          <code>null</code>.
-   * @return a channel row index (>= 0), or -1 if the point is nowhere near a
-   *         channel row.
-   */
-  public int getChannelRow( final Point aCoordinate )
-  {
-    final int row = getCalculatedChannelRow( aCoordinate );
-    if ( row < 0 )
-    {
-      return -1;
-    }
-
-    return this.screenModel.toVirtualRow( row );
-  }
-
-  /**
-   * @param aCursorIdx
-   * @return
-   */
-  public Long getCursor( final int aCursorIdx )
-  {
-    return this.dataModel.getCursor( aCursorIdx );
-  }
-
-  /**
-   * Calculates the drop point for the cursor under the given coordinate.
-   * 
-   * @param aCoordinate
-   *          the coordinate to return the channel drop point for, cannot be
-   *          <code>null</code>.
-   * @return a drop point, never <code>null</code>.
-   */
-  public Point getCursorDropPoint( final Point aCoordinate )
-  {
-    Point dropPoint = new Point( aCoordinate );
-
-    if ( isSnapModeEnabled() )
-    {
-      dropPoint = getCursorSnapPoint( aCoordinate );
-    }
-    dropPoint.y = 0;
-
-    return dropPoint;
   }
 
   /**
@@ -269,47 +150,6 @@ public final class SignalDiagramController
   }
 
   /**
-   * Returns the X-position of the cursor with the given index, for displaying
-   * purposes on screen.
-   * 
-   * @param aCursorIdx
-   *          the index of the cursor to retrieve the X-position for, >= 0.
-   * @return the screen X-position of the cursor with the given index, or -1 if
-   *         the cursor is not defined.
-   */
-  public int getCursorScreenCoordinate( final int aCursorIdx )
-  {
-    Long cursorTimestamp = this.dataModel.getCursor( aCursorIdx );
-    if ( cursorTimestamp == null )
-    {
-      return -1;
-    }
-    return ( int )Math.min( Integer.MAX_VALUE, this.screenModel.getZoomFactor() * cursorTimestamp.longValue() );
-  }
-
-  /**
-   * XXX
-   * 
-   * @param aCoordinate
-   * @return
-   */
-  public Point getCursorSnapPoint( final Point aCoordinate )
-  {
-    if ( isSnapModeEnabled() )
-    {
-      final SignalHoverInfo signalHover = getSignalHover( aCoordinate );
-      if ( ( signalHover != null ) && !signalHover.isEmpty() )
-      {
-        final Rectangle rect = signalHover.getRectangle();
-        aCoordinate.x = signalHover.getMidSamplePos().intValue();
-        aCoordinate.y = rect.y;
-      }
-    }
-
-    return aCoordinate;
-  }
-
-  /**
    * @return
    */
   public SampleDataModel getDataModel()
@@ -331,16 +171,6 @@ public final class SignalDiagramController
   public ScreenModel getScreenModel()
   {
     return this.screenModel;
-  }
-
-  /**
-   * Returns the settings provider.
-   * 
-   * @return a settings provider, never <code>null</code>.
-   */
-  public IUserInterfaceSettingsProvider getSettingsProvider()
-  {
-    return this.settingsProvider;
   }
 
   /**
@@ -481,7 +311,7 @@ public final class SignalDiagramController
     {
       return false;
     }
-    return this.dataModel.getCursor( aCursorIdx ) != null;
+    return this.dataModel.isCursorDefined( aCursorIdx );
   }
 
   /**
@@ -556,71 +386,6 @@ public final class SignalDiagramController
   }
 
   /**
-   * Moves a given channel row to another position.
-   * 
-   * @param aMovedRow
-   *          the virtual (screen) row index that is to be moved;
-   * @param aInsertRow
-   *          the virtual (screen) row index that the moved row is moved to.
-   */
-  public void moveChannelRows( final int aMovedRow, final int aInsertRow )
-  {
-    if ( aMovedRow == aInsertRow )
-    {
-      return;
-    }
-    if ( ( aMovedRow < 0 ) || ( aMovedRow >= this.dataModel.getWidth() ) )
-    {
-      throw new IllegalArgumentException( "Moved row invalid!" );
-    }
-    if ( ( aInsertRow < 0 ) || ( aInsertRow >= this.dataModel.getWidth() ) )
-    {
-      throw new IllegalArgumentException( "Insert row invalid!" );
-    }
-
-    final int row = this.screenModel.toRealRow( aMovedRow );
-    final int newRow = this.screenModel.toRealRow( aInsertRow );
-
-    // Update the screen model...
-    this.screenModel.moveRows( row, newRow );
-
-    final JScrollPane scrollPane = ( JScrollPane )SwingUtilities
-        .getAncestorOfClass( JScrollPane.class, getSignalView() );
-    if ( scrollPane != null )
-    {
-      final int signalOffset = this.screenModel.getSignalOffset();
-      final int channelHeight = this.screenModel.getChannelHeight();
-
-      final int oldRowY = ( ( row * channelHeight ) + signalOffset ) - 3;
-      final int newRowY = ( ( newRow * channelHeight ) + signalOffset ) - 3;
-      final int rowHeight = channelHeight + 6;
-
-      // Update the signal display's view port; only the affected regions...
-      final JViewport viewport = scrollPane.getViewport();
-
-      Rectangle rect = viewport.getVisibleRect();
-      // ...old region...
-      rect.y = oldRowY;
-      rect.height = rowHeight;
-      viewport.repaint( rect );
-      // ...new region...
-      rect.y = newRowY;
-      viewport.repaint( rect );
-
-      final JViewport channelLabelsView = scrollPane.getRowHeader();
-
-      rect = channelLabelsView.getVisibleRect();
-      // ...old region...
-      rect.y = oldRowY;
-      rect.height = rowHeight;
-      channelLabelsView.repaint( rect );
-      // ...new region...
-      rect.y = newRowY;
-      channelLabelsView.repaint( rect );
-    }
-  }
-
-  /**
    * Drags a cursor with a given index to a given point, possibly snapping to a
    * signal edge.
    * 
@@ -654,7 +419,7 @@ public final class SignalDiagramController
       }
       else
       {
-        listener.cursorChanged( aCursorIdx, newCursorTimestamp );
+        listener.cursorChanged( aCursorIdx, oldValue.longValue(), newCursorTimestamp );
       }
     }
   }
@@ -664,8 +429,7 @@ public final class SignalDiagramController
    */
   public void recalculateDimensions()
   {
-    final JScrollPane scrollPane = ( JScrollPane )SwingUtilities
-        .getAncestorOfClass( JScrollPane.class, getSignalView() );
+    final JScrollPane scrollPane = SwingUtils.getAncestorOfClass( JScrollPane.class, getSignalView() );
     if ( scrollPane != null )
     {
       final Rectangle viewPortSize = scrollPane.getViewport().getVisibleRect();
@@ -706,7 +470,9 @@ public final class SignalDiagramController
   }
 
   /**
-   * Removes the cursor denoted by the given index.
+   * Removes the cursor denoted by the given index. If the cursor with the given
+   * index is <em>undefined</em> this method does nothing (not even call event
+   * listeners!).
    * 
    * @param aCursorIdx
    *          the index of the cursor to remove.
@@ -717,13 +483,17 @@ public final class SignalDiagramController
     {
       throw new IllegalArgumentException( "Invalid cursor index!" );
     }
+    if ( !this.dataModel.isCursorDefined( aCursorIdx ) )
+    {
+      return;
+    }
 
-    this.dataModel.setCursor( aCursorIdx, null );
+    final Long oldValue = this.dataModel.setCursor( aCursorIdx, null );
 
     ICursorChangeListener[] listeners = this.eventListeners.getListeners( ICursorChangeListener.class );
     for ( ICursorChangeListener listener : listeners )
     {
-      listener.cursorRemoved( aCursorIdx );
+      listener.cursorRemoved( aCursorIdx, oldValue.longValue() );
     }
   }
 
@@ -777,8 +547,8 @@ public final class SignalDiagramController
     Rectangle rect = new Rectangle();
     rect.width = visibleRect.width;
     rect.height = visibleRect.height;
-    rect.x = ( int )( ( aTimestamp * this.screenModel.getZoomFactor() ) - rect.getCenterX() );
-    rect.y = 0; // XXX
+    rect.x = ( int )( timestampToCoordinate( aTimestamp ) - rect.getCenterX() );
+    rect.y = visibleRect.y;
 
     signalView.scrollRectToVisible( rect );
   }
@@ -889,6 +659,23 @@ public final class SignalDiagramController
   }
 
   /**
+   * Converts a given time stamp to a screen coordinate.
+   * 
+   * @param aTimestamp
+   *          the time stamp to convert, >= 0.
+   * @return a screen coordinate, >= 0.
+   */
+  public int timestampToCoordinate( final long aTimestamp )
+  {
+    double result = this.screenModel.getZoomFactor() * aTimestamp;
+    if ( result > Integer.MAX_VALUE )
+    {
+      return Integer.MAX_VALUE;
+    }
+    return ( int )result;
+  }
+
+  /**
    * Zooms to make all data visible in one screen.
    */
   public void zoomAll()
@@ -983,29 +770,28 @@ public final class SignalDiagramController
   }
 
   /**
-   * Determines the signal row as calculated from the given coordinate.
-   * <p>
-   * This method returns the <em>virtual</em> signal row, not the actual signal
-   * row.
-   * </p>
+   * Calculates the drop point for the cursor under the given coordinate.
    * 
    * @param aCoordinate
-   *          the coordinate to return the signal row for, cannot be
+   *          the coordinate to return the channel drop point for, cannot be
    *          <code>null</code>.
-   * @return a signal row, or -1 if the point is nowhere near a signal row.
+   * @return a drop point, never <code>null</code>.
    */
-  private int getCalculatedChannelRow( final Point aCoordinate )
+  private Point getCursorDropPoint( final Point aCoordinate )
   {
-    final int signalWidth = this.dataModel.getWidth();
-    final int channelHeight = this.screenModel.getChannelHeight();
+    Point dropPoint = new Point( aCoordinate );
 
-    final int row = ( int )( aCoordinate.y / ( double )channelHeight );
-    if ( ( row < 0 ) || ( row >= signalWidth ) )
+    if ( isSnapModeEnabled() )
     {
-      return -1;
+      final SignalHoverInfo signalHover = getSignalHover( aCoordinate );
+      if ( ( signalHover != null ) && !signalHover.isEmpty() )
+      {
+        dropPoint.x = signalHover.getMidSamplePos().intValue();
+      }
     }
+    dropPoint.y = 0;
 
-    return row;
+    return dropPoint;
   }
 
   /**
@@ -1083,7 +869,7 @@ public final class SignalDiagramController
       this.screenModel.setZoomAll( false );
     }
 
-    LOG.log( Level.INFO, "Setting zoom factor to " + this.screenModel.getZoomFactor() );
+    LOG.log( Level.INFO, "Zoom factor set to " + this.screenModel.getZoomFactor() );
   }
 
   /**
@@ -1092,7 +878,6 @@ public final class SignalDiagramController
   private void zoomRelative( final double aFactor )
   {
     final double maxFactor = getMaxZoomLevel();
-    System.out.println( "MAX zoom level = " + maxFactor );
     final double newFactor = Math.min( maxFactor, aFactor * this.screenModel.getZoomFactor() );
     zoomAbsolute( newFactor );
   }

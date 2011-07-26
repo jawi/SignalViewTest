@@ -70,7 +70,7 @@ public class SampleDataModel
 
     this.sampleRate = aProvider.getSampleData( this.values, this.timestamps, aSize );
 
-    final double end = this.timestamps[this.timestamps.length - 1] + 1 - this.timestamps[0];
+    final double end = ( this.timestamps[this.timestamps.length - 1] + 1 ) - this.timestamps[0];
 
     System.out.println( "Data sample rate  : " + Utils.displayFrequency( this.sampleRate ) );
     System.out.println( "Data size         : " + aSize + " samples." );
@@ -135,7 +135,7 @@ public class SampleDataModel
     }
 
     // Determine the insertion point, avoid crossing the array boundaries...
-    if ( mid < aToIndex - 1 )
+    if ( mid < ( aToIndex - 1 ) )
     {
       // If the searched value is greater than the value of the found index,
       // insert it after this value, otherwise before it (= the last return)...
@@ -146,6 +146,32 @@ public class SampleDataModel
     }
 
     return mid;
+  }
+
+  /**
+   * @param aTimestamp
+   * @param aSensitivityArea
+   * @return
+   */
+  public int findCursor( final long aTimestamp, final double aSensitivityArea )
+  {
+    for ( int i = 0; i < this.cursors.length; i++ )
+    {
+      if ( this.cursors[i] == null )
+      {
+        continue;
+      }
+
+      final double min = this.cursors[i].longValue() - aSensitivityArea;
+      final double max = this.cursors[i].longValue() + aSensitivityArea;
+
+      if ( ( aTimestamp >= min ) && ( aTimestamp <= max ) )
+      {
+        return i;
+      }
+    }
+
+    return -1;
   }
 
   public long getAbsoluteLength()
@@ -205,6 +231,19 @@ public class SampleDataModel
   public int getWidth()
   {
     return 32;
+  }
+
+  /**
+   * @param aCursorIdx
+   * @return
+   */
+  public boolean isCursorDefined( final int aCursorIdx )
+  {
+    if ( ( aCursorIdx < 0 ) || ( aCursorIdx > this.cursors.length ) )
+    {
+      throw new IllegalArgumentException();
+    }
+    return this.cursors[aCursorIdx] != null;
   }
 
   /**

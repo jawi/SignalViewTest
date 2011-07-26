@@ -20,6 +20,7 @@
 package nl.lxtreme.test.view.laf;
 
 
+import static java.awt.RenderingHints.*;
 import static nl.lxtreme.test.Utils.*;
 
 import java.awt.*;
@@ -58,9 +59,9 @@ public class TimeLineUI extends ComponentUI
    * {@inheritDoc}
    */
   @Override
-  public void paint(final Graphics aGraphics, final JComponent aComponent)
+  public void paint( final Graphics aGraphics, final JComponent aComponent )
   {
-    final TimeLineView view = (TimeLineView) aComponent;
+    final TimeLineView view = ( TimeLineView )aComponent;
     final TimeLineViewModel model = view.getModel();
 
     final int baseTickYpos = model.getTimeLineHeight() - VERTICAL_PADDING;
@@ -68,106 +69,106 @@ public class TimeLineUI extends ComponentUI
     final int majorTickYpos = baseTickYpos - model.getMajorTickHeight();
     final int minorTickYpos = baseTickYpos - model.getMinorTickHeight();
 
-    Graphics2D canvas = (Graphics2D) aGraphics.create();
+    Graphics2D canvas = ( Graphics2D )aGraphics.create();
 
     try
     {
       final Rectangle clip = canvas.getClipBounds();
       // Tell Swing how we would like to render ourselves...
-      canvas.setRenderingHints(createRenderingHints());
+      canvas.setRenderingHints( createRenderingHints() );
 
-      canvas.setBackground(model.getBackgroundColor());
-      canvas.clearRect(clip.x, clip.y, clip.width, clip.height);
+      canvas.setBackground( model.getBackgroundColor() );
+      canvas.clearRect( clip.x, clip.y, clip.width, clip.height );
 
       final Rectangle visibleRect = view.getVisibleRect();
 
       final double zoomFactor = model.getZoomFactor();
       final double sampleRate = model.getSampleRate();
-      final double timebase = model.getTimebase(aComponent.getVisibleRect());
-      final double tickIncr = model.getTickIncrement(timebase);
-      final double timeIncr = model.getTimeIncrement(timebase);
-      final long startTimeStamp = model.getStartTimestamp(visibleRect);
-      final long endTimeStamp = model.getEndTimestamp(visibleRect);
+      final double timebase = model.getTimebase( aComponent.getVisibleRect() );
+      final double tickIncr = model.getTickIncrement( timebase );
+      final double timeIncr = model.getTimeIncrement( timebase );
+      final long startTimeStamp = model.getStartTimestamp( visibleRect );
+      final long endTimeStamp = model.getEndTimestamp( visibleRect );
 
-      final FontMetrics majorFM = canvas.getFontMetrics(model.getMajorTickLabelFont());
-      final FontMetrics minorFM = canvas.getFontMetrics(model.getMinorTickLabelFont());
+      final FontMetrics majorFM = canvas.getFontMetrics( model.getMajorTickLabelFont() );
+      final FontMetrics minorFM = canvas.getFontMetrics( model.getMinorTickLabelFont() );
       final int minorFontHeight = minorFM.getHeight();
 
-      double timestamp = Math.floor(startTimeStamp / tickIncr) * tickIncr;
-      double majorTimestamp = Math.round(startTimeStamp / timebase) * timebase;
+      double timestamp = Math.floor( startTimeStamp / tickIncr ) * tickIncr;
+      double majorTimestamp = Math.round( startTimeStamp / timebase ) * timebase;
 
-      while (timestamp <= endTimeStamp)
+      while ( timestamp <= endTimeStamp )
       {
-        int relXpos = (int) (zoomFactor * timestamp);
+        int relXpos = ( int )( zoomFactor * timestamp );
 
-        if ((timestamp % tickIncr) != 0)
+        if ( ( timestamp % tickIncr ) != 0 )
         {
-          canvas.setColor(model.getTickColor());
+          canvas.setColor( model.getTickColor() );
 
-          canvas.drawLine(relXpos, baseTickYpos, relXpos, tickYpos);
+          canvas.drawLine( relXpos, baseTickYpos, relXpos, tickYpos );
         }
         else
         {
-          boolean major = ((timestamp % timebase) == 0);
+          boolean major = ( ( timestamp % timebase ) == 0 );
 
           final String time;
           final int textWidth;
           final int textHeight;
           final int tickHeight;
 
-          if (major)
+          if ( major )
           {
             majorTimestamp = timestamp;
 
-            final double tickTime = (majorTimestamp / sampleRate);
-            time = displayTime(tickTime, 3, "", true /* aIncludeUnit */);
+            final double tickTime = ( majorTimestamp / sampleRate );
+            time = displayTime( tickTime, 3, "", true /* aIncludeUnit */);
 
-            canvas.setFont(model.getMajorTickLabelFont());
+            canvas.setFont( model.getMajorTickLabelFont() );
 
-            textWidth = majorFM.stringWidth(time) + TEXT_PADDING_X;
+            textWidth = majorFM.stringWidth( time ) + TEXT_PADDING_X;
             textHeight = 2 * minorFontHeight;
 
-            canvas.setColor(model.getMajorTickColor());
+            canvas.setColor( model.getMajorTickColor() );
 
             tickHeight = majorTickYpos;
           }
           else
           {
-            final double tickTime = (timestamp - majorTimestamp) / sampleRate;
-            time = displayTime(tickTime, 1, "", true /* aIncludeUnit */);
+            final double tickTime = ( timestamp - majorTimestamp ) / sampleRate;
+            time = displayTime( tickTime, 1, "", true /* aIncludeUnit */);
 
-            canvas.setFont(model.getMinorTickLabelFont());
-            textWidth = minorFM.stringWidth(time) + TEXT_PADDING_X;
+            canvas.setFont( model.getMinorTickLabelFont() );
+            textWidth = minorFM.stringWidth( time ) + TEXT_PADDING_X;
             textHeight = minorFontHeight;
 
-            canvas.setColor(model.getMinorTickColor());
+            canvas.setColor( model.getMinorTickColor() );
 
             tickHeight = minorTickYpos;
           }
 
-          canvas.drawLine(relXpos, baseTickYpos, relXpos, tickHeight);
+          canvas.drawLine( relXpos, baseTickYpos, relXpos, tickHeight );
 
-          int textXpos = Math.max(0, (int) (relXpos - (textWidth / 2.0))) + 1;
-          int textYpos = Math.max(1, (baseTickYpos - textHeight));
+          int textXpos = Math.max( 0, ( int )( relXpos - ( textWidth / 2.0 ) ) ) + 1;
+          int textYpos = Math.max( 1, ( baseTickYpos - textHeight ) );
 
-          canvas.setColor(model.getTextColor());
+          canvas.setColor( model.getTextColor() );
 
-          canvas.drawString(time, textXpos, textYpos);
+          canvas.drawString( time, textXpos, textYpos );
         }
 
         // make sure we're rounding to two digits after the comma...
-        timestamp = Math.round(100.0 * (timestamp + timeIncr)) / 100.0;
+        timestamp = Math.round( 100.0 * ( timestamp + timeIncr ) ) / 100.0;
       }
 
-      if (model.isRenderHelpText())
+      if ( model.isRenderHelpText() )
       {
-        renderHelpText(view, canvas, timeIncr / sampleRate, (endTimeStamp - startTimeStamp) / sampleRate);
+        renderHelpText( view, canvas, timeIncr / sampleRate, ( endTimeStamp - startTimeStamp ) / sampleRate );
       }
 
       // Draw the cursor "flags"...
-      if (model.isCursorMode())
+      if ( model.isCursorMode() )
       {
-        paintCursorFlags(model, canvas, clip);
+        paintCursorFlags( model, canvas );
       }
     }
     finally
@@ -182,12 +183,11 @@ public class TimeLineUI extends ComponentUI
    */
   private RenderingHints createRenderingHints()
   {
-    RenderingHints hints = new RenderingHints(RenderingHints.KEY_INTERPOLATION,
-        RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-    hints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    hints.put(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
-    hints.put(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
-    hints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+    RenderingHints hints = new RenderingHints( KEY_INTERPOLATION, VALUE_INTERPOLATION_NEAREST_NEIGHBOR );
+    hints.put( KEY_ANTIALIASING, VALUE_ANTIALIAS_ON );
+    hints.put( KEY_ALPHA_INTERPOLATION, VALUE_ALPHA_INTERPOLATION_QUALITY );
+    hints.put( KEY_COLOR_RENDERING, VALUE_COLOR_RENDER_QUALITY );
+    hints.put( KEY_RENDERING, VALUE_RENDER_QUALITY );
     return hints;
   }
 
@@ -196,30 +196,27 @@ public class TimeLineUI extends ComponentUI
    * 
    * @param aCanvas
    *          the canvas to paint the cursor (flags) on;
-   * @param aClip
-   *          the clip boundaries.
    */
-  private void paintCursorFlags(final TimeLineViewModel aModel, final Graphics2D aCanvas,
-      final Rectangle aClip)
+  private void paintCursorFlags( final TimeLineViewModel aModel, final Graphics2D aCanvas )
   {
-    for (int i = 0; i < SampleDataModel.MAX_CURSORS; i++)
+    for ( int i = 0; i < SampleDataModel.MAX_CURSORS; i++ )
     {
-      int x = aModel.getCursorScreenCoordinate(i);
+      int x = aModel.getCursorScreenCoordinate( i );
       int y = CURSOR_Y_POS;
 
-      if (x < 0)
+      if ( x < 0 )
       {
-        // Trivial reject: don't paint undefined cursors, or cursors outside the
-        // clip boundaries...
+        // Trivial reject: don't paint undefined cursors...
         continue;
       }
 
-      aCanvas.setColor(aModel.getCursorColor(i));
-      aCanvas.setFont(aModel.getCursorFlagFont());
+      aCanvas.setColor( aModel.getCursorTextColor( i ) );
+      aCanvas.setBackground( aModel.getCursorColor( i ) );
+      aCanvas.setFont( aModel.getCursorFlagFont() );
 
-      this.cursorRenderer.setContext(aModel.getCursorFlagText(i));
+      this.cursorRenderer.setContext( aModel.getCursorFlagText( i ) );
 
-      this.cursorRenderer.render(aCanvas, x, y);
+      this.cursorRenderer.render( aCanvas, x, y );
     }
   }
 
@@ -234,11 +231,11 @@ public class TimeLineUI extends ComponentUI
    * @param aTotalTime
    *          the total displayed time.
    */
-  private void renderHelpText(final TimeLineView aView, final Graphics2D aCanvas, final double aTickIncrement,
-      final double aTotalTime)
+  private void renderHelpText( final TimeLineView aView, final Graphics2D aCanvas, final double aTickIncrement,
+      final double aTotalTime )
   {
     final TimeLineViewModel model = aView.getModel();
-    if (!model.isRenderHelpText())
+    if ( !model.isRenderHelpText() )
     {
       // Return; nothing to do...
       return;
@@ -247,26 +244,26 @@ public class TimeLineUI extends ComponentUI
     final int baseTickYpos = model.getTimeLineHeight() - VERTICAL_PADDING;
 
     String helpText;
-    switch (model.getHelpTextDisplayMode())
+    switch ( model.getHelpTextDisplayMode() )
     {
       case LABEL:
       {
-        helpText = String.format("1 tick = %s, total visible = %s",
-            displayTime(aTickIncrement, 1, "", true /* aIncludeUnit */),
-            displayTime(aTotalTime, 2, "", true /* aIncludeUnit */));
+        helpText = String.format( "1 tick = %s, total visible = %s",
+            displayTime( aTickIncrement, 1, "", true /* aIncludeUnit */),
+            displayTime( aTotalTime, 2, "", true /* aIncludeUnit */) );
 
         int x = 50;
-        int y = baseTickYpos - 2 * aCanvas.getFontMetrics().getHeight();
+        int y = baseTickYpos - ( 2 * aCanvas.getFontMetrics().getHeight() );
 
-        aCanvas.drawString(helpText, x, y);
+        aCanvas.drawString( helpText, x, y );
         break;
       }
       case TOOLTIP:
       {
-        helpText = String.format("<html>1 tick = %s<br>total visible = %s</html>",
-            displayTime(aTickIncrement, 1, "", true /* aIncludeUnit */),
-            displayTime(aTotalTime, 2, "", true /* aIncludeUnit */));
-        aView.setToolTipText(helpText);
+        helpText = String.format( "<html>1 tick = %s<br>total visible = %s</html>",
+            displayTime( aTickIncrement, 1, "", true /* aIncludeUnit */),
+            displayTime( aTotalTime, 2, "", true /* aIncludeUnit */) );
+        aView.setToolTipText( helpText );
         break;
       }
       default:

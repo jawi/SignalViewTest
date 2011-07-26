@@ -22,6 +22,8 @@ package nl.lxtreme.test.view.model;
 
 import java.awt.*;
 
+import javax.swing.*;
+
 import nl.lxtreme.test.view.*;
 import nl.lxtreme.test.view.laf.*;
 
@@ -44,28 +46,12 @@ public class GhostGlassPaneModel extends AbstractViewModel
    * @param aController
    *          the diagram controller to use, cannot be <code>null</code>.
    */
-  public GhostGlassPaneModel(SignalDiagramController aController)
+  public GhostGlassPaneModel( final SignalDiagramController aController )
   {
-    super(aController);
+    super( aController );
   }
 
   // METHODS
-
-  /**
-   * Returns the alpha composite.
-   * 
-   * @return a composite, never <code>null</code>.
-   */
-  public Composite getComposite()
-  {
-    Integer percentage = getSettingsProvider().getInteger(COMPONENT_ALPHA);
-    if (percentage == null)
-    {
-      percentage = LafDefaults.DEFAULT_GLASSPANE_ALPHA_PERCENTAGE;
-    }
-    float alpha = percentage.floatValue() / 100.0f;
-    return AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha);
-  }
 
   /**
    * Returns the color in which the items on the glasspane are drawn.
@@ -74,11 +60,27 @@ public class GhostGlassPaneModel extends AbstractViewModel
    */
   public Color getColor()
   {
-    Color color = getSettingsProvider().getColor(COMPONENT_COLOR);
-    if (color == null)
+    Color color = UIManager.getColor( COMPONENT_COLOR );
+    if ( color == null )
     {
       color = LafDefaults.DEFAULT_GLASSPANE_COLOR;
     }
     return color;
+  }
+
+  /**
+   * Returns the alpha composite.
+   * 
+   * @return a composite, never <code>null</code>.
+   */
+  public Composite getComposite()
+  {
+    int percentage = UIManager.getInt( COMPONENT_ALPHA );
+    if ( percentage <= 0 )
+    {
+      percentage = LafDefaults.DEFAULT_GLASSPANE_ALPHA_PERCENTAGE;
+    }
+    float alpha = percentage / 100.0f;
+    return AlphaComposite.getInstance( AlphaComposite.SRC_OVER, alpha );
   }
 }

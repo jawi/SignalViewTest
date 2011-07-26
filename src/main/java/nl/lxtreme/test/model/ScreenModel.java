@@ -359,7 +359,25 @@ public class ScreenModel
    */
   public void moveRows( final int aOldRowIdx, final int aNewRowIdx )
   {
-    shiftElements( this.virtualRowMapping, aOldRowIdx, aNewRowIdx );
+    if ( aOldRowIdx == aNewRowIdx )
+    {
+      return;
+    }
+
+    final int dataWidth = this.virtualRowMapping.length;
+    if ( ( aOldRowIdx < 0 ) || ( aOldRowIdx >= dataWidth ) )
+    {
+      throw new IllegalArgumentException( "Moved row invalid!" );
+    }
+    if ( ( aNewRowIdx < 0 ) || ( aNewRowIdx >= dataWidth ) )
+    {
+      throw new IllegalArgumentException( "Insert row invalid!" );
+    }
+
+    final int row = toRealRow( aOldRowIdx );
+    final int newRow = toRealRow( aNewRowIdx );
+
+    shiftElements( this.virtualRowMapping, row, newRow );
   }
 
   /**

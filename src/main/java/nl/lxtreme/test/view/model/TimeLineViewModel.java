@@ -22,6 +22,8 @@ package nl.lxtreme.test.view.model;
 
 import java.awt.*;
 
+import javax.swing.*;
+
 import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.model.ScreenModel.HelpTextDisplay;
 import nl.lxtreme.test.view.*;
@@ -77,7 +79,7 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public Color getBackgroundColor()
   {
-    Color color = getSettingsProvider().getColor( COMPONENT_BACKGROUND_COLOR );
+    Color color = UIManager.getColor( COMPONENT_BACKGROUND_COLOR );
     if ( color == null )
     {
       color = LafDefaults.DEFAULT_BACKGROUND_COLOR;
@@ -92,7 +94,7 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public Font getCursorFlagFont()
   {
-    Font font = getSettingsProvider().getFont( CURSOR_FLAG_FONT );
+    Font font = UIManager.getFont( CURSOR_FLAG_FONT );
     if ( font == null )
     {
       font = LafDefaults.DEFAULT_CURSOR_FLAG_FONT;
@@ -118,8 +120,7 @@ public class TimeLineViewModel extends AbstractViewModel
       return 0L;
     }
 
-    final SampleDataModel dataModel = this.controller.getDataModel();
-    final long[] timestamps = dataModel.getTimestamps();
+    final long[] timestamps = getDataModel().getTimestamps();
 
     return timestamps[idx] + 1;
   }
@@ -131,7 +132,7 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public HelpTextDisplay getHelpTextDisplayMode()
   {
-    return this.controller.getScreenModel().getHelpTextDisplayMode();
+    return getScreenModel().getHelpTextDisplayMode();
   }
 
   /**
@@ -141,7 +142,7 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public Color getMajorTickColor()
   {
-    Color color = getSettingsProvider().getColor( MAJOR_TICK_COLOR );
+    Color color = UIManager.getColor( MAJOR_TICK_COLOR );
     if ( color == null )
     {
       color = LafDefaults.DEFAULT_MAJOR_TICK_COLOR;
@@ -156,12 +157,12 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public int getMajorTickHeight()
   {
-    Integer value = getSettingsProvider().getInteger( MAJOR_TICK_HEIGHT );
-    if ( value == null )
+    int value = UIManager.getInt( MAJOR_TICK_HEIGHT );
+    if ( value <= 0 )
     {
       return LafDefaults.DEFAULT_MAJOR_TICK_HEIGHT;
     }
-    return value.intValue();
+    return value;
   }
 
   /**
@@ -171,7 +172,7 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public Font getMajorTickLabelFont()
   {
-    Font font = getSettingsProvider().getFont( MAJOR_TICK_LABEL_FONT );
+    Font font = UIManager.getFont( MAJOR_TICK_LABEL_FONT );
     if ( font == null )
     {
       font = LafDefaults.DEFAULT_MAJOR_TICK_FONT;
@@ -186,7 +187,7 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public Color getMinorTickColor()
   {
-    Color color = getSettingsProvider().getColor( MINOR_TICK_COLOR );
+    Color color = UIManager.getColor( MINOR_TICK_COLOR );
     if ( color == null )
     {
       color = LafDefaults.DEFAULT_MINOR_TICK_COLOR;
@@ -201,12 +202,12 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public int getMinorTickHeight()
   {
-    Integer value = getSettingsProvider().getInteger( MINOR_TICK_HEIGHT );
-    if ( value == null )
+    int value = UIManager.getInt( MINOR_TICK_HEIGHT );
+    if ( value <= 0 )
     {
       return LafDefaults.DEFAULT_MINOR_TICK_HEIGHT;
     }
-    return value.intValue();
+    return value;
   }
 
   /**
@@ -216,7 +217,7 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public Font getMinorTickLabelFont()
   {
-    Font font = getSettingsProvider().getFont( MINOR_TICK_LABEL_FONT );
+    Font font = UIManager.getFont( MINOR_TICK_LABEL_FONT );
     if ( font == null )
     {
       font = LafDefaults.DEFAULT_MINOR_TICK_FONT;
@@ -267,7 +268,7 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public Color getTextColor()
   {
-    Color color = getSettingsProvider().getColor( TEXT_COLOR );
+    Color color = UIManager.getColor( TEXT_COLOR );
     if ( color == null )
     {
       color = LafDefaults.DEFAULT_TEXT_COLOR;
@@ -282,7 +283,7 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public Color getTickColor()
   {
-    Color value = getSettingsProvider().getColor( TICK_COLOR );
+    Color value = UIManager.getColor( TICK_COLOR );
     if ( value == null )
     {
       value = LafDefaults.DEFAULT_TICK_COLOR;
@@ -297,12 +298,12 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public int getTickHeight()
   {
-    Integer value = getSettingsProvider().getInteger( TICK_HEIGHT );
-    if ( value == null )
+    int value = UIManager.getInt( TICK_HEIGHT );
+    if ( value <= 0 )
     {
       return LafDefaults.DEFAULT_TICK_HEIGHT;
     }
-    return value.intValue();
+    return value;
   }
 
   /**
@@ -352,12 +353,12 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public int getTimeLineHeight()
   {
-    Integer value = getSettingsProvider().getInteger( COMPONENT_HEIGHT );
-    if ( value == null )
+    int value = UIManager.getInt( COMPONENT_HEIGHT );
+    if ( value <= 0 )
     {
       return LafDefaults.DEFAULT_TIMELINE_HEIGHT;
     }
-    return value.intValue();
+    return value;
   }
 
   /**
@@ -369,6 +370,6 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public boolean isRenderHelpText()
   {
-    return this.controller.getScreenModel().isTimeLineHelpTextDisplayed();
+    return getScreenModel().isTimeLineHelpTextDisplayed();
   }
 }

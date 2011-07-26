@@ -294,24 +294,26 @@ public class SignalUI extends ComponentUI
     // Tell Swing how we would like to render ourselves...
     aCanvas.setRenderingHints( createCursorRenderingHints() );
 
+    final int viewYpos = aView.getVisibleRect().y;
     for ( int i = 0; i < SampleDataModel.MAX_CURSORS; i++ )
     {
-      int x = aModel.getCursorScreenCoordinate( i );
-      int y = getYposition( aView );
+      int cursorXpos = aModel.getCursorScreenCoordinate( i );
+      int cursorYpos = getYposition( aView );
 
-      if ( ( x < 0 ) || !aClip.contains( x, 0 ) )
+      if ( ( cursorXpos < 0 ) || !aClip.contains( cursorXpos, viewYpos ) )
       {
         // Trivial reject: don't paint undefined cursors, or cursors outside the
         // clip boundaries...
         continue;
       }
 
-      aCanvas.setColor( aModel.getCursorColor( i ) );
+      aCanvas.setColor( aModel.getCursorTextColor( i ) );
+      aCanvas.setBackground( aModel.getCursorColor( i ) );
       aCanvas.setFont( aModel.getCursorFlagFont() );
 
       this.cursorRenderer.setContext( aModel.getCursorFlagText( i ) );
 
-      this.cursorRenderer.render( aCanvas, x, y );
+      this.cursorRenderer.render( aCanvas, cursorXpos, cursorYpos );
     }
   }
 
