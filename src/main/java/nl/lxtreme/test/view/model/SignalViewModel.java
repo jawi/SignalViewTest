@@ -99,7 +99,7 @@ public class SignalViewModel extends AbstractViewModel
   public int getEndIndex( final Rectangle aClip, final int aLength )
   {
     final Point location = new Point( aClip.x + aClip.width, 0 );
-    int index = this.controller.locationToSampleIndex( location );
+    int index = locationToSampleIndex( location );
     return Math.min( index + 1, aLength - 1 );
   }
 
@@ -125,7 +125,7 @@ public class SignalViewModel extends AbstractViewModel
   public int getStartIndex( final Rectangle aClip )
   {
     final Point location = aClip.getLocation();
-    int index = this.controller.locationToSampleIndex( location );
+    int index = locationToSampleIndex( location );
     return Math.max( index - 1, 0 );
   }
 

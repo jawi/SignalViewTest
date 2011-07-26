@@ -89,7 +89,32 @@ abstract class AbstractViewModel
    */
   public String getCursorFlagText( final int aCursorIndex )
   {
-    return this.controller.getCursorFlagText( aCursorIndex );
+    final Long cursorTimestamp = getDataModel().getCursor( aCursorIndex );
+    if ( cursorTimestamp == null )
+    {
+      return "";
+    }
+    return getCursorFlagText( aCursorIndex, cursorTimestamp.longValue() );
+  }
+
+  /**
+   * Returns the cursor flag text for the cursor with the given index.
+   * 
+   * @param aCursorIdx
+   *          the index of the cursor, >= 0 && < 10;
+   * @param aCursorTimestamp
+   *          the timestamp of the cursor.
+   * @return a cursor flag text, or an empty string if the cursor with the given
+   *         index is undefined.
+   */
+  public String getCursorFlagText( final int aCursorIdx, final long aCursorTimestamp )
+  {
+    final double sampleRate = getDataModel().getSampleRate();
+
+    final String label = getScreenModel().getCursorLabel( aCursorIdx );
+    final String cursorTime = Utils.displayTime( aCursorTimestamp / sampleRate );
+
+    return String.format( "%s: %s", label, cursorTime );
   }
 
   /**
@@ -108,7 +133,7 @@ abstract class AbstractViewModel
     {
       return -1;
     }
-    return this.controller.timestampToCoordinate( cursorTimestamp.longValue() );
+    return timestampToCoordinate( cursorTimestamp.longValue() );
   }
 
   /**
@@ -185,6 +210,23 @@ abstract class AbstractViewModel
   }
 
   /**
+   * Converts a given time stamp to a screen coordinate.
+   * 
+   * @param aTimestamp
+   *          the time stamp to convert, >= 0.
+   * @return a screen coordinate, >= 0.
+   */
+  public int timestampToCoordinate( final long aTimestamp )
+  {
+    double result = getScreenModel().getZoomFactor() * aTimestamp;
+    if ( result > Integer.MAX_VALUE )
+    {
+      return Integer.MAX_VALUE;
+    }
+    return ( int )result;
+  }
+
+  /**
    * @param aB
    * @return
    */
@@ -207,5 +249,25 @@ abstract class AbstractViewModel
   protected final ScreenModel getScreenModel()
   {
     return this.controller.getScreenModel();
+  }
+
+  /**
+   * @param aPoint
+   * @return
+   */
+  protected int locationToSampleIndex( final Point aPoint )
+  {
+    final SignalDiagramModel model = this.controller.getSignalDiagram().getModel();
+    return model.locationToSampleIndex( aPoint );
+  }
+
+  /**
+   * @param aPoint
+   * @return
+   */
+  protected long locationToTimestamp( final Point aPoint )
+  {
+    final SignalDiagramModel model = this.controller.getSignalDiagram().getModel();
+    return model.locationToTimestamp( aPoint );
   }
 }

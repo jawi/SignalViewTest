@@ -28,6 +28,7 @@ import javax.swing.*;
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.view.action.*;
+import nl.lxtreme.test.view.model.*;
 
 
 /**
@@ -260,7 +261,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
           final int channel = signalHover.getChannelIndex();
           final long timestamp = signalHover.getEndTimestamp().longValue();
 
-          this.controller.scrollToTimestamp( channel, timestamp );
+          scrollToTimestamp( channel, timestamp );
         }
       }
     }
@@ -363,7 +364,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
      */
     private int findCursor( final Point aPoint )
     {
-      final long refIdx = this.controller.locationToTimestamp( aPoint );
+      final long refIdx = getModel().locationToTimestamp( aPoint );
 
       final double snapArea = CURSOR_SENSITIVITY_AREA / this.controller.getScreenModel().getZoomFactor();
 
@@ -466,10 +467,9 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   // VARIABLES
 
   private final SignalDiagramController controller;
-
   private final SignalView signalView;
-
   private final TransparentAWTListener awtListener;
+  private final SignalDiagramModel model;
 
   // CONSTRUCTORS
 
@@ -487,6 +487,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
     this.signalView = SignalView.create( this.controller );
 
+    this.model = new SignalDiagramModel( aController );
     this.awtListener = new TransparentAWTListener( this.controller );
 
     initComponent();
@@ -538,6 +539,16 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     {
       super.addNotify();
     }
+  }
+
+  /**
+   * Returns the current value of model.
+   * 
+   * @return the model, never <code>null</code>.
+   */
+  public SignalDiagramModel getModel()
+  {
+    return this.model;
   }
 
   /**
@@ -658,6 +669,29 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   }
 
   /**
+   * Scrolls the signal diagram component so that the given timestamp for the
+   * given channel becomes visible.
+   * 
+   * @param aChannel
+   *          the channel index of the channel to scroll the timeline for;
+   * @param aTimestamp
+   *          the timestamp to make visible, >= 0 and < last timestamp.
+   */
+  public void scrollToTimestamp( final int aChannel, final long aTimestamp )
+  {
+    final SignalView signalView = getSignalView();
+    final Rectangle visibleRect = signalView.getVisibleRect();
+
+    Rectangle rect = new Rectangle();
+    rect.width = visibleRect.width;
+    rect.height = visibleRect.height;
+    rect.x = ( int )( ( this.controller.getScreenModel().getZoomFactor() * aTimestamp ) - rect.getCenterX() );
+    rect.y = visibleRect.y;
+
+    signalView.scrollRectToVisible( rect );
+  }
+
+  /**
    * If this component is the <code>viewportView</code> of an enclosing
    * <code>JScrollPane</code> (the usual situation), configure this
    * <code>ScrollPane</code> by, amongst other things, installing the diagram's
@@ -715,9 +749,9 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   {
     final int blockIncr = 50;
 
-    final int firstVisibleSample = this.controller.locationToSampleIndex( aVisibleRect.getLocation() );
-    final int lastVisibleSample = this.controller.locationToSampleIndex( new Point(
-        aVisibleRect.x + aVisibleRect.width, 0 ) );
+    final int firstVisibleSample = getModel().locationToSampleIndex( aVisibleRect.getLocation() );
+    final int lastVisibleSample = getModel()
+        .locationToSampleIndex( new Point( aVisibleRect.x + aVisibleRect.width, 0 ) );
 
     int inc = 0;
     if ( aDirection < 0 )

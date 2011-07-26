@@ -84,10 +84,10 @@ public class TimeLineView extends AbstractViewLayer implements ICursorChangeList
   {
     final int visibleHeight = getVisibleRect().height;
 
-    final SignalDiagramController ctrl = getController();
+    final TimeLineViewModel model = getModel();
 
-    int cursorPos = ctrl.timestampToCoordinate( aCursorTimestamp );
-    int width = getStringWidth( ctrl.getCursorFlagText( aCursorIdx, aCursorTimestamp ) ) + 10;
+    int cursorPos = model.timestampToCoordinate( aCursorTimestamp );
+    int width = getStringWidth( model.getCursorFlagText( aCursorIdx, aCursorTimestamp ) ) + 10;
     repaint( cursorPos - 1, 0, width, visibleHeight );
   }
 
@@ -99,14 +99,14 @@ public class TimeLineView extends AbstractViewLayer implements ICursorChangeList
   {
     final int visibleHeight = getVisibleRect().height;
 
-    final SignalDiagramController ctrl = getController();
+    final TimeLineViewModel model = getModel();
 
-    int cursorPos = ctrl.timestampToCoordinate( aOldCursorTimestamp );
-    int width = getStringWidth( ctrl.getCursorFlagText( aCursorIdx, aOldCursorTimestamp ) ) + 10;
+    int cursorPos = model.timestampToCoordinate( aOldCursorTimestamp );
+    int width = getStringWidth( model.getCursorFlagText( aCursorIdx, aOldCursorTimestamp ) ) + 10;
     repaint( new Rectangle( cursorPos - 1, 0, width, visibleHeight ) );
 
-    cursorPos = ctrl.timestampToCoordinate( aNewCursorTimestamp );
-    width = getStringWidth( ctrl.getCursorFlagText( aCursorIdx, aNewCursorTimestamp ) ) + 10;
+    cursorPos = model.timestampToCoordinate( aNewCursorTimestamp );
+    width = getStringWidth( model.getCursorFlagText( aCursorIdx, aNewCursorTimestamp ) ) + 10;
     repaint( 0, cursorPos - 1, 0, width, visibleHeight );
   }
 
@@ -118,10 +118,10 @@ public class TimeLineView extends AbstractViewLayer implements ICursorChangeList
   {
     final int visibleHeight = getVisibleRect().height;
 
-    final SignalDiagramController ctrl = getController();
+    final TimeLineViewModel model = getModel();
 
-    int cursorPos = ctrl.timestampToCoordinate( aOldCursorTimestamp );
-    int width = getStringWidth( ctrl.getCursorFlagText( aCursorIdx, aOldCursorTimestamp ) ) + 10;
+    int cursorPos = model.timestampToCoordinate( aOldCursorTimestamp );
+    int width = getStringWidth( model.getCursorFlagText( aCursorIdx, aOldCursorTimestamp ) ) + 10;
     repaint( cursorPos - 1, 0, width, visibleHeight );
   }
 

@@ -114,7 +114,7 @@ public class TimeLineViewModel extends AbstractViewModel
   public long getEndTimestamp( final Rectangle aClip )
   {
     final Point location = new Point( aClip.x + aClip.width, 0 );
-    final int idx = this.controller.locationToSampleIndex( location );
+    final int idx = locationToSampleIndex( location );
     if ( idx < 0 )
     {
       return 0L;
@@ -247,7 +247,7 @@ public class TimeLineViewModel extends AbstractViewModel
   public long getStartTimestamp( final Rectangle aClip )
   {
     final Point location = aClip.getLocation();
-    final int idx = this.controller.locationToSampleIndex( location ) - 1;
+    final int idx = locationToSampleIndex( location ) - 1;
     if ( idx < 0 )
     {
       return 0L;

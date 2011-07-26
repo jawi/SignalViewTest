@@ -95,9 +95,9 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
   {
     final int visibleHeight = getVisibleRect().height;
 
-    final SignalDiagramController ctrl = getController();
+    final SignalViewModel model = getModel();
 
-    int cursorPos = ctrl.timestampToCoordinate( aCursorTimestamp );
+    int cursorPos = model.timestampToCoordinate( aCursorTimestamp );
     repaint( new Rectangle( cursorPos - 1, 0, 2, visibleHeight ) );
   }
 
@@ -109,12 +109,12 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
   {
     final int visibleHeight = getVisibleRect().height;
 
-    final SignalDiagramController ctrl = getController();
+    final SignalViewModel model = getModel();
 
-    int cursorPos = ctrl.timestampToCoordinate( aOldCursorTimestamp );
+    int cursorPos = model.timestampToCoordinate( aOldCursorTimestamp );
     repaint( 0, cursorPos - 1, 0, 2, visibleHeight );
 
-    cursorPos = ctrl.timestampToCoordinate( aNewCursorTimestamp );
+    cursorPos = model.timestampToCoordinate( aNewCursorTimestamp );
     repaint( 0, cursorPos - 1, 0, 2, visibleHeight );
   }
 
@@ -126,9 +126,9 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
   {
     final int visibleHeight = getVisibleRect().height;
 
-    final SignalDiagramController ctrl = getController();
+    final SignalViewModel model = getModel();
 
-    int cursorPos = ctrl.timestampToCoordinate( aOldCursorTimestamp );
+    int cursorPos = model.timestampToCoordinate( aOldCursorTimestamp );
     repaint( 0, cursorPos - 1, 0, 2, visibleHeight );
   }
 
