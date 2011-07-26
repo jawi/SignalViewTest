@@ -44,7 +44,7 @@ public final class LafDefaults
   /** Color used when rendering items during DnD. */
   public static final Color DEFAULT_GLASSPANE_COLOR = Color.YELLOW;
   /** Alpha percentage (0..100) used when rendering items during DnD. */
-  public static final Integer DEFAULT_GLASSPANE_ALPHA_PERCENTAGE = Integer.valueOf( 70 );
+  public static final int DEFAULT_GLASSPANE_ALPHA_PERCENTAGE = 70;
 
   // TIMELINE
 
