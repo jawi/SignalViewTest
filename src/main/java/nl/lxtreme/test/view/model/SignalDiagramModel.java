@@ -36,7 +36,7 @@ import nl.lxtreme.test.view.*;
 /**
  * The main model for the {@link SignalDiagramComponent}.
  */
-public class SignalDiagramModel extends AbstractViewModel
+public class SignalDiagramModel
 {
   // INNER TYPES
 
@@ -116,6 +116,7 @@ public class SignalDiagramModel extends AbstractViewModel
   private int sampleRate;
   private int sampleWidth;
 
+  private final SignalDiagramController controller;
   private final EventListenerList eventListeners;
   private final PropertyChangeSupport propertyChangeSupport;
 
@@ -125,11 +126,11 @@ public class SignalDiagramModel extends AbstractViewModel
    * Creates a new SignalDiagramModel instance.
    * 
    * @param aController
-   *          the controller to use.
+   *          the controller to use, cannot be <code>null</code>.
    */
   public SignalDiagramModel( final SignalDiagramController aController )
   {
-    super( aController );
+    this.controller = aController;
 
     this.eventListeners = new EventListenerList();
     this.propertyChangeSupport = new PropertyChangeSupport( this );
@@ -377,7 +378,6 @@ public class SignalDiagramModel extends AbstractViewModel
   /**
    * @return the colors
    */
-  @Override
   public Color getChannelColor( final int aChannelIdx )
   {
     return this.colors[aChannelIdx];
@@ -386,7 +386,6 @@ public class SignalDiagramModel extends AbstractViewModel
   /**
    * @return
    */
-  @Override
   public int getChannelHeight()
   {
     return this.channelHeight;
@@ -450,9 +449,8 @@ public class SignalDiagramModel extends AbstractViewModel
    */
   public double getMaxZoomLevel()
   {
-    final long[] timestamps = getSignalDiagramModel().getTimestamps();
-    final double end = timestamps[timestamps.length - 1] + 1;
-    final double start = timestamps[0];
+    final double end = this.timestamps[this.timestamps.length - 1] + 1;
+    final double start = this.timestamps[0];
     return Math.floor( Integer.MAX_VALUE / ( end - start ) );
   }
 
@@ -475,7 +473,6 @@ public class SignalDiagramModel extends AbstractViewModel
   /**
    * {@inheritDoc}
    */
-  @Override
   public int getSampleWidth()
   {
     return this.sampleWidth;
@@ -492,7 +489,6 @@ public class SignalDiagramModel extends AbstractViewModel
   /**
    * @return
    */
-  @Override
   public int getSignalHeight()
   {
     return this.signalHeight;
@@ -614,7 +610,6 @@ public class SignalDiagramModel extends AbstractViewModel
    * @return a signal offset, >= 0.
    * @see #getSignalAlignment()
    */
-  @Override
   public int getSignalOffset()
   {
     final int signalOffset;
@@ -706,7 +701,6 @@ public class SignalDiagramModel extends AbstractViewModel
   /**
    * @return
    */
-  @Override
   public double getZoomFactor()
   {
     return this.zoomFactor;
@@ -716,7 +710,6 @@ public class SignalDiagramModel extends AbstractViewModel
    * @param aChannelIdx
    * @return
    */
-  @Override
   public boolean isChannelVisible( final int aChannelIdx )
   {
     if ( ( aChannelIdx < 0 ) || ( aChannelIdx >= this.virtualRowMapping.length ) )
@@ -743,13 +736,14 @@ public class SignalDiagramModel extends AbstractViewModel
   /**
    * @return the cursorMode
    */
-  @Override
   public boolean isCursorMode()
   {
     return ( this.mode & CURSORS_VISIBLE ) != 0;
   }
 
-  @Override
+  /**
+   * @return
+   */
   public boolean isMeasurementMode()
   {
     return ( this.mode & MEASUREMENT_MODE ) != 0;
@@ -791,7 +785,6 @@ public class SignalDiagramModel extends AbstractViewModel
    * @return a sample index, >= 0, or -1 if no corresponding sample index could
    *         be found.
    */
-  @Override
   public int locationToSampleIndex( final Point aCoordinate )
   {
     final long timestamp = locationToTimestamp( aCoordinate );
@@ -818,10 +811,9 @@ public class SignalDiagramModel extends AbstractViewModel
    * @return a sample index, >= 0, or -1 if no corresponding sample index could
    *         be found.
    */
-  @Override
   public long locationToTimestamp( final Point aCoordinate )
   {
-    final long timestamp = ( long )Math.ceil( aCoordinate.x / getSignalDiagramModel().getZoomFactor() );
+    final long timestamp = ( long )Math.ceil( aCoordinate.x / getZoomFactor() );
     if ( timestamp < 0 )
     {
       return -1;
@@ -1001,7 +993,7 @@ public class SignalDiagramModel extends AbstractViewModel
    */
   public void setCursorColor( final int aCursorIndex, final Color aColor )
   {
-    final Cursor cursor = getSignalDiagramModel().getCursor( aCursorIndex );
+    final Cursor cursor = getCursor( aCursorIndex );
     Color oldColor = cursor.getColor();
     cursor.setColor( aColor );
 
@@ -1216,7 +1208,6 @@ public class SignalDiagramModel extends AbstractViewModel
    * @param aRowIdx
    * @return
    */
-  @Override
   public int toVirtualRow( final int aRowIdx )
   {
     for ( int i = 0; i < this.virtualRowMapping.length; i++ )

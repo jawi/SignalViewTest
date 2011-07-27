@@ -26,7 +26,6 @@ import javax.swing.*;
 
 import nl.lxtreme.test.view.*;
 import nl.lxtreme.test.view.laf.*;
-import nl.lxtreme.test.view.model.SignalDiagramModel.HelpTextDisplay;
 
 
 /**
@@ -119,16 +118,6 @@ public class TimeLineViewModel extends AbstractViewModel
     final long[] timestamps = getSignalDiagramModel().getTimestamps();
 
     return timestamps[idx] + 1;
-  }
-
-  /**
-   * Returns how the help text is to be displayed.
-   * 
-   * @return a {@link HelpTextDisplay} mode, never <code>null</code>.
-   */
-  public HelpTextDisplay getHelpTextDisplayMode()
-  {
-    return getSignalDiagramModel().getHelpTextDisplayMode();
   }
 
   /**

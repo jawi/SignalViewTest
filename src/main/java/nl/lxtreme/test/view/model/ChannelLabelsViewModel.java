@@ -105,7 +105,7 @@ public class ChannelLabelsViewModel extends AbstractViewModel
       return -1;
     }
 
-    return getSignalDiagramModel().toVirtualRow( row );
+    return toVirtualRow( row );
   }
 
   /**
@@ -121,18 +121,6 @@ public class ChannelLabelsViewModel extends AbstractViewModel
       color = LafDefaults.DEFAULT_BACKGROUND_COLOR;
     }
     return color;
-  }
-
-  /**
-   * Returns the label for the channel with the given index.
-   * 
-   * @param aChannelIndex
-   *          the channel index of the channel to get the label for.
-   * @return a channel label, never <code>null</code>.
-   */
-  public String getChannelLabel( final int aChannelIndex )
-  {
-    return getSignalDiagramModel().getChannelLabel( aChannelIndex );
   }
 
   /**

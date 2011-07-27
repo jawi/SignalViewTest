@@ -24,6 +24,7 @@ import java.awt.*;
 
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.view.*;
+import nl.lxtreme.test.view.model.SignalDiagramModel.HelpTextDisplay;
 
 
 /**
@@ -65,6 +66,15 @@ abstract class AbstractViewModel
   public int getChannelHeight()
   {
     return getSignalDiagramModel().getChannelHeight();
+  }
+
+  /**
+   * @param aChannelIdx
+   * @return
+   */
+  public String getChannelLabel( final int aChannelIdx )
+  {
+    return getSignalDiagramModel().getChannelLabel( aChannelIdx );
   }
 
   /**
@@ -154,6 +164,16 @@ abstract class AbstractViewModel
   public Color getCursorTextColor( final int aCursorIndex )
   {
     return Utils.getContrastColor( getCursorColor( aCursorIndex ) );
+  }
+
+  /**
+   * Returns how the time line help text is to be displayed.
+   * 
+   * @return a {@link HelpTextDisplay} value, never <code>null</code>.
+   */
+  public HelpTextDisplay getHelpTextDisplayMode()
+  {
+    return getSignalDiagramModel().getHelpTextDisplayMode();
   }
 
   /**

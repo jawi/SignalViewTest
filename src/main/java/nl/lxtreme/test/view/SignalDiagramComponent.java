@@ -39,6 +39,14 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   // INNER TYPES
 
   /**
+   * Defines a zoom factor, with a ratio and some additional properties.
+   */
+  public static class ZoomFactor
+  {
+    // TODO
+  }
+
+  /**
    * Provides a transparent event listener to allow some of the functionality
    * (such as DnD and cursor dragging) of this component to be controlled with
    * the mouse and keyboard. It is implemented as an {@link AWTEventListener} to
