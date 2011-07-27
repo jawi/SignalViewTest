@@ -174,14 +174,34 @@ public class SampleDataModel
     return -1;
   }
 
+  /**
+   * @return
+   */
   public long getAbsoluteLength()
   {
     int idx = this.timestamps.length - 1;
-    if ( idx >= 0 )
+
+    long length = -1L;
+    if ( idx > 0 )
     {
-      return this.timestamps[idx] + 1;
+      length = ( this.timestamps[idx] + 1 ) - this.timestamps[0];
     }
-    return -1;
+    else if ( idx == 0 )
+    {
+      length = this.timestamps[0];
+    }
+
+    return length;
+  }
+
+  /**
+   * Returns the total capture length of data in this model.
+   * 
+   * @return a capture length, in seconds.
+   */
+  public double getCaptureLength()
+  {
+    return getAbsoluteLength() / ( double )getSampleRate();
   }
 
   /**

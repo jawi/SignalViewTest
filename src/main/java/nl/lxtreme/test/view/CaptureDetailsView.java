@@ -23,6 +23,7 @@ package nl.lxtreme.test.view;
 import static nl.lxtreme.test.Utils.*;
 
 import java.awt.*;
+import java.beans.*;
 import java.text.*;
 
 import javax.swing.*;
@@ -34,13 +35,19 @@ import nl.lxtreme.test.model.*;
 /**
  * 
  */
-public class CaptureDetailsView extends AbstractViewLayer implements IDataModelChangeListener
+public class CaptureDetailsView extends AbstractViewLayer implements IDataModelChangeListener, PropertyChangeListener
 {
   // CONSTANTS
 
   private static final long serialVersionUID = 1L;
 
   // VARIABLES
+
+  private volatile String sampleRate = "-";
+  private volatile String sampleCount = "-";
+  private volatile String totalWidth = "-";
+  private volatile String tickInterval = "-";
+  private volatile String displayedTime = "-";
 
   private final JLabel captureInfoField;
 
@@ -56,7 +63,7 @@ public class CaptureDetailsView extends AbstractViewLayer implements IDataModelC
   {
     super( aController );
 
-    this.captureInfoField = new JLabel( asText( null ) );
+    this.captureInfoField = new JLabel( asText() );
   }
 
   // METHODS
@@ -75,6 +82,7 @@ public class CaptureDetailsView extends AbstractViewLayer implements IDataModelC
     result.initComponent();
 
     aController.addDataModelChangeListener( result );
+    aController.addPropertyChangeListener( result );
 
     return result;
   }
@@ -85,32 +93,59 @@ public class CaptureDetailsView extends AbstractViewLayer implements IDataModelC
   @Override
   public void dataModelChanged( final SampleDataModel aDataModel )
   {
-    this.captureInfoField.setText( asText( aDataModel ) );
+    this.sampleRate = "-";
+    this.sampleCount = "-";
+    this.totalWidth = "-";
+
+    if ( aDataModel != null )
+    {
+      this.sampleRate = displayFrequency( aDataModel.getSampleRate() );
+      this.sampleCount = new DecimalFormat().format( aDataModel.getSize() );
+      this.totalWidth = displayTime( aDataModel.getCaptureLength() );
+    }
+
     repaint( 50L );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void propertyChange( final PropertyChangeEvent aEvent )
+  {
+    final String name = aEvent.getPropertyName();
+    if ( "zoomFactor".equals( name ) || "visibleRect".equals( name ) )
+    {
+      this.tickInterval = displayTime( getController().getTimeInterval() );
+      this.displayedTime = displayTime( getController().getDisplayedTimeInterval() );
+
+      repaint( 50L );
+    }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  protected void paintComponent( final Graphics aGraphics )
+  {
+    this.captureInfoField.setText( asText() );
+
+    super.paintComponent( aGraphics );
   }
 
   /**
    * @param aEvent
    * @return
    */
-  private String asText( final SampleDataModel aModel )
+  private String asText()
   {
-    String sampleRate = "-", sampleCount = "-", totalWidth = "-";
-
-    if ( aModel != null )
-    {
-      final long[] timestamps = aModel.getTimestamps();
-      final double end = ( timestamps[timestamps.length - 1] + 1 ) - timestamps[0];
-
-      sampleRate = displayFrequency( aModel.getSampleRate() );
-      sampleCount = new DecimalFormat().format( aModel.getSize() );
-      totalWidth = Utils.displayTime( end / aModel.getSampleRate() );
-    }
-
     final StringBuilder sb = new StringBuilder( "<html><table>" );
-    sb.append( "<tr><th align='right'>Sample rate:</th><td>" ).append( sampleRate ).append( "</td>" );
-    sb.append( "<tr><th align='right'>Sample count:</th><td>" ).append( sampleCount ).append( "</td>" );
-    sb.append( "<tr><th align='right'>Sample time:</th><td>" ).append( totalWidth ).append( "</td>" );
+    sb.append( "<tr><th align='right'>Sample rate:</th><td>" ).append( this.sampleRate ).append( "</td>" );
+    sb.append( "<tr><th align='right'>Sample count:</th><td>" ).append( this.sampleCount ).append( "</td>" );
+    sb.append( "<tr><th align='right'>Sample time:</th><td>" ).append( this.totalWidth ).append( "</td>" );
+    sb.append( "<tr><th align='right'>Tick interval:</th><td>" ).append( this.tickInterval ).append( "</td>" );
+    sb.append( "<tr><th align='right'>Displayed time:</th><td>" ).append( this.displayedTime ).append( "</td>" );
     sb.append( "</table></html>" );
 
     return sb.toString();

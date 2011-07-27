@@ -25,6 +25,7 @@ import static nl.lxtreme.test.SwingUtils.*;
 import java.awt.*;
 
 import nl.lxtreme.test.*;
+import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.view.laf.*;
 import nl.lxtreme.test.view.model.*;
 
@@ -33,7 +34,7 @@ import nl.lxtreme.test.view.model.*;
  * Provides a time line view, displaying ticks at regular intervals along with
  * timing information.
  */
-public class TimeLineView extends AbstractViewLayer implements ICursorChangeListener
+public class TimeLineView extends AbstractViewLayer implements ICursorChangeListener, IDataModelChangeListener
 {
   // CONSTANTS
 
@@ -139,6 +140,15 @@ public class TimeLineView extends AbstractViewLayer implements ICursorChangeList
    */
   @Override
   public void cursorsVisible()
+  {
+    repaint( 50L );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void dataModelChanged( final SampleDataModel aDataModel )
   {
     repaint( 50L );
   }

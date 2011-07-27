@@ -54,9 +54,6 @@ public class TimeLineViewModel extends AbstractViewModel
   public static final String MINOR_TICK_LABEL_FONT = "timeline.minortick.label.font";
   public static final String MINOR_TICK_COLOR = "timeline.minortick.color";
 
-  /** The tick increment (in pixels). */
-  private static final int TIMELINE_INCREMENT = 5;
-
   // CONSTRUCTORS
 
   /**
@@ -309,41 +306,34 @@ public class TimeLineViewModel extends AbstractViewModel
   /**
    * Returns the increment of pixels per timeline tick.
    * 
-   * @param aTimebase
-   *          a time base.
    * @return a tick increment, >= 1.0.
-   * @see #getTimebase(Rectangle)
+   * @see #getTimebase()
    */
-  public double getTickIncrement( final double aTimebase )
+  public double getTickIncrement()
   {
-    return Math.max( 1.0, aTimebase / TIMELINE_INCREMENT );
+    return getScreenModel().getTickIncrement();
   }
 
   /**
    * Determines the time base for the given absolute time (= total time
    * displayed).
    * 
-   * @param aViewRect
-   *          the view rectangle to base the time base on.
    * @return a time base, as power of 10.
    */
-  public double getTimebase( final Rectangle aViewRect )
+  public double getTimebase()
   {
-    final double absoluteTime = aViewRect.width / getZoomFactor();
-    return Math.pow( 10, Math.round( Math.log10( absoluteTime ) ) );
+    return getScreenModel().getTimebase();
   }
 
   /**
    * Returns the increment of pixels per unit of time.
    * 
-   * @param aTimebase
-   *          a time base.
    * @return a time increment, >= 0.1.
-   * @see #getTimebase(Rectangle)
+   * @see #getTimebase()
    */
-  public double getTimeIncrement( final double aTimebase )
+  public double getTimeIncrement()
   {
-    return Math.max( 0.1, aTimebase / ( 10.0 * TIMELINE_INCREMENT ) );
+    return getScreenModel().getTimeIncrement();
   }
 
   /**

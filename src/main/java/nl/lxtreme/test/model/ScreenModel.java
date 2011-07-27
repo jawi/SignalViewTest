@@ -49,6 +49,9 @@ public class ScreenModel
 
   private static final int MAX_CURSORS = 10;
 
+  /** The tick increment (in pixels). */
+  private static final int TIMELINE_INCREMENT = 5;
+
   private static final Color[] SALEAE_COLORS = { //
   Utils.parseColor( "000000" ), //
       Utils.parseColor( "8B4513" ), //
@@ -99,6 +102,7 @@ public class ScreenModel
   private final String[] cursorLabels;
   private SignalAlignment signalAlignment;
   private HelpTextDisplay helpTextDisplay;
+  private Rectangle visibleRect;
 
   // CONSTRUCTORS
 
@@ -287,6 +291,55 @@ public class ScreenModel
   }
 
   /**
+   * Returns the increment of pixels per timeline tick.
+   * 
+   * @return a tick increment, >= 1.0.
+   * @see #getTimebase()
+   */
+  public double getTickIncrement()
+  {
+    return Math.max( 1.0, getTimebase() / TIMELINE_INCREMENT );
+  }
+
+  /**
+   * Determines the time base for the given absolute time (= total time
+   * displayed).
+   * 
+   * @return a time base, as power of 10.
+   */
+  public double getTimebase()
+  {
+    if ( this.visibleRect == null )
+    {
+      return 0.0;
+    }
+    final double absoluteTime = this.visibleRect.width / getZoomFactor();
+    return Math.pow( 10, Math.round( Math.log10( absoluteTime ) ) );
+  }
+
+  /**
+   * Returns the increment of pixels per unit of time.
+   * 
+   * @return a time increment, >= 0.1.
+   * @see #getTimebase()
+   */
+  public double getTimeIncrement()
+  {
+    return Math.max( 0.1, getTimebase() / ( 10.0 * TIMELINE_INCREMENT ) );
+  }
+
+  /**
+   * Returns the dimensions of the visible screen.
+   * 
+   * @return the visible dimensions, as {@link Rectangle}, never
+   *         <code>null</code>.
+   */
+  public Rectangle getVisibleRect()
+  {
+    return this.visibleRect;
+  }
+
+  /**
    * @return
    */
   public double getZoomFactor()
@@ -359,11 +412,6 @@ public class ScreenModel
    */
   public void moveRows( final int aOldRowIdx, final int aNewRowIdx )
   {
-    if ( aOldRowIdx == aNewRowIdx )
-    {
-      return;
-    }
-
     final int dataWidth = this.virtualRowMapping.length;
     if ( ( aOldRowIdx < 0 ) || ( aOldRowIdx >= dataWidth ) )
     {
@@ -372,6 +420,11 @@ public class ScreenModel
     if ( ( aNewRowIdx < 0 ) || ( aNewRowIdx >= dataWidth ) )
     {
       throw new IllegalArgumentException( "Insert row invalid!" );
+    }
+
+    if ( aOldRowIdx == aNewRowIdx )
+    {
+      return;
     }
 
     final int row = toRealRow( aOldRowIdx );
@@ -464,6 +517,22 @@ public class ScreenModel
   public void setSnapCursor( final boolean aSnapCursor )
   {
     this.snapCursor = aSnapCursor;
+  }
+
+  /**
+   * Sets the visible dimensions of the signal view.
+   * 
+   * @param aVisibleRect
+   *          the visible dimensions to set, cannot be <code>null</code>.
+   */
+  public void setVisibleRect( final Rectangle aVisibleRect )
+  {
+    if ( aVisibleRect == null )
+    {
+      throw new IllegalArgumentException( "Parameter VisibleRect cannot be null!" );
+    }
+    // Take a copy to avoid external modifications...
+    this.visibleRect = new Rectangle( aVisibleRect );
   }
 
   /**

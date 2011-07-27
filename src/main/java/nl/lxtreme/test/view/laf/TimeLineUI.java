@@ -84,9 +84,9 @@ public class TimeLineUI extends ComponentUI
 
       final double zoomFactor = model.getZoomFactor();
       final double sampleRate = model.getSampleRate();
-      final double timebase = model.getTimebase( aComponent.getVisibleRect() );
-      final double tickIncr = model.getTickIncrement( timebase );
-      final double timeIncr = model.getTimeIncrement( timebase );
+      final double timebase = model.getTimebase();
+      final double tickIncr = model.getTickIncrement();
+      final double timeIncr = model.getTimeIncrement();
       final long startTimeStamp = model.getStartTimestamp( visibleRect );
       final long endTimeStamp = model.getEndTimestamp( visibleRect );
 
@@ -162,7 +162,10 @@ public class TimeLineUI extends ComponentUI
 
       if ( model.isRenderHelpText() )
       {
-        renderHelpText( view, canvas, timeIncr / sampleRate, ( endTimeStamp - startTimeStamp ) / sampleRate );
+        final double tickInterval = timeIncr / sampleRate;
+        final double totalDisplayTime = ( endTimeStamp - startTimeStamp ) / sampleRate;
+
+        renderHelpText( view, canvas, tickInterval, totalDisplayTime );
       }
 
       // Draw the cursor "flags"...

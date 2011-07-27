@@ -135,18 +135,18 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       else if ( aEvent instanceof ComponentEvent )
       {
         final ComponentEvent event = ( ComponentEvent )aEvent;
-        if ( !SignalDiagramComponent.class.isInstance( event.getComponent() ) )
+        final Component view = event.getComponent();
+        // XXX the parent is the scrollpane's viewport???
+        if ( view == SignalDiagramComponent.this.getParent() )
         {
-          return;
-        }
-
-        if ( id == ComponentEvent.COMPONENT_RESIZED )
-        {
-          componentResized( event );
-        }
-        else if ( id == ComponentEvent.COMPONENT_SHOWN )
-        {
-          componentShown( event );
+          if ( id == ComponentEvent.COMPONENT_RESIZED )
+          {
+            componentResized( event );
+          }
+          else if ( id == ComponentEvent.COMPONENT_SHOWN )
+          {
+            componentShown( event );
+          }
         }
       }
     }
@@ -165,6 +165,10 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
         {
           this.controller.zoomAll();
         }
+        else
+        {
+          this.controller.recalculateDimensions();
+        }
       }
       finally
       {
@@ -182,8 +186,14 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
       try
       {
-        // Ask the controller to redimension all contained components...
-        this.controller.zoomAll();
+        if ( this.controller.isZoomAll() )
+        {
+          this.controller.zoomAll();
+        }
+        else
+        {
+          this.controller.recalculateDimensions();
+        }
       }
       finally
       {

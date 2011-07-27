@@ -21,6 +21,7 @@ package nl.lxtreme.test.view;
 
 
 import java.awt.*;
+import java.beans.*;
 import java.util.logging.*;
 
 import javax.swing.*;
@@ -43,7 +44,9 @@ public final class SignalDiagramController
   // VARIABLES
 
   private final DragAndDropTargetController dndTargetController;
+
   private final EventListenerList eventListeners;
+  private final PropertyChangeSupport propertyChangeSupport;
 
   private SampleDataModel dataModel;
   private ScreenModel screenModel;
@@ -59,6 +62,7 @@ public final class SignalDiagramController
     this.dndTargetController = new DragAndDropTargetController( this );
 
     this.eventListeners = new EventListenerList();
+    this.propertyChangeSupport = new PropertyChangeSupport( this );
   }
 
   // METHODS
@@ -97,6 +101,17 @@ public final class SignalDiagramController
   }
 
   /**
+   * Adds a property change listener.
+   * 
+   * @param aListener
+   *          the listener to add, cannot be <code>null</code>.
+   */
+  public void addPropertyChangeListener( final PropertyChangeListener aListener )
+  {
+    this.propertyChangeSupport.addPropertyChangeListener( aListener );
+  }
+
+  /**
    * @param aPoint
    */
   public void fireMeasurementEvent( final SignalHoverInfo signalHover )
@@ -117,6 +132,19 @@ public final class SignalDiagramController
   public SampleDataModel getDataModel()
   {
     return this.dataModel;
+  }
+
+  /**
+   * @return
+   */
+  public double getDisplayedTimeInterval()
+  {
+    final Rectangle visibleRect = this.screenModel.getVisibleRect();
+    if ( visibleRect == null )
+    {
+      return 0.0;
+    }
+    return visibleRect.width / ( double )this.dataModel.getSampleRate();
   }
 
   /**
@@ -260,6 +288,14 @@ public final class SignalDiagramController
   }
 
   /**
+   * @return
+   */
+  public double getTimeInterval()
+  {
+    return this.screenModel.getTimeIncrement() / this.dataModel.getSampleRate();
+  }
+
+  /**
    * Returns whether the cursor denoted by the given index is defined.
    * 
    * @param aCursorIdx
@@ -353,43 +389,51 @@ public final class SignalDiagramController
   public void recalculateDimensions()
   {
     final JScrollPane scrollPane = SwingUtils.getAncestorOfClass( JScrollPane.class, getSignalView() );
-    if ( scrollPane != null )
+    if ( scrollPane == null )
     {
-      final Rectangle viewPortSize = scrollPane.getViewport().getVisibleRect();
-
-      int width = ( int )Math.min( getMaxWidth(), getAbsoluteLength() );
-      if ( width < viewPortSize.width )
-      {
-        width = viewPortSize.width;
-      }
-
-      int height = ( this.screenModel.getChannelHeight() * this.dataModel.getWidth() );
-      if ( height < viewPortSize.height )
-      {
-        height = viewPortSize.height;
-      }
-
-      JComponent view = ( JComponent )scrollPane.getViewport().getView();
-      view.setPreferredSize( new Dimension( width, height ) );
-      view.revalidate();
-
-      TimeLineView timeline = ( TimeLineView )scrollPane.getColumnHeader().getView();
-      // the timeline component always follows the width of the signal view, but
-      // with a fixed height...
-      timeline.setPreferredSize( new Dimension( width, timeline.getTimeLineHeight() ) );
-      timeline.setMinimumSize( view.getPreferredSize() );
-      timeline.revalidate();
-
-      ChannelLabelsView channelLabels = ( ChannelLabelsView )scrollPane.getRowHeader().getView();
-      // the channel label component calculates its own 'optimal' width, but
-      // doesn't know squat about the correct height...
-      final Dimension minimumSize = channelLabels.getMinimumSize();
-      channelLabels.setMinimumSize( new Dimension( minimumSize.width, height ) );
-      channelLabels.setPreferredSize( new Dimension( minimumSize.width, height ) );
-      channelLabels.revalidate();
-
-      scrollPane.repaint();
+      return;
     }
+
+    final Rectangle viewPortSize = scrollPane.getViewport().getVisibleRect();
+
+    int width = ( int )Math.min( getMaxWidth(), getAbsoluteLength() );
+    if ( width < viewPortSize.width )
+    {
+      width = viewPortSize.width;
+    }
+
+    int height = ( this.screenModel.getChannelHeight() * this.dataModel.getWidth() );
+    if ( height < viewPortSize.height )
+    {
+      height = viewPortSize.height;
+    }
+
+    JComponent signalView = ( JComponent )scrollPane.getViewport().getView();
+    signalView.setPreferredSize( new Dimension( width, height ) );
+    signalView.revalidate();
+
+    TimeLineView timeline = ( TimeLineView )scrollPane.getColumnHeader().getView();
+    // the timeline component always follows the width of the signal view, but
+    // with a fixed height...
+    timeline.setPreferredSize( new Dimension( width, timeline.getTimeLineHeight() ) );
+    timeline.setMinimumSize( signalView.getPreferredSize() );
+    timeline.revalidate();
+
+    ChannelLabelsView channelLabels = ( ChannelLabelsView )scrollPane.getRowHeader().getView();
+    // the channel label component calculates its own 'optimal' width, but
+    // doesn't know squat about the correct height...
+    final Dimension minimumSize = channelLabels.getMinimumSize();
+    channelLabels.setMinimumSize( new Dimension( minimumSize.width, height ) );
+    channelLabels.setPreferredSize( new Dimension( minimumSize.width, height ) );
+    channelLabels.revalidate();
+
+    scrollPane.repaint();
+
+    // Update the screen model...
+    Rectangle oldVisibleRect = this.screenModel.getVisibleRect();
+    this.screenModel.setVisibleRect( viewPortSize );
+
+    this.propertyChangeSupport.firePropertyChange( "visibleRect", oldVisibleRect, viewPortSize );
   }
 
   /**
@@ -454,6 +498,17 @@ public final class SignalDiagramController
   }
 
   /**
+   * Removes a property change listener.
+   * 
+   * @param aListener
+   *          the listener to remove, cannot be <code>null</code>.
+   */
+  public void removePropertyChangeListener( final PropertyChangeListener aListener )
+  {
+    this.propertyChangeSupport.removePropertyChangeListener( aListener );
+  }
+
+  /**
    * Turns the visibility of all cursors either on or off.
    * <p>
    * This method does <em>not</em> modify any cursor, only whether they are
@@ -497,13 +552,15 @@ public final class SignalDiagramController
 
     this.dataModel = aDataModel;
 
-    this.screenModel = new ScreenModel( aDataModel.getWidth() );
+    setScreenModel( new ScreenModel( aDataModel.getWidth() ) );
 
     final IDataModelChangeListener[] listeners = this.eventListeners.getListeners( IDataModelChangeListener.class );
     for ( IDataModelChangeListener listener : listeners )
     {
       listener.dataModelChanged( aDataModel );
     }
+
+    zoomOriginal();
   }
 
   /**
@@ -563,6 +620,8 @@ public final class SignalDiagramController
    */
   public void zoomAll()
   {
+    final double oldFactor = this.screenModel.getZoomFactor();
+
     try
     {
       Dimension viewSize = getVisibleViewSize();
@@ -573,7 +632,11 @@ public final class SignalDiagramController
       this.screenModel.setZoomAll( true );
     }
 
+    LOG.log( Level.INFO, "Zoom factor set to " + this.screenModel.getZoomFactor() );
+
     recalculateDimensions();
+
+    this.propertyChangeSupport.firePropertyChange( "zoomFactor", oldFactor, this.screenModel.getZoomFactor() );
   }
 
   /**
@@ -581,9 +644,13 @@ public final class SignalDiagramController
    */
   public void zoomIn()
   {
+    final double oldFactor = this.screenModel.getZoomFactor();
+
     zoomRelative( 2.0 );
 
     recalculateDimensions();
+
+    this.propertyChangeSupport.firePropertyChange( "zoomFactor", oldFactor, this.screenModel.getZoomFactor() );
   }
 
   /**
@@ -591,9 +658,13 @@ public final class SignalDiagramController
    */
   public void zoomOriginal()
   {
+    final double oldFactor = this.screenModel.getZoomFactor();
+
     zoomAbsolute( 1.0 );
 
     recalculateDimensions();
+
+    this.propertyChangeSupport.firePropertyChange( "zoomFactor", oldFactor, this.screenModel.getZoomFactor() );
   }
 
   /**
@@ -601,9 +672,13 @@ public final class SignalDiagramController
    */
   public void zoomOut()
   {
+    final double oldFactor = this.screenModel.getZoomFactor();
+
     zoomRelative( 0.5 );
 
     recalculateDimensions();
+
+    this.propertyChangeSupport.firePropertyChange( "zoomFactor", oldFactor, this.screenModel.getZoomFactor() );
   }
 
   /**
@@ -723,7 +798,7 @@ public final class SignalDiagramController
   {
     final JComponent component = getSignalView();
 
-    final JScrollPane scrollPane = ( JScrollPane )SwingUtilities.getAncestorOfClass( JScrollPane.class, component );
+    final JScrollPane scrollPane = SwingUtils.getAncestorOfClass( JScrollPane.class, component );
 
     final Rectangle rect;
     if ( scrollPane != null )
