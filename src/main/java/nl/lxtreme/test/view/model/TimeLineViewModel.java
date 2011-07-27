@@ -24,10 +24,9 @@ import java.awt.*;
 
 import javax.swing.*;
 
-import nl.lxtreme.test.model.*;
-import nl.lxtreme.test.model.ScreenModel.HelpTextDisplay;
 import nl.lxtreme.test.view.*;
 import nl.lxtreme.test.view.laf.*;
+import nl.lxtreme.test.view.model.SignalDiagramModel.HelpTextDisplay;
 
 
 /**
@@ -117,7 +116,7 @@ public class TimeLineViewModel extends AbstractViewModel
       return 0L;
     }
 
-    final long[] timestamps = getDataModel().getTimestamps();
+    final long[] timestamps = getSignalDiagramModel().getTimestamps();
 
     return timestamps[idx] + 1;
   }
@@ -129,7 +128,7 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public HelpTextDisplay getHelpTextDisplayMode()
   {
-    return getScreenModel().getHelpTextDisplayMode();
+    return getSignalDiagramModel().getHelpTextDisplayMode();
   }
 
   /**
@@ -229,7 +228,7 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public int getSampleRate()
   {
-    return this.controller.getDataModel().getSampleRate();
+    return this.controller.getSignalDiagramModel().getSampleRate();
   }
 
   /**
@@ -250,7 +249,7 @@ public class TimeLineViewModel extends AbstractViewModel
       return 0L;
     }
 
-    final SampleDataModel dataModel = this.controller.getDataModel();
+    final SignalDiagramModel dataModel = this.controller.getSignalDiagramModel();
     final long[] timestamps = dataModel.getTimestamps();
 
     // Make sure that if we're at the beginning of the timeline, we're always
@@ -311,7 +310,7 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public double getTickIncrement()
   {
-    return getScreenModel().getTickIncrement();
+    return getSignalDiagramModel().getTickIncrement();
   }
 
   /**
@@ -322,7 +321,7 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public double getTimebase()
   {
-    return getScreenModel().getTimebase();
+    return getSignalDiagramModel().getTimebase();
   }
 
   /**
@@ -333,7 +332,7 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public double getTimeIncrement()
   {
-    return getScreenModel().getTimeIncrement();
+    return getSignalDiagramModel().getTimeIncrement();
   }
 
   /**
@@ -360,6 +359,6 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public boolean isRenderHelpText()
   {
-    return getScreenModel().isTimeLineHelpTextDisplayed();
+    return getSignalDiagramModel().isTimeLineHelpTextDisplayed();
   }
 }

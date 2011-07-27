@@ -22,6 +22,8 @@ package nl.lxtreme.test;
 
 import java.util.*;
 
+import nl.lxtreme.test.model.*;
+
 
 /**
  * Denotes a listener for cursor changes, such as setting, removing or moving
@@ -32,22 +34,30 @@ public interface ICursorChangeListener extends EventListener
   // METHODS
 
   /**
-   * @param aCursorIdx
-   * @param aCursorTimestamp
+   * Called when a cursor is "added" on screen.
+   * 
+   * @param aCursor
+   *          the cursor that is added, cannot be <code>null</code>.
    */
-  void cursorAdded( int aCursorIdx, long aCursorTimestamp );
+  void cursorAdded( Cursor aCursor );
 
   /**
-   * @param aCursorIdx
-   * @param aOldCursorTimestamp
-   * @param aNewCursorTimestamp
+   * Called when a single cursor is changed/moved.
+   * 
+   * @param aOldCursor
+   *          the old cursor, cannot be <code>null</code>;
+   * @param aNewCursor
+   *          the new cursor, cannot be <code>null</code>.
    */
-  void cursorChanged( int aCursorIdx, long aOldCursorTimestamp, long aNewCursorTimestamp );
+  void cursorChanged( Cursor aOldCursor, Cursor aNewCursor );
 
   /**
-   * @param aCursorIdx
+   * Called when a single cursor is removed.
+   * 
+   * @param aOldCursor
+   *          the old cursor (before removal), cannot be <code>null</code>.
    */
-  void cursorRemoved( int aCursorIdx, long aOldCursorTimestamp );
+  void cursorRemoved( Cursor aOldCursor );
 
   /**
    * Called when the cursors are made invisible.

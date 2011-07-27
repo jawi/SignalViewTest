@@ -26,7 +26,6 @@ import java.awt.event.*;
 import javax.swing.*;
 
 import nl.lxtreme.test.*;
-import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.view.action.*;
 import nl.lxtreme.test.view.model.*;
 
@@ -161,7 +160,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
       try
       {
-        if ( this.controller.isZoomAll() )
+        if ( getModel().isZoomAll() )
         {
           this.controller.zoomAll();
         }
@@ -186,7 +185,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
       try
       {
-        if ( this.controller.isZoomAll() )
+        if ( getModel().isZoomAll() )
         {
           this.controller.zoomAll();
         }
@@ -265,7 +264,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
         final Point point = SwingUtilities.convertPoint( aEvent.getComponent(), aEvent.getPoint(), view );
 
-        final SignalHoverInfo signalHover = this.controller.getSignalHover( point );
+        final SignalHoverInfo signalHover = getModel().getSignalHover( point );
         if ( ( signalHover != null ) && !signalHover.isEmpty() )
         {
           final int channel = signalHover.getChannelIndex();
@@ -287,10 +286,10 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
         return;
       }
 
-      if ( this.controller.isCursorMode() && ( this.movingCursor >= 0 ) )
+      if ( getModel().isCursorMode() && ( this.movingCursor >= 0 ) )
       {
         final Point point = SwingUtilities.convertPoint( aEvent.getComponent(), aEvent.getPoint(), view );
-        this.controller.moveCursor( this.movingCursor, point );
+        this.controller.moveCursor( this.movingCursor, getCursorDropPoint( point ) );
       }
     }
 
@@ -307,18 +306,18 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
       view.setCursor( DEFAULT );
 
-      if ( this.controller.isCursorMode() || this.controller.isMeasurementMode() )
+      if ( getModel().isCursorMode() || getModel().isMeasurementMode() )
       {
         final Point point = SwingUtilities.convertPoint( aEvent.getComponent(), aEvent.getPoint(), view );
 
-        if ( this.controller.isMeasurementMode() )
+        if ( getModel().isMeasurementMode() )
         {
-          SignalHoverInfo signalHover = this.controller.getSignalHover( point );
-          this.controller.fireMeasurementEvent( signalHover );
+          SignalHoverInfo signalHover = getModel().getSignalHover( point );
+          getModel().fireMeasurementEvent( signalHover );
           view.setCursor( signalHover == null ? DEFAULT : CURSOR_HOVER );
         }
 
-        if ( this.controller.isCursorMode() && ( findCursor( point ) >= 0 ) )
+        if ( getModel().isCursorMode() && ( findCursor( point ) >= 0 ) )
         {
           view.setCursor( CURSOR_MOVE_CURSOR );
         }
@@ -334,7 +333,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
       if ( !handlePopupTrigger( aEvent ) )
       {
-        if ( ( view != null ) && this.controller.isCursorMode() )
+        if ( ( view != null ) && getModel().isCursorMode() )
         {
           final Point point = SwingUtilities.convertPoint( aEvent.getComponent(), aEvent.getPoint(), view );
 
@@ -357,7 +356,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
       if ( !handlePopupTrigger( aEvent ) )
       {
-        if ( this.controller.isCursorMode() )
+        if ( getModel().isCursorMode() )
         {
           this.movingCursor = -1;
         }
@@ -376,9 +375,9 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     {
       final long refIdx = getModel().locationToTimestamp( aPoint );
 
-      final double snapArea = CURSOR_SENSITIVITY_AREA / this.controller.getScreenModel().getZoomFactor();
+      final double snapArea = CURSOR_SENSITIVITY_AREA / this.controller.getSignalDiagramModel().getZoomFactor();
 
-      return this.controller.getDataModel().findCursor( refIdx, snapArea );
+      return this.controller.getSignalDiagramModel().findCursor( refIdx, snapArea );
     }
 
     /**
@@ -395,6 +394,31 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
         }
       }
       return this.compRoot;
+    }
+
+    /**
+     * Calculates the drop point for the cursor under the given coordinate.
+     * 
+     * @param aCoordinate
+     *          the coordinate to return the channel drop point for, cannot be
+     *          <code>null</code>.
+     * @return a drop point, never <code>null</code>.
+     */
+    private Point getCursorDropPoint( final Point aCoordinate )
+    {
+      Point dropPoint = new Point( aCoordinate );
+
+      if ( getModel().isSnapCursor() )
+      {
+        final SignalHoverInfo signalHover = getModel().getSignalHover( aCoordinate );
+        if ( ( signalHover != null ) && !signalHover.isEmpty() )
+        {
+          dropPoint.x = signalHover.getMidSamplePos().intValue();
+        }
+      }
+      dropPoint.y = 0;
+
+      return dropPoint;
     }
 
     /**
@@ -416,7 +440,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
      */
     private boolean handlePopupTrigger( final MouseEvent aEvent )
     {
-      final boolean popupTrigger = this.controller.isCursorMode() && aEvent.isPopupTrigger();
+      final boolean popupTrigger = getModel().isCursorMode() && aEvent.isPopupTrigger();
       if ( popupTrigger )
       {
         final JComponent view = getDeepestComponentAt( aEvent );
@@ -440,7 +464,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
         {
           // Not hovering above existing cursor, show add menu...
           contextMenu = new JPopupMenu();
-          for ( int i = 0; i < SampleDataModel.MAX_CURSORS; i++ )
+          for ( int i = 0; i < nl.lxtreme.test.model.Cursor.MAX_CURSORS; i++ )
           {
             final SetCursorAction action = new SetCursorAction( this.controller, i );
             contextMenu.add( new JCheckBoxMenuItem( action ) );
@@ -450,7 +474,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
           // when an action is selected, we *no* longer know where the point was
           // where the user clicked. Therefore, we need to store it separately
           // for later use...
-          contextMenu.putClientProperty( SetCursorAction.KEY, point );
+          contextMenu.putClientProperty( SetCursorAction.KEY, getCursorDropPoint( point ) );
         }
 
         if ( contextMenu != null )
@@ -494,11 +518,10 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     super();
 
     this.controller = aController;
-
-    this.signalView = SignalView.create( this.controller );
-
-    this.model = new SignalDiagramModel( aController );
     this.awtListener = new TransparentAWTListener( this.controller );
+
+    this.model = new SignalDiagramModel( this.controller );
+    this.signalView = new SignalView( this.controller );
 
     initComponent();
   }
@@ -519,6 +542,9 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     final SignalDiagramComponent result = new SignalDiagramComponent( aController );
 
     aController.setSignalDiagram( result );
+
+    aController.addCursorChangeListener( result.getSignalView() );
+    aController.addMeasurementListener( result.getSignalView() );
 
     return result;
   }
@@ -542,8 +568,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       rootPane.setGlassPane( glassPane );
 
       configureEnclosingScrollPane();
-
-      this.controller.recalculateDimensions();
     }
     finally
     {
@@ -556,7 +580,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
    * 
    * @return the model, never <code>null</code>.
    */
-  public SignalDiagramModel getModel()
+  public final SignalDiagramModel getModel()
   {
     return this.model;
   }
@@ -576,12 +600,11 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   @Override
   public int getScrollableBlockIncrement( final Rectangle aVisibleRect, final int aOrientation, final int aDirection )
   {
-    final SampleDataModel dataModel = this.controller.getDataModel();
-    final ScreenModel screenModel = this.controller.getScreenModel();
+    final SignalDiagramModel model = this.controller.getSignalDiagramModel();
 
-    final int channelHeight = screenModel.getChannelHeight();
-    final int channelCount = dataModel.getWidth();
-    final int lastSampleIdx = dataModel.getSize();
+    final int channelHeight = getModel().getChannelHeight();
+    final int channelCount = model.getSampleWidth();
+    final int lastSampleIdx = model.getSampleCount();
 
     final int inc;
     if ( aOrientation == SwingConstants.VERTICAL )
@@ -632,6 +655,31 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   public final SignalView getSignalView()
   {
     return this.signalView;
+  }
+
+  /**
+   * Returns the dimensions of the visible view, taking care of viewports (such
+   * as used in {@link JScrollPane}).
+   * 
+   * @return a visible view size, as {@link Dimension}, never <code>null</code>.
+   */
+  public final Dimension getVisibleViewSize()
+  {
+    final JComponent component = getSignalView();
+
+    final JScrollPane scrollPane = SwingUtils.getAncestorOfClass( JScrollPane.class, component );
+
+    final Rectangle rect;
+    if ( scrollPane != null )
+    {
+      rect = scrollPane.getViewport().getVisibleRect();
+    }
+    else
+    {
+      rect = getVisibleRect();
+    }
+
+    return rect.getSize();
   }
 
   /**
@@ -695,7 +743,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     Rectangle rect = new Rectangle();
     rect.width = visibleRect.width;
     rect.height = visibleRect.height;
-    rect.x = ( int )( ( this.controller.getScreenModel().getZoomFactor() * aTimestamp ) - rect.getCenterX() );
+    rect.x = ( int )( ( this.controller.getSignalDiagramModel().getZoomFactor() * aTimestamp ) - rect.getCenterX() );
     rect.y = visibleRect.y;
 
     signalView.scrollRectToVisible( rect );

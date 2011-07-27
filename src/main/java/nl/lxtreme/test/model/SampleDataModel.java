@@ -20,38 +20,16 @@
 package nl.lxtreme.test.model;
 
 
-import java.util.*;
-
-import nl.lxtreme.test.*;
-
-
 /**
  * @author jajans
  */
 public class SampleDataModel
 {
-  // INNER TYPES
-
-  public static interface SampleDataProvider
-  {
-    /**
-     * @param aValues
-     * @param aTimestamps
-     * @param aSize
-     * @return the sample rate, in Hertz.
-     */
-    int getSampleData( final int[] aValues, final long[] aTimestamps, final int aSize );
-  }
-
-  // CONSTANTS
-
-  public static final int MAX_CURSORS = 10;
-
   // VARIABLES
 
   private final int[] values;
   private final long[] timestamps;
-  private final Long[] cursors;
+  private final Cursor[] cursors;
   private final int sampleRate;
 
   // CONSTRUCTORS
@@ -70,112 +48,13 @@ public class SampleDataModel
 
     this.sampleRate = aProvider.getSampleData( this.values, this.timestamps, aSize );
 
-    final double end = ( this.timestamps[this.timestamps.length - 1] + 1 ) - this.timestamps[0];
-
-    System.out.println( "Data sample rate  : " + Utils.displayFrequency( this.sampleRate ) );
-    System.out.println( "Data size         : " + aSize + " samples." );
-    System.out.println( "Total sample time : " + Utils.displayTime( end / this.sampleRate ) );
-
-    this.cursors = new Long[MAX_CURSORS];
-    this.cursors[0] = Long.valueOf( 100 );
-    this.cursors[1] = Long.valueOf( 200 );
+    this.cursors = Cursor.createCursors();
   }
 
   // METHODS
 
   /**
-   * Provides a binary search for arrays of long-values.
-   * <p>
-   * This implementation is directly copied from the JDK
-   * {@link Arrays#binarySearch(long[], long)} implementation, slightly modified
-   * to only perform a single comparison-action.
-   * </p>
-   * 
-   * @param aArray
-   *          the array of long values to search in;
-   * @param aFromIndex
-   *          the from index to search from;
-   * @param aToIndex
-   *          the to index to search up and until;
-   * @param aKey
-   *          the value to search for.
-   * @return the index of the given key, which is either the greatest index of
-   *         the value less or equal to the given key.
-   * @see Arrays#binarySearch(long[], long)
-   */
-  static final int binarySearch( final long[] aArray, final int aFromIndex, final int aToIndex, final long aKey )
-  {
-    int mid = -1;
-    int low = aFromIndex;
-    int high = aToIndex - 1;
-
-    while ( low <= high )
-    {
-      mid = ( low + high ) >>> 1;
-      final long midVal = aArray[mid];
-
-      final int c = ( aKey < midVal ? -1 : ( aKey == midVal ? 0 : 1 ) );
-      if ( c > 0 )
-      {
-        low = mid + 1;
-      }
-      else if ( c < 0 )
-      {
-        high = mid - 1;
-      }
-      else
-      {
-        return mid; // key found
-      }
-    }
-
-    if ( mid < 0 )
-    {
-      return low;
-    }
-
-    // Determine the insertion point, avoid crossing the array boundaries...
-    if ( mid < ( aToIndex - 1 ) )
-    {
-      // If the searched value is greater than the value of the found index,
-      // insert it after this value, otherwise before it (= the last return)...
-      if ( aKey > aArray[mid] )
-      {
-        return mid + 1;
-      }
-    }
-
-    return mid;
-  }
-
-  /**
-   * @param aTimestamp
-   * @param aSensitivityArea
-   * @return
-   */
-  public int findCursor( final long aTimestamp, final double aSensitivityArea )
-  {
-    for ( int i = 0; i < this.cursors.length; i++ )
-    {
-      if ( this.cursors[i] == null )
-      {
-        continue;
-      }
-
-      final double min = this.cursors[i].longValue() - aSensitivityArea;
-      final double max = this.cursors[i].longValue() + aSensitivityArea;
-
-      if ( ( aTimestamp >= min ) && ( aTimestamp <= max ) )
-      {
-        return i;
-      }
-    }
-
-    return -1;
-  }
-
-  /**
-   * @return
+   * {@inheritDoc}
    */
   public long getAbsoluteLength()
   {
@@ -195,9 +74,7 @@ public class SampleDataModel
   }
 
   /**
-   * Returns the total capture length of data in this model.
-   * 
-   * @return a capture length, in seconds.
+   * {@inheritDoc}
    */
   public double getCaptureLength()
   {
@@ -205,10 +82,9 @@ public class SampleDataModel
   }
 
   /**
-   * @param aCursorIdx
-   * @return
+   * {@inheritDoc}
    */
-  public Long getCursor( final int aCursorIdx )
+  public Cursor getCursor( final int aCursorIdx )
   {
     if ( ( aCursorIdx < 0 ) || ( aCursorIdx > this.cursors.length ) )
     {
@@ -217,67 +93,63 @@ public class SampleDataModel
     return this.cursors[aCursorIdx];
   }
 
-  public Long[] getCursors()
+  /**
+   * {@inheritDoc}
+   */
+  public Cursor[] getCursors()
   {
     return this.cursors;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public int getSampleRate()
   {
     return this.sampleRate;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public int getSize()
   {
     return this.values.length;
   }
 
-  public int getTimestampIndex( final long aValue )
-  {
-    final int length = this.timestamps.length;
-    return binarySearch( this.timestamps, 0, length, aValue );
-  }
-
+  /**
+   * {@inheritDoc}
+   */
   public long[] getTimestamps()
   {
     return this.timestamps;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public int[] getValues()
   {
     return this.values;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public int getWidth()
   {
     return 32;
   }
 
   /**
-   * @param aCursorIdx
-   * @return
+   * {@inheritDoc}
    */
-  public boolean isCursorDefined( final int aCursorIdx )
+  public void setCursor( final int aCursorIdx, final Long aTimestamp )
   {
     if ( ( aCursorIdx < 0 ) || ( aCursorIdx > this.cursors.length ) )
     {
       throw new IllegalArgumentException();
     }
-    return this.cursors[aCursorIdx] != null;
-  }
-
-  /**
-   * @param aCursorIdx
-   * @return the old cursor value, can be <code>null</code>.
-   */
-  public Long setCursor( final int aCursorIdx, final Long aTimestamp )
-  {
-    if ( ( aCursorIdx < 0 ) || ( aCursorIdx > this.cursors.length ) )
-    {
-      throw new IllegalArgumentException();
-    }
-    final Long oldValue = this.cursors[aCursorIdx];
-    this.cursors[aCursorIdx] = aTimestamp;
-    return oldValue;
+    this.cursors[aCursorIdx].setTimestamp( aTimestamp );
   }
 }

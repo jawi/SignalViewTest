@@ -30,6 +30,7 @@ import javax.swing.*;
 
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.model.*;
+import nl.lxtreme.test.view.model.*;
 
 
 /**
@@ -116,8 +117,10 @@ public class CaptureDetailsView extends AbstractViewLayer implements IDataModelC
     final String name = aEvent.getPropertyName();
     if ( "zoomFactor".equals( name ) || "visibleRect".equals( name ) )
     {
-      this.tickInterval = displayTime( getController().getTimeInterval() );
-      this.displayedTime = displayTime( getController().getDisplayedTimeInterval() );
+      final SignalDiagramModel model = getController().getSignalDiagramModel();
+
+      this.tickInterval = displayTime( model.getTimeInterval() );
+      this.displayedTime = displayTime( model.getDisplayedTimeInterval() );
 
       repaint( 50L );
     }

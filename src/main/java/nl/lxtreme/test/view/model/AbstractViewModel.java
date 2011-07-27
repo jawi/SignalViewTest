@@ -23,7 +23,6 @@ package nl.lxtreme.test.view.model;
 import java.awt.*;
 
 import nl.lxtreme.test.*;
-import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.view.*;
 
 
@@ -57,7 +56,7 @@ abstract class AbstractViewModel
    */
   public Color getChannelColor( final int aChannelIndex )
   {
-    return getScreenModel().getChannelColor( aChannelIndex );
+    return getSignalDiagramModel().getChannelColor( aChannelIndex );
   }
 
   /**
@@ -65,7 +64,7 @@ abstract class AbstractViewModel
    */
   public int getChannelHeight()
   {
-    return getScreenModel().getChannelHeight();
+    return getSignalDiagramModel().getChannelHeight();
   }
 
   /**
@@ -77,7 +76,8 @@ abstract class AbstractViewModel
    */
   public Color getCursorColor( final int aCursorIndex )
   {
-    return getScreenModel().getCursorColor( aCursorIndex );
+    final nl.lxtreme.test.model.Cursor cursor = getSignalDiagramModel().getCursor( aCursorIndex );
+    return cursor.getColor();
   }
 
   /**
@@ -89,12 +89,12 @@ abstract class AbstractViewModel
    */
   public String getCursorFlagText( final int aCursorIndex )
   {
-    final Long cursorTimestamp = getDataModel().getCursor( aCursorIndex );
-    if ( cursorTimestamp == null )
+    final nl.lxtreme.test.model.Cursor cursor = getSignalDiagramModel().getCursor( aCursorIndex );
+    if ( !cursor.isDefined() )
     {
       return "";
     }
-    return getCursorFlagText( aCursorIndex, cursorTimestamp.longValue() );
+    return getCursorFlagText( aCursorIndex, cursor.getTimestamp() );
   }
 
   /**
@@ -109,10 +109,18 @@ abstract class AbstractViewModel
    */
   public String getCursorFlagText( final int aCursorIdx, final long aCursorTimestamp )
   {
-    final double sampleRate = getDataModel().getSampleRate();
+    final SignalDiagramModel model = getSignalDiagramModel();
 
-    final String label = getScreenModel().getCursorLabel( aCursorIdx );
+    final nl.lxtreme.test.model.Cursor cursor = model.getCursor( aCursorIdx );
+
+    final double sampleRate = model.getSampleRate();
     final String cursorTime = Utils.displayTime( aCursorTimestamp / sampleRate );
+
+    String label = cursor.getLabel();
+    if ( !cursor.hasLabel() )
+    {
+      label = Integer.toString( aCursorIdx + 1 );
+    }
 
     return String.format( "%s: %s", label, cursorTime );
   }
@@ -128,12 +136,12 @@ abstract class AbstractViewModel
    */
   public int getCursorScreenCoordinate( final int aCursorIndex )
   {
-    Long cursorTimestamp = getDataModel().getCursor( aCursorIndex );
-    if ( cursorTimestamp == null )
+    nl.lxtreme.test.model.Cursor cursorTimestamp = getSignalDiagramModel().getCursor( aCursorIndex );
+    if ( !cursorTimestamp.isDefined() )
     {
       return -1;
     }
-    return timestampToCoordinate( cursorTimestamp.longValue() );
+    return timestampToCoordinate( cursorTimestamp.getTimestamp() );
   }
 
   /**
@@ -151,9 +159,9 @@ abstract class AbstractViewModel
   /**
    * @return
    */
-  public int getDataWidth()
+  public int getSampleWidth()
   {
-    return getDataModel().getWidth();
+    return getSignalDiagramModel().getSampleWidth();
   }
 
   /**
@@ -161,7 +169,7 @@ abstract class AbstractViewModel
    */
   public int getSignalHeight()
   {
-    return getScreenModel().getSignalHeight();
+    return getSignalDiagramModel().getSignalHeight();
   }
 
   /**
@@ -171,7 +179,7 @@ abstract class AbstractViewModel
    */
   public int getSignalOffset()
   {
-    return getScreenModel().getSignalOffset();
+    return getSignalDiagramModel().getSignalOffset();
   }
 
   /**
@@ -181,7 +189,7 @@ abstract class AbstractViewModel
    */
   public double getZoomFactor()
   {
-    return getScreenModel().getZoomFactor();
+    return getSignalDiagramModel().getZoomFactor();
   }
 
   /**
@@ -190,7 +198,7 @@ abstract class AbstractViewModel
    */
   public boolean isChannelVisible( final int aChannelIndex )
   {
-    return getScreenModel().isChannelVisible( aChannelIndex );
+    return getSignalDiagramModel().isChannelVisible( aChannelIndex );
   }
 
   /**
@@ -198,7 +206,7 @@ abstract class AbstractViewModel
    */
   public boolean isCursorMode()
   {
-    return this.controller.isCursorMode();
+    return getSignalDiagramModel().isCursorMode();
   }
 
   /**
@@ -206,7 +214,7 @@ abstract class AbstractViewModel
    */
   public boolean isMeasurementMode()
   {
-    return this.controller.isMeasurementMode();
+    return getSignalDiagramModel().isMeasurementMode();
   }
 
   /**
@@ -218,7 +226,7 @@ abstract class AbstractViewModel
    */
   public int timestampToCoordinate( final long aTimestamp )
   {
-    double result = getScreenModel().getZoomFactor() * aTimestamp;
+    double result = getSignalDiagramModel().getZoomFactor() * aTimestamp;
     if ( result > Integer.MAX_VALUE )
     {
       return Integer.MAX_VALUE;
@@ -232,23 +240,15 @@ abstract class AbstractViewModel
    */
   public int toVirtualRow( final int aChannelIndex )
   {
-    return getScreenModel().toVirtualRow( aChannelIndex );
+    return getSignalDiagramModel().toVirtualRow( aChannelIndex );
   }
 
   /**
    * @return
    */
-  protected final SampleDataModel getDataModel()
+  protected final SignalDiagramModel getSignalDiagramModel()
   {
-    return this.controller.getDataModel();
-  }
-
-  /**
-   * @return
-   */
-  protected final ScreenModel getScreenModel()
-  {
-    return this.controller.getScreenModel();
+    return this.controller.getSignalDiagramModel();
   }
 
   /**

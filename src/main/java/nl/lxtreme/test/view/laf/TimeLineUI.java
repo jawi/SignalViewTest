@@ -28,7 +28,7 @@ import java.awt.*;
 import javax.swing.*;
 import javax.swing.plaf.*;
 
-import nl.lxtreme.test.model.*;
+import nl.lxtreme.test.model.Cursor;
 import nl.lxtreme.test.view.*;
 import nl.lxtreme.test.view.model.*;
 import nl.lxtreme.test.view.renderer.*;
@@ -202,7 +202,7 @@ public class TimeLineUI extends ComponentUI
    */
   private void paintCursorFlags( final TimeLineViewModel aModel, final Graphics2D aCanvas )
   {
-    for ( int i = 0; i < SampleDataModel.MAX_CURSORS; i++ )
+    for ( int i = 0; i < Cursor.MAX_CURSORS; i++ )
     {
       int x = aModel.getCursorScreenCoordinate( i );
       int y = CURSOR_Y_POS;

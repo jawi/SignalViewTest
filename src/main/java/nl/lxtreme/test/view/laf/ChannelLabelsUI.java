@@ -95,7 +95,7 @@ public class ChannelLabelsUI extends ComponentUI
       final int signalOffset = model.getSignalOffset();
 
       final int compWidth = view.getWidth();
-      final int dataWidth = model.getDataWidth();
+      final int dataWidth = model.getSampleWidth();
 
       // Determine which bits of the actual signal should be drawn...
       int startBit = (int) Math.max(0, Math.floor(clip.y / (double) channelHeight));
@@ -171,7 +171,7 @@ public class ChannelLabelsUI extends ComponentUI
     int minWidth = -1;
 
     final FontMetrics fm = aView.getFontMetrics(model.getLabelFont());
-    for (int i = 0; i < aModel.getDataWidth(); i++)
+    for (int i = 0; i < aModel.getSampleWidth(); i++)
     {
       String label = aModel.getChannelLabel(i);
       if ((label == null) || label.trim().isEmpty())

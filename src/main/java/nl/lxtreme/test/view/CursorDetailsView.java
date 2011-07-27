@@ -28,7 +28,8 @@ import javax.swing.*;
 import javax.swing.event.*;
 
 import nl.lxtreme.test.*;
-import nl.lxtreme.test.model.*;
+import nl.lxtreme.test.model.Cursor;
+import nl.lxtreme.test.view.model.*;
 
 
 /**
@@ -84,7 +85,7 @@ public class CursorDetailsView extends AbstractViewLayer implements ICursorChang
    * {@inheritDoc}
    */
   @Override
-  public void cursorAdded( final int aCursorIdx, final long aCursorTimestamp )
+  public void cursorAdded( final Cursor aCursor )
   {
     updateViewText();
   }
@@ -93,7 +94,7 @@ public class CursorDetailsView extends AbstractViewLayer implements ICursorChang
    * {@inheritDoc}
    */
   @Override
-  public void cursorChanged( final int aCursorIdx, final long aOldCursorTimestamp, final long aNewCursorTimestamp )
+  public void cursorChanged( final Cursor aOldCursor, final Cursor aNewCursor )
   {
     updateViewText();
   }
@@ -102,7 +103,7 @@ public class CursorDetailsView extends AbstractViewLayer implements ICursorChang
    * {@inheritDoc}
    */
   @Override
-  public void cursorRemoved( final int aCursorIdx, final long aOldCursorTimestamp )
+  public void cursorRemoved( final Cursor aOldCursor )
   {
     updateViewText();
   }
@@ -159,31 +160,35 @@ public class CursorDetailsView extends AbstractViewLayer implements ICursorChang
   {
     final SignalDiagramController ctrl = getController();
 
-    final SampleDataModel dataModel = ctrl.getDataModel();
-    if ( ( dataModel == null ) || !ctrl.isCursorMode() )
+    final SignalDiagramModel model = ctrl.getSignalDiagramModel();
+    if ( ( model == null ) || !model.isCursorMode() )
     {
       return "";
     }
-
-    final ScreenModel screenModel = ctrl.getScreenModel();
 
     final Font labelFont = UIManager.getFont( SwingUtils.SWING_LABEL_FONT );
 
     final StringBuilder sb = new StringBuilder( "<html><head><style>td, th {" );
     sb.append( toCssString( labelFont ) ).append( "} th { font-weight: bold; }</style></head><body><table>" );
-    for ( int c = 0; c < SampleDataModel.MAX_CURSORS; c++ )
+    for ( int c = 0; c < Cursor.MAX_CURSORS; c++ )
     {
-      Long cursor = dataModel.getCursor( c );
-      if ( cursor == null )
+      final Cursor cursor = model.getCursor( c );
+      if ( !cursor.isDefined() )
       {
         continue;
       }
 
+      String label = cursor.getLabel();
+      if ( !cursor.hasLabel() )
+      {
+        label = "";
+      }
+
       sb.append( "<tr><th align='right'>" );
       sb.append( c + 1 ).append( ":" ).append( "</th>" );
-      sb.append( "<td>" ).append( screenModel.getCursorLabel( c ) ).append( "</td>" );
-      sb.append( "<td align='right'><a href='#" ).append( cursor.longValue() ).append( "'>" );
-      sb.append( displayTime( cursor.doubleValue() / dataModel.getSampleRate() ) );
+      sb.append( "<td>" ).append( label ).append( "</td>" );
+      sb.append( "<td align='right'><a href='#" ).append( cursor.getTimestamp() ).append( "'>" );
+      sb.append( displayTime( cursor.getTimestamp() / ( double )model.getSampleRate() ) );
       sb.append( "</a></td></tr>" );
     }
     sb.append( "</table></body></html>" );

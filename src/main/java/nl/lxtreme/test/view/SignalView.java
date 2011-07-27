@@ -23,6 +23,7 @@ package nl.lxtreme.test.view;
 import java.awt.*;
 
 import nl.lxtreme.test.*;
+import nl.lxtreme.test.model.Cursor;
 import nl.lxtreme.test.view.laf.*;
 import nl.lxtreme.test.view.model.*;
 
@@ -48,7 +49,7 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
    * @param aController
    *          the controller to use, cannot be <code>null</code>.
    */
-  private SignalView( final SignalDiagramController aController )
+  SignalView( final SignalDiagramController aController )
   {
     super( aController );
 
@@ -58,23 +59,6 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
   }
 
   // METHODS
-
-  /**
-   * Creates a new {@link SignalView} instance.
-   * 
-   * @param aController
-   *          the controller to use, cannot be <code>null</code>.
-   * @return a {@link SignalView} instance, never <code>null</code>.
-   */
-  public static SignalView create( final SignalDiagramController aController )
-  {
-    SignalView result = new SignalView( aController );
-
-    aController.addCursorChangeListener( result );
-    aController.addMeasurementListener( result );
-
-    return result;
-  }
 
   /**
    * {@inheritDoc}
@@ -91,13 +75,13 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
    * {@inheritDoc}
    */
   @Override
-  public void cursorAdded( final int aCursorIdx, final long aCursorTimestamp )
+  public void cursorAdded( final Cursor aCursor )
   {
     final int visibleHeight = getVisibleRect().height;
 
     final SignalViewModel model = getModel();
 
-    int cursorPos = model.timestampToCoordinate( aCursorTimestamp );
+    int cursorPos = model.timestampToCoordinate( aCursor.getTimestamp() );
     repaint( new Rectangle( cursorPos - 1, 0, 2, visibleHeight ) );
   }
 
@@ -105,16 +89,16 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
    * {@inheritDoc}
    */
   @Override
-  public void cursorChanged( final int aCursorIdx, final long aOldCursorTimestamp, final long aNewCursorTimestamp )
+  public void cursorChanged( final Cursor aOldCursor, final Cursor aNewCursor )
   {
     final int visibleHeight = getVisibleRect().height;
 
     final SignalViewModel model = getModel();
 
-    int cursorPos = model.timestampToCoordinate( aOldCursorTimestamp );
+    int cursorPos = model.timestampToCoordinate( aOldCursor.getTimestamp() );
     repaint( 0, cursorPos - 1, 0, 2, visibleHeight );
 
-    cursorPos = model.timestampToCoordinate( aNewCursorTimestamp );
+    cursorPos = model.timestampToCoordinate( aNewCursor.getTimestamp() );
     repaint( 0, cursorPos - 1, 0, 2, visibleHeight );
   }
 
@@ -122,13 +106,13 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
    * {@inheritDoc}
    */
   @Override
-  public void cursorRemoved( final int aCursorIdx, final long aOldCursorTimestamp )
+  public void cursorRemoved( final Cursor aOldCursor )
   {
     final int visibleHeight = getVisibleRect().height;
 
     final SignalViewModel model = getModel();
 
-    int cursorPos = model.timestampToCoordinate( aOldCursorTimestamp );
+    int cursorPos = model.timestampToCoordinate( aOldCursor.getTimestamp() );
     repaint( 0, cursorPos - 1, 0, 2, visibleHeight );
   }
 

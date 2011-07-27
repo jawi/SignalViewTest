@@ -25,7 +25,7 @@ import java.awt.*;
 import javax.swing.*;
 import javax.swing.plaf.*;
 
-import nl.lxtreme.test.model.*;
+import nl.lxtreme.test.model.Cursor;
 import nl.lxtreme.test.view.*;
 import nl.lxtreme.test.view.model.*;
 import nl.lxtreme.test.view.renderer.*;
@@ -116,7 +116,7 @@ public class SignalUI extends ComponentUI
 
       final int[] values = model.getDataValues();
       final long[] timestamps = model.getTimestamps();
-      final int dataWidth = model.getDataWidth();
+      final int dataWidth = model.getSampleWidth();
 
       final int startIdx = model.getStartIndex( clip );
       final int endIdx = model.getEndIndex( clip, values.length );
@@ -295,7 +295,7 @@ public class SignalUI extends ComponentUI
     aCanvas.setRenderingHints( createCursorRenderingHints() );
 
     final int viewYpos = aView.getVisibleRect().y;
-    for ( int i = 0; i < SampleDataModel.MAX_CURSORS; i++ )
+    for ( int i = 0; i < Cursor.MAX_CURSORS; i++ )
     {
       int cursorXpos = aModel.getCursorScreenCoordinate( i );
       int cursorYpos = getYposition( aView );

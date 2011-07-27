@@ -72,7 +72,7 @@ public class ChannelLabelsViewModel extends AbstractViewModel
    */
   public int findChannelRow( final Point aCoordinate )
   {
-    final int dataWidth = getDataWidth();
+    final int dataWidth = getSampleWidth();
     final int channelHeight = getChannelHeight();
 
     final int row = ( int )( aCoordinate.y / ( double )channelHeight );
@@ -105,7 +105,7 @@ public class ChannelLabelsViewModel extends AbstractViewModel
       return -1;
     }
 
-    return getScreenModel().toVirtualRow( row );
+    return getSignalDiagramModel().toVirtualRow( row );
   }
 
   /**
@@ -132,7 +132,7 @@ public class ChannelLabelsViewModel extends AbstractViewModel
    */
   public String getChannelLabel( final int aChannelIndex )
   {
-    return getScreenModel().getChannelLabel( aChannelIndex );
+    return getSignalDiagramModel().getChannelLabel( aChannelIndex );
   }
 
   /**
@@ -206,6 +206,6 @@ public class ChannelLabelsViewModel extends AbstractViewModel
   public void moveChannelRows( final int aMovedRow, final int aInsertRow )
   {
     // Update the screen model...
-    getScreenModel().moveRows( aMovedRow, aInsertRow );
+    getSignalDiagramModel().moveRows( aMovedRow, aInsertRow );
   }
 }

@@ -26,6 +26,7 @@ import java.awt.*;
 
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.model.*;
+import nl.lxtreme.test.model.Cursor;
 import nl.lxtreme.test.view.laf.*;
 import nl.lxtreme.test.view.model.*;
 
@@ -81,14 +82,16 @@ public class TimeLineView extends AbstractViewLayer implements ICursorChangeList
    * {@inheritDoc}
    */
   @Override
-  public void cursorAdded( final int aCursorIdx, final long aCursorTimestamp )
+  public void cursorAdded( final Cursor aCursor )
   {
     final int visibleHeight = getVisibleRect().height;
 
     final TimeLineViewModel model = getModel();
 
-    int cursorPos = model.timestampToCoordinate( aCursorTimestamp );
-    int width = getStringWidth( model.getCursorFlagText( aCursorIdx, aCursorTimestamp ) ) + 10;
+    final long timestamp = aCursor.getTimestamp();
+
+    int cursorPos = model.timestampToCoordinate( timestamp );
+    int width = getStringWidth( model.getCursorFlagText( aCursor.getIndex(), timestamp ) ) + 10;
     repaint( cursorPos - 1, 0, width, visibleHeight );
   }
 
@@ -96,18 +99,18 @@ public class TimeLineView extends AbstractViewLayer implements ICursorChangeList
    * {@inheritDoc}
    */
   @Override
-  public void cursorChanged( final int aCursorIdx, final long aOldCursorTimestamp, final long aNewCursorTimestamp )
+  public void cursorChanged( final Cursor aOldCursor, final Cursor aNewCursor )
   {
     final int visibleHeight = getVisibleRect().height;
 
     final TimeLineViewModel model = getModel();
 
-    int cursorPos = model.timestampToCoordinate( aOldCursorTimestamp );
-    int width = getStringWidth( model.getCursorFlagText( aCursorIdx, aOldCursorTimestamp ) ) + 10;
+    int cursorPos = model.timestampToCoordinate( aOldCursor.getTimestamp() );
+    int width = getStringWidth( model.getCursorFlagText( aOldCursor.getIndex(), aOldCursor.getTimestamp() ) ) + 10;
     repaint( new Rectangle( cursorPos - 1, 0, width, visibleHeight ) );
 
-    cursorPos = model.timestampToCoordinate( aNewCursorTimestamp );
-    width = getStringWidth( model.getCursorFlagText( aCursorIdx, aNewCursorTimestamp ) ) + 10;
+    cursorPos = model.timestampToCoordinate( aNewCursor.getTimestamp() );
+    width = getStringWidth( model.getCursorFlagText( aNewCursor.getIndex(), aNewCursor.getTimestamp() ) ) + 10;
     repaint( 0, cursorPos - 1, 0, width, visibleHeight );
   }
 
@@ -115,14 +118,14 @@ public class TimeLineView extends AbstractViewLayer implements ICursorChangeList
    * {@inheritDoc}
    */
   @Override
-  public void cursorRemoved( final int aCursorIdx, final long aOldCursorTimestamp )
+  public void cursorRemoved( final Cursor aOldCursor )
   {
     final int visibleHeight = getVisibleRect().height;
 
     final TimeLineViewModel model = getModel();
 
-    int cursorPos = model.timestampToCoordinate( aOldCursorTimestamp );
-    int width = getStringWidth( model.getCursorFlagText( aCursorIdx, aOldCursorTimestamp ) ) + 10;
+    int cursorPos = model.timestampToCoordinate( aOldCursor.getTimestamp() );
+    int width = getStringWidth( model.getCursorFlagText( aOldCursor.getIndex(), aOldCursor.getTimestamp() ) ) + 10;
     repaint( cursorPos - 1, 0, width, visibleHeight );
   }
 

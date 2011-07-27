@@ -17,52 +17,21 @@
  *
  * Copyright (C) 2010-2011 - J.W. Janssen, <http://www.lxtreme.nl>
  */
-package nl.lxtreme.test.view.action;
-
-
-import java.awt.event.*;
-
-import javax.swing.*;
-
-import nl.lxtreme.test.model.*;
-import nl.lxtreme.test.view.*;
+package nl.lxtreme.test.model;
 
 
 /**
- * 
+ * Provides sample data to the {@link SampleDataModel}.
  */
-public class DeleteAllCursorsAction extends AbstractAction
+public interface SampleDataProvider
 {
-  // CONSTANTS
-
-  private static final long serialVersionUID = 1L;
-
-  // VARIABLES
-
-  private final SignalDiagramController controller;
-
-  // CONSTRUCTORS
-
-  /**
-   * Creates a new DeleteCursorAction instance.
-   */
-  public DeleteAllCursorsAction( final SignalDiagramController aController )
-  {
-    super( "Delete all cursors" );
-    this.controller = aController;
-  }
-
   // METHODS
 
   /**
-   * {@inheritDoc}
+   * @param aValues
+   * @param aTimestamps
+   * @param aSize
+   * @return the sample rate, in Hertz.
    */
-  @Override
-  public void actionPerformed( final ActionEvent aEvent )
-  {
-    for ( int i = 0; i < Cursor.MAX_CURSORS; i++ )
-    {
-      this.controller.removeCursor( i );
-    }
-  }
+  int getSampleData( final int[] aValues, final long[] aTimestamps, final int aSize );
 }

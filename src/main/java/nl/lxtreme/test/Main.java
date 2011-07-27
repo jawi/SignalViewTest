@@ -27,7 +27,6 @@ import java.util.*;
 import javax.swing.*;
 
 import nl.lxtreme.test.model.*;
-import nl.lxtreme.test.model.SampleDataModel.SampleDataProvider;
 import nl.lxtreme.test.view.*;
 
 import org.noos.xing.mydoggy.*;
