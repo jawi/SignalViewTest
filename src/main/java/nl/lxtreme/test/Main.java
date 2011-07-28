@@ -187,7 +187,7 @@ public class Main
       for ( int i = 0; i < aSize; i++ )
       {
         aValues[i] = rnd.nextInt();
-        aTimestamps[i] = i;
+        aTimestamps[i] = 4 + i;
       }
       return 25000000; // 25MHz
     }
@@ -447,6 +447,8 @@ public class Main
     this.cursorDetails = CursorDetailsView.create( this.controller );
 
     this.controller.setDataModel( model );
+
+    this.signalDiagram.zoomOriginal();
   }
 
   /**

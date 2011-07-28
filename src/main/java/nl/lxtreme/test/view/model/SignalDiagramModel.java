@@ -40,11 +40,6 @@ public class SignalDiagramModel
 {
   // INNER TYPES
 
-  public static enum HelpTextDisplay
-  {
-    INVISIBLE, TOOLTIP, LABEL;
-  }
-
   /**
    * @author jawi
    */
@@ -106,7 +101,6 @@ public class SignalDiagramModel
   private Color[] colors;
   private String[] channelLabels;
   private SignalAlignment signalAlignment;
-  private HelpTextDisplay helpTextDisplay;
 
   private int[] values;
   private long[] timestamps;
@@ -139,9 +133,8 @@ public class SignalDiagramModel
     this.channelHeight = 40;
 
     this.signalAlignment = SignalAlignment.CENTER;
-    this.helpTextDisplay = HelpTextDisplay.TOOLTIP;
 
-    this.zoomFactor = 1.0;
+    this.zoomFactor = 0.0;
     this.mode = 0;
 
     this.visibleMask = 0x555;
@@ -419,22 +412,14 @@ public class SignalDiagramModel
    */
   public double getDisplayedTimeInterval()
   {
-    final Dimension visibleRect = this.controller.getSignalDiagram().getVisibleViewSize();
+    final Rectangle visibleRect = this.controller.getSignalDiagram().getVisibleViewSize();
     if ( visibleRect == null )
     {
       return 0.0;
     }
-    return visibleRect.width / ( double )getSampleRate();
-  }
-
-  /**
-   * Returns how the time line help text is to be displayed.
-   * 
-   * @return a {@link HelpTextDisplay} value, never <code>null</code>.
-   */
-  public HelpTextDisplay getHelpTextDisplayMode()
-  {
-    return this.helpTextDisplay;
+    double start = visibleRect.x / this.zoomFactor;
+    double end = ( visibleRect.x + visibleRect.width ) / this.zoomFactor;
+    return ( end - start ) / getSampleRate();
   }
 
   /**
@@ -468,7 +453,7 @@ public class SignalDiagramModel
     if ( aDirection < 0 )
     {
       // Scroll left
-      if ( firstVisibleSample > 0 )
+      if ( firstVisibleSample >= 0 )
       {
         inc = blockIncr;
       }
@@ -540,7 +525,7 @@ public class SignalDiagramModel
     // Calculate the "absolute" time based on the mouse position, use a
     // "over sampling" factor to allow intermediary (between two time stamps)
     // time value to be shown...
-    final double refTime = ( ( SignalHoverInfo.TIMESTAMP_FACTOR * aPoint.x ) / getZoomFactor() )
+    final double refTime = ( ( SignalHoverInfo.TIMESTAMP_FACTOR * aPoint.x ) / this.zoomFactor )
         / ( SignalHoverInfo.TIMESTAMP_FACTOR * this.sampleRate );
 
     final int virtualChannel = ( aPoint.y / this.channelHeight );
@@ -585,7 +570,7 @@ public class SignalDiagramModel
 
       // convert the found index back to "screen" values...
       final int tm_idx = Math.max( 0, idx + 1 );
-      tm = timestamps[tm_idx];
+      tm = ( tm_idx == 0 ) ? 0 : timestamps[tm_idx];
 
       // Search for the original value again, to complete the pulse...
       do
@@ -596,7 +581,7 @@ public class SignalDiagramModel
 
       // convert the found index back to "screen" values...
       final int ts_idx = Math.max( 0, idx + 1 );
-      ts = timestamps[ts_idx];
+      ts = ( ts_idx == 0 ) ? 0 : timestamps[ts_idx];
 
       idx = refIdx;
       do
@@ -607,7 +592,7 @@ public class SignalDiagramModel
 
       // convert the found index back to "screen" values...
       final int te_idx = Math.min( idx, timestamps.length - 1 );
-      te = timestamps[te_idx];
+      te = ( te_idx == 0 ) ? 0 : timestamps[te_idx];
 
       // Determine the width of the "high" part...
       if ( ( values[ts_idx] & mask ) != 0 )
@@ -678,7 +663,7 @@ public class SignalDiagramModel
    */
   public double getTimebase()
   {
-    final Dimension visibleViewSize = this.controller.getSignalDiagram().getVisibleViewSize();
+    final Rectangle visibleViewSize = this.controller.getSignalDiagram().getVisibleViewSize();
     final double absoluteTime = visibleViewSize.width / getZoomFactor();
     return Math.pow( 10, Math.round( Math.log10( absoluteTime ) ) );
   }
@@ -861,17 +846,6 @@ public class SignalDiagramModel
   public boolean isSnapCursor()
   {
     return ( this.mode & SNAP_CURSOR_MODE ) != 0;
-  }
-
-  /**
-   * Returns whether or not the time line help text is to be displayed.
-   * 
-   * @return <code>true</code> if the time line help text is to be displayed,
-   *         <code>false</code> otherwise.
-   */
-  public boolean isTimeLineHelpTextDisplayed()
-  {
-    return HelpTextDisplay.INVISIBLE != this.helpTextDisplay;
   }
 
   /**
@@ -1149,6 +1123,9 @@ public class SignalDiagramModel
     final long[] dmTimestamps = aDataModel.getTimestamps();
     this.timestamps = Arrays.copyOf( dmTimestamps, dmTimestamps.length );
 
+    final Cursor[] dmCursors = aDataModel.getCursors();
+    this.cursors = Arrays.copyOf( dmCursors, dmCursors.length );
+
     this.sampleRate = aDataModel.getSampleRate();
     this.sampleWidth = aDataModel.getWidth();
 
@@ -1158,8 +1135,8 @@ public class SignalDiagramModel
       this.virtualRowMapping[i] = i;
     }
 
-    final Cursor[] dmCursors = aDataModel.getCursors();
-    this.cursors = Arrays.copyOf( dmCursors, dmCursors.length );
+    // Default turn all channels on...
+    this.visibleMask = ( int )( ( 1L << this.sampleWidth ) - 1 );
 
     this.colors = new Color[this.sampleWidth];
     int value = 2;
@@ -1199,17 +1176,6 @@ public class SignalDiagramModel
     {
       listener.dataModelChanged( aDataModel );
     }
-  }
-
-  /**
-   * Sets how the time line help text is to be displayed.
-   * 
-   * @param aHelpTextDisplay
-   *          the {@link HelpTextDisplay} to set, cannot be <code>null</code>.
-   */
-  public void setHelpTextDisplayMode( final HelpTextDisplay aHelpTextDisplay )
-  {
-    this.helpTextDisplay = aHelpTextDisplay;
   }
 
   /**
@@ -1280,7 +1246,11 @@ public class SignalDiagramModel
    */
   public final void setZoomFactor( final double aZoomFactor )
   {
+    double oldFactor = this.zoomFactor;
     this.zoomFactor = aZoomFactor;
+
+    this.propertyChangeSupport.firePropertyChange( "zoomFactor", Double.valueOf( oldFactor ),
+        Double.valueOf( aZoomFactor ) );
   }
 
   /**

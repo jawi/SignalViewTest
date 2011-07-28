@@ -62,6 +62,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     private final SignalDiagramController controller;
     private JComponent compRoot;
 
+    private volatile Timer resizeTimeout;
     private volatile int movingCursor;
 
     // CONSTRUCTORS
@@ -156,23 +157,45 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
      */
     protected void componentResized( final ComponentEvent aEvent )
     {
-      final Component component = aEvent.getComponent();
-      component.setCursor( Cursor.getPredefinedCursor( Cursor.WAIT_CURSOR ) );
+      if ( this.resizeTimeout == null )
+      {
+        this.resizeTimeout = new Timer( 250, new ActionListener()
+        {
+          @Override
+          public void actionPerformed( final ActionEvent aInnerEvent )
+          {
+            final Component component = aEvent.getComponent();
+            component.setCursor( Cursor.getPredefinedCursor( Cursor.WAIT_CURSOR ) );
 
-      try
-      {
-        if ( isZoomAll() )
-        {
-          zoomAll();
-        }
-        else
-        {
-          recalculateDimensions();
-        }
+            try
+            {
+              if ( isZoomAll() )
+              {
+                zoomAll();
+              }
+              else
+              {
+                recalculateDimensions();
+              }
+            }
+            finally
+            {
+              component.setCursor( Cursor.getDefaultCursor() );
+
+              TransparentAWTListener.this.resizeTimeout.stop();
+              TransparentAWTListener.this.resizeTimeout = null;
+            }
+          }
+        } );
+
+        this.resizeTimeout.setCoalesce( true );
+        this.resizeTimeout.setRepeats( false );
+
+        this.resizeTimeout.start();
       }
-      finally
+      else
       {
-        component.setCursor( Cursor.getDefaultCursor() );
+        this.resizeTimeout.restart();
       }
     }
 
@@ -540,7 +563,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
       LOG.log( Level.INFO, "Zoom factor set to " + getFactor() );
 
-      repaintSignalDiagram();
+      this.signalDiagram.recalculateDimensions();
     }
 
     /**
@@ -550,7 +573,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     {
       zoomRelative( 2.0 );
 
-      repaintSignalDiagram();
+      this.signalDiagram.recalculateDimensions();
     }
 
     /**
@@ -560,7 +583,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     {
       zoomAbsolute( 1.0 );
 
-      repaintSignalDiagram();
+      this.signalDiagram.recalculateDimensions();
     }
 
     /**
@@ -570,7 +593,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     {
       zoomRelative( 0.5 );
 
-      repaintSignalDiagram();
+      this.signalDiagram.recalculateDimensions();
     }
 
     /**
@@ -600,27 +623,10 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     {
       final SignalDiagramModel model = this.signalDiagram.getModel();
 
-      Dimension viewSize = this.signalDiagram.getVisibleViewSize();
+      Rectangle viewSize = this.signalDiagram.getVisibleViewSize();
       final double length = model.getAbsoluteLength();
 
       return viewSize.getWidth() / length;
-    }
-
-    /**
-     * Repaints the signal diagram, keeping into account that this component
-     * might be placed inside a {@link JScrollPane}.
-     */
-    private void repaintSignalDiagram()
-    {
-      JScrollPane scrollPane = SwingUtils.getAncestorOfClass( JScrollPane.class, this.signalDiagram );
-      if ( scrollPane != null )
-      {
-        scrollPane.repaint( 25L );
-      }
-      else
-      {
-        this.signalDiagram.repaint( 25L );
-      }
     }
 
     /**
@@ -650,7 +656,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
      */
     private void zoomRelative( final double aFactor )
     {
-      zoomAbsolute( Math.min( getMaxZoomLevel(), aFactor * getFactor() ) );
+      zoomAbsolute( Math.max( getMinZoomLevel(), Math.min( getMaxZoomLevel(), aFactor * getFactor() ) ) );
     }
   }
 
@@ -827,7 +833,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
    * 
    * @return a visible view size, as {@link Dimension}, never <code>null</code>.
    */
-  public final Dimension getVisibleViewSize()
+  public final Rectangle getVisibleViewSize()
   {
     final JComponent component = getSignalView();
 
@@ -843,7 +849,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       rect = getVisibleRect();
     }
 
-    return rect.getSize();
+    return rect;
   }
 
   /**

@@ -100,6 +100,7 @@ public class TimeLineUI extends ComponentUI
       final double timebase = model.getTimebase();
       final double tickIncr = model.getTickIncrement();
       final double timeIncr = model.getTimeIncrement();
+
       final long startTimeStamp = model.getStartTimestamp( visibleRect );
       final long endTimeStamp = model.getEndTimestamp( visibleRect );
 
@@ -173,14 +174,6 @@ public class TimeLineUI extends ComponentUI
         timestamp = Math.round( 100.0 * ( timestamp + timeIncr ) ) / 100.0;
       }
 
-      if ( model.isRenderHelpText() )
-      {
-        final double tickInterval = timeIncr / sampleRate;
-        final double totalDisplayTime = ( endTimeStamp - startTimeStamp ) / sampleRate;
-
-        renderHelpText( view, canvas, tickInterval, totalDisplayTime );
-      }
-
       // Draw the cursor "flags"...
       if ( model.isCursorMode() )
       {
@@ -220,58 +213,6 @@ public class TimeLineUI extends ComponentUI
       this.cursorRenderer.setContext( aModel.getCursorFlagText( i ) );
 
       this.cursorRenderer.render( aCanvas, x, y );
-    }
-  }
-
-  /**
-   * Renders the help text for this component, which displays the amount of time
-   * between ticks and the total amount of time displayed by this component.
-   * 
-   * @param aView
-   *          the actual view component;
-   * @param aTickIncrement
-   *          the tick increment;
-   * @param aTotalTime
-   *          the total displayed time.
-   */
-  @SuppressWarnings( "static-method" )
-  private void renderHelpText( final TimeLineView aView, final Graphics2D aCanvas, final double aTickIncrement,
-      final double aTotalTime )
-  {
-    final TimeLineViewModel model = aView.getModel();
-    if ( !model.isRenderHelpText() )
-    {
-      // Return; nothing to do...
-      return;
-    }
-
-    final int baseTickYpos = model.getTimeLineHeight() - VERTICAL_PADDING;
-
-    String helpText;
-    switch ( model.getHelpTextDisplayMode() )
-    {
-      case LABEL:
-      {
-        helpText = String.format( "1 tick = %s, total visible = %s",
-            displayTime( aTickIncrement, 1, "", true /* aIncludeUnit */),
-            displayTime( aTotalTime, 2, "", true /* aIncludeUnit */) );
-
-        int x = 50;
-        int y = baseTickYpos - ( 2 * aCanvas.getFontMetrics().getHeight() );
-
-        aCanvas.drawString( helpText, x, y );
-        break;
-      }
-      case TOOLTIP:
-      {
-        helpText = String.format( "<html>1 tick = %s<br>total visible = %s</html>",
-            displayTime( aTickIncrement, 1, "", true /* aIncludeUnit */),
-            displayTime( aTotalTime, 2, "", true /* aIncludeUnit */) );
-        aView.setToolTipText( helpText );
-        break;
-      }
-      default:
-        break;
     }
   }
 }

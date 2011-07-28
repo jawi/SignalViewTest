@@ -100,9 +100,6 @@ public class CaptureDetailsView extends AbstractViewLayer implements IDataModelC
 
     if ( aDataModel != null )
     {
-      this.sampleRate = displayFrequency( aDataModel.getSampleRate() );
-      this.sampleCount = new DecimalFormat().format( aDataModel.getSize() );
-      this.totalWidth = displayTime( aDataModel.getCaptureLength() );
     }
 
     repaint( 50L );
@@ -115,13 +112,8 @@ public class CaptureDetailsView extends AbstractViewLayer implements IDataModelC
   public void propertyChange( final PropertyChangeEvent aEvent )
   {
     final String name = aEvent.getPropertyName();
-    if ( "zoomFactor".equals( name ) || "visibleRect".equals( name ) )
+    if ( "zoomFactor".equals( name ) )
     {
-      final SignalDiagramModel model = getController().getSignalDiagramModel();
-
-      this.tickInterval = displayTime( model.getTimeInterval() );
-      this.displayedTime = displayTime( model.getDisplayedTimeInterval() );
-
       repaint( 50L );
     }
   }
@@ -132,6 +124,15 @@ public class CaptureDetailsView extends AbstractViewLayer implements IDataModelC
   @Override
   protected void paintComponent( final Graphics aGraphics )
   {
+    final SignalDiagramModel model = getController().getSignalDiagramModel();
+
+    this.sampleRate = displayFrequency( model.getSampleRate() );
+    this.sampleCount = new DecimalFormat().format( model.getSampleCount() );
+    this.totalWidth = displayTime( model.getCaptureLength() );
+
+    this.tickInterval = displayTime( model.getTimeInterval() );
+    this.displayedTime = displayTime( model.getDisplayedTimeInterval() );
+
     this.captureInfoField.setText( asText() );
 
     super.paintComponent( aGraphics );
@@ -144,11 +145,13 @@ public class CaptureDetailsView extends AbstractViewLayer implements IDataModelC
   private String asText()
   {
     final StringBuilder sb = new StringBuilder( "<html><table>" );
-    sb.append( "<tr><th align='right'>Sample rate:</th><td>" ).append( this.sampleRate ).append( "</td>" );
     sb.append( "<tr><th align='right'>Sample count:</th><td>" ).append( this.sampleCount ).append( "</td>" );
-    sb.append( "<tr><th align='right'>Sample time:</th><td>" ).append( this.totalWidth ).append( "</td>" );
-    sb.append( "<tr><th align='right'>Tick interval:</th><td>" ).append( this.tickInterval ).append( "</td>" );
-    sb.append( "<tr><th align='right'>Displayed time:</th><td>" ).append( this.displayedTime ).append( "</td>" );
+    sb.append( "<tr><th align='right'>Sample rate:</th><td align='right'>" ).append( this.sampleRate ).append( "</td>" );
+    sb.append( "<tr><th align='right'>Sample time:</th><td align='right'>" ).append( this.totalWidth ).append( "</td>" );
+    sb.append( "<tr><th align='right'>Tick interval:</th><td align='right'>" ).append( this.tickInterval )
+        .append( "</td>" );
+    sb.append( "<tr><th align='right'>Displayed time:</th><td align='right'>" ).append( this.displayedTime )
+        .append( "</td>" );
     sb.append( "</table></html>" );
 
     return sb.toString();

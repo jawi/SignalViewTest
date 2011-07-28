@@ -108,16 +108,7 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public long getEndTimestamp( final Rectangle aClip )
   {
-    final Point location = new Point( aClip.x + aClip.width, 0 );
-    final int idx = locationToSampleIndex( location );
-    if ( idx < 0 )
-    {
-      return 0L;
-    }
-
-    final long[] timestamps = getSignalDiagramModel().getTimestamps();
-
-    return timestamps[idx] + 1;
+    return locationToTimestamp( new Point( aClip.x + aClip.width, 0 ) );
   }
 
   /**
@@ -217,7 +208,7 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public int getSampleRate()
   {
-    return this.controller.getSignalDiagramModel().getSampleRate();
+    return getSignalDiagramModel().getSampleRate();
   }
 
   /**
@@ -231,19 +222,7 @@ public class TimeLineViewModel extends AbstractViewModel
    */
   public long getStartTimestamp( final Rectangle aClip )
   {
-    final Point location = aClip.getLocation();
-    final int idx = locationToSampleIndex( location ) - 1;
-    if ( idx < 0 )
-    {
-      return 0L;
-    }
-
-    final SignalDiagramModel dataModel = this.controller.getSignalDiagramModel();
-    final long[] timestamps = dataModel.getTimestamps();
-
-    // Make sure that if we're at the beginning of the timeline, we're always
-    // start at 0...
-    return ( idx == 0 ) ? 0 : timestamps[idx];
+    return locationToTimestamp( aClip.getLocation() );
   }
 
   /**
@@ -337,17 +316,5 @@ public class TimeLineViewModel extends AbstractViewModel
       return LafDefaults.DEFAULT_TIMELINE_HEIGHT;
     }
     return value;
-  }
-
-  /**
-   * Returns whether or not a help text is to be displayed for the timeline
-   * component.
-   * 
-   * @return <code>true</code> if a help text is to be displayed,
-   *         <code>false</code> otherwise.
-   */
-  public boolean isRenderHelpText()
-  {
-    return getSignalDiagramModel().isTimeLineHelpTextDisplayed();
   }
 }
