@@ -74,6 +74,20 @@ public final class SimpleLineMeasurer implements Iterator<TextLayout>
   // METHODS
 
   /**
+   * Determines whether the given character is a carriage return or newline
+   * character, denoting a line break.
+   * 
+   * @param aCharacter
+   *          the character to test.
+   * @return <code>true</code> if the given character is a carriage return or
+   *         newline character, <code>false</code> otherwise.
+   */
+  private static boolean isLineBreak( final int aCharacter )
+  {
+    return ( aCharacter == '\r' ) || ( aCharacter == '\n' );
+  }
+
+  /**
    * {@inheritDoc}
    */
   @Override
@@ -115,20 +129,6 @@ public final class SimpleLineMeasurer implements Iterator<TextLayout>
   public void remove()
   {
     throw new UnsupportedOperationException( "Remove is not supported!" );
-  }
-
-  /**
-   * Determines whether the given character is a carriage return or newline
-   * character, denoting a line break.
-   * 
-   * @param aCharacter
-   *          the character to test.
-   * @return <code>true</code> if the given character is a carriage return or
-   *         newline character, <code>false</code> otherwise.
-   */
-  private boolean isLineBreak( final int aCharacter )
-  {
-    return ( aCharacter == '\r' ) || ( aCharacter == '\n' );
   }
 
   /**

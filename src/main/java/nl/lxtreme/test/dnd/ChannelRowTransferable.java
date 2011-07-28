@@ -72,10 +72,8 @@ public class ChannelRowTransferable implements Transferable
     {
       return this.row;
     }
-    else
-    {
-      return new UnsupportedFlavorException( aFlavor );
-    }
+
+    throw new UnsupportedFlavorException( aFlavor );
   }
 
   /**

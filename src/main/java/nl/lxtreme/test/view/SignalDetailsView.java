@@ -77,6 +77,36 @@ public class SignalDetailsView extends AbstractViewLayer implements IMeasurement
   }
 
   /**
+   * @param aEvent
+   * @return
+   */
+  private static String asText( final SignalHoverInfo aEvent )
+  {
+    String channelIndex = "-", timeValue = "-", totalWidth = "-", pwHigh = "-", pwLow = "-", dc = "-";
+
+    if ( aEvent != null )
+    {
+      channelIndex = aEvent.getChannelIndexAsString();
+      timeValue = aEvent.getReferenceTimeAsString();
+      totalWidth = aEvent.getTotalTimeAsString();
+      pwHigh = aEvent.getHighTimeAsString();
+      pwLow = aEvent.getLowTimeAsString();
+      dc = aEvent.getDutyCycleAsString();
+    }
+
+    final StringBuilder sb = new StringBuilder( "<html><table>" );
+    sb.append( "<tr><th align='right'>Channel:</th><td>" ).append( channelIndex ).append( "</td>" );
+    sb.append( "<tr><th align='right'>Time:</th><td>" ).append( timeValue ).append( "</td>" );
+    sb.append( "<tr><th align='right'>Period:</th><td>" ).append( totalWidth ).append( "</td>" );
+    sb.append( "<tr><th align='right'>Width (H):</th><td>" ).append( pwHigh ).append( "</td>" );
+    sb.append( "<tr><th align='right'>Width (L):</th><td>" ).append( pwLow ).append( "</td>" );
+    sb.append( "<tr><th align='right'>Duty cycle:</th><td>" ).append( dc ).append( "</td>" );
+    sb.append( "</table></html>" );
+
+    return sb.toString();
+  }
+
+  /**
    * {@inheritDoc}
    */
   @Override
@@ -111,36 +141,6 @@ public class SignalDetailsView extends AbstractViewLayer implements IMeasurement
   public boolean isListening()
   {
     return true;
-  }
-
-  /**
-   * @param aEvent
-   * @return
-   */
-  private String asText( final SignalHoverInfo aEvent )
-  {
-    String channelIndex = "-", timeValue = "-", totalWidth = "-", pwHigh = "-", pwLow = "-", dc = "-";
-
-    if ( aEvent != null )
-    {
-      channelIndex = aEvent.getChannelIndexAsString();
-      timeValue = aEvent.getReferenceTimeAsString();
-      totalWidth = aEvent.getTotalTimeAsString();
-      pwHigh = aEvent.getHighTimeAsString();
-      pwLow = aEvent.getLowTimeAsString();
-      dc = aEvent.getDutyCycleAsString();
-    }
-
-    final StringBuilder sb = new StringBuilder( "<html><table>" );
-    sb.append( "<tr><th align='right'>Channel:</th><td>" ).append( channelIndex ).append( "</td>" );
-    sb.append( "<tr><th align='right'>Time:</th><td>" ).append( timeValue ).append( "</td>" );
-    sb.append( "<tr><th align='right'>Period:</th><td>" ).append( totalWidth ).append( "</td>" );
-    sb.append( "<tr><th align='right'>Width (H):</th><td>" ).append( pwHigh ).append( "</td>" );
-    sb.append( "<tr><th align='right'>Width (L):</th><td>" ).append( pwLow ).append( "</td>" );
-    sb.append( "<tr><th align='right'>Duty cycle:</th><td>" ).append( dc ).append( "</td>" );
-    sb.append( "</table></html>" );
-
-    return sb.toString();
   }
 
   /**

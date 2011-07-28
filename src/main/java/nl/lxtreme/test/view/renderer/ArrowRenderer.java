@@ -44,6 +44,79 @@ public class ArrowRenderer extends BaseRenderer
   // METHODS
 
   /**
+   * Draws a single arrow head
+   * 
+   * @param aCanvas
+   *          the canvas to draw on;
+   * @param aXpos
+   *          the X position of the arrow head;
+   * @param aYpos
+   *          the (center) Y position of the arrow head;
+   * @param aDirection
+   *          {@link #LEFT_FACING} to have a left-facing arrow head,
+   *          {@link #RIGHT_FACING} to have a right-facing arrow head;
+   * @param aArrowWidth
+   *          the total width of the arrow head;
+   * @param aArrowHeight
+   *          the total height of the arrow head.
+   */
+  private static void drawArrowHead( final Graphics2D aCanvas, final int aXpos, final int aYpos, final int aDirection,
+      final int aArrowWidth, final int aArrowHeight )
+  {
+    final double halfHeight = aArrowHeight / 2.0;
+    final int x1 = aXpos + ( aDirection * aArrowWidth );
+    final int y1 = ( int )Math.ceil( aYpos - halfHeight );
+    final int y2 = ( int )Math.floor( aYpos + halfHeight );
+
+    final Polygon arrowHead = new Polygon();
+    arrowHead.addPoint( aXpos, aYpos );
+    arrowHead.addPoint( x1, y1 );
+    arrowHead.addPoint( x1, y2 );
+
+    aCanvas.fill( arrowHead );
+  }
+
+  /**
+   * Draws a double headed arrow with arrow heads of a given width and height.
+   * 
+   * @param aCanvas
+   *          the canvas to draw on;
+   * @param aX1
+   *          the starting X position of the arrow;
+   * @param aY1
+   *          the starting Y position of the arrow;
+   * @param aX2
+   *          the ending X position of the arrow;
+   * @param aY2
+   *          the ending Y position of the arrow;
+   * @param aArrowWidth
+   *          the total width of the arrow head;
+   * @param aArrowHeight
+   *          the total height of the arrow head.
+   */
+  private static void drawDoubleHeadedArrow( final Graphics2D aCanvas, final int aX1, final int aY1, final int aX2,
+      final int aY2, final int aArrowWidth, final int aArrowHeight )
+  {
+    int x1 = aX1;
+    int x2 = aX2;
+
+    final int lineWidth = Math.abs( x2 - x1 );
+    final int threshold = ( 2 * aArrowWidth ) + 2;
+
+    if ( lineWidth > threshold )
+    {
+      drawArrowHead( aCanvas, x1, aY1, LEFT_FACING, aArrowWidth, aArrowHeight );
+      // why x2 needs to be shifted by one pixel is beyond me...
+      drawArrowHead( aCanvas, x2 + 1, aY2, RIGHT_FACING, aArrowWidth, aArrowHeight );
+
+      x1 += aArrowWidth - 1;
+      x2 -= aArrowWidth + 1;
+    }
+
+    aCanvas.drawLine( x1, aY1, x2, aY2 );
+  }
+
+  /**
    * {@inheritDoc}
    */
   @Override
@@ -79,78 +152,5 @@ public class ArrowRenderer extends BaseRenderer
     drawDoubleHeadedArrow( aCanvas, 0, 0, this.width, 0, 8, 8 );
 
     return new Rectangle( -HEAD_WIDTH, -HEAD_HEIGHT, this.width + ( 2 * HEAD_WIDTH ), 3 * HEAD_HEIGHT );
-  }
-
-  /**
-   * Draws a single arrow head
-   * 
-   * @param aCanvas
-   *          the canvas to draw on;
-   * @param aXpos
-   *          the X position of the arrow head;
-   * @param aYpos
-   *          the (center) Y position of the arrow head;
-   * @param aDirection
-   *          {@link #LEFT_FACING} to have a left-facing arrow head,
-   *          {@link #RIGHT_FACING} to have a right-facing arrow head;
-   * @param aArrowWidth
-   *          the total width of the arrow head;
-   * @param aArrowHeight
-   *          the total height of the arrow head.
-   */
-  private void drawArrowHead( final Graphics2D aCanvas, final int aXpos, final int aYpos, final int aDirection,
-      final int aArrowWidth, final int aArrowHeight )
-  {
-    final double halfHeight = aArrowHeight / 2.0;
-    final int x1 = aXpos + ( aDirection * aArrowWidth );
-    final int y1 = ( int )Math.ceil( aYpos - halfHeight );
-    final int y2 = ( int )Math.floor( aYpos + halfHeight );
-
-    final Polygon arrowHead = new Polygon();
-    arrowHead.addPoint( aXpos, aYpos );
-    arrowHead.addPoint( x1, y1 );
-    arrowHead.addPoint( x1, y2 );
-
-    aCanvas.fill( arrowHead );
-  }
-
-  /**
-   * Draws a double headed arrow with arrow heads of a given width and height.
-   * 
-   * @param aCanvas
-   *          the canvas to draw on;
-   * @param aX1
-   *          the starting X position of the arrow;
-   * @param aY1
-   *          the starting Y position of the arrow;
-   * @param aX2
-   *          the ending X position of the arrow;
-   * @param aY2
-   *          the ending Y position of the arrow;
-   * @param aArrowWidth
-   *          the total width of the arrow head;
-   * @param aArrowHeight
-   *          the total height of the arrow head.
-   */
-  private void drawDoubleHeadedArrow( final Graphics2D aCanvas, final int aX1, final int aY1, final int aX2,
-      final int aY2, final int aArrowWidth, final int aArrowHeight )
-  {
-    int x1 = aX1;
-    int x2 = aX2;
-
-    final int lineWidth = Math.abs( x2 - x1 );
-    final int threshold = ( 2 * aArrowWidth ) + 2;
-
-    if ( lineWidth > threshold )
-    {
-      drawArrowHead( aCanvas, x1, aY1, LEFT_FACING, aArrowWidth, aArrowHeight );
-      // why x2 needs to be shifted by one pixel is beyond me...
-      drawArrowHead( aCanvas, x2 + 1, aY2, RIGHT_FACING, aArrowWidth, aArrowHeight );
-
-      x1 += aArrowWidth - 1;
-      x2 -= aArrowWidth + 1;
-    }
-
-    aCanvas.drawLine( x1, aY1, x2, aY2 );
   }
 }

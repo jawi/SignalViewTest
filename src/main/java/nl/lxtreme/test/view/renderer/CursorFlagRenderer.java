@@ -45,6 +45,30 @@ public class CursorFlagRenderer extends BaseRenderer
   // METHODS
 
   /**
+   * Draws the cursor line itself.
+   * 
+   * @param aCanvas
+   *          the canvas to draw on;
+   * @param aClip
+   *          the clip boundaries;
+   * @param aFlagArea
+   *          the outer rectangle denoting the cursor boundaries (+ flag).
+   */
+  private static void drawCursorLine( final Graphics2D aCanvas, final Rectangle aClip, final Rectangle aFlagArea )
+  {
+    int x = aFlagArea.x;
+
+    int y1 = aFlagArea.y;
+    if ( y1 < aClip.y )
+    {
+      y1 = aClip.y;
+    }
+    int y2 = aFlagArea.y + aFlagArea.height;
+
+    aCanvas.drawLine( x, y1, x, y2 );
+  }
+
+  /**
    * {@inheritDoc}
    */
   @Override
@@ -104,29 +128,5 @@ public class CursorFlagRenderer extends BaseRenderer
     aCanvas.drawString( this.cursorFlagText, textXpos, textYpos );
 
     return result;
-  }
-
-  /**
-   * Draws the cursor line itself.
-   * 
-   * @param aCanvas
-   *          the canvas to draw on;
-   * @param aClip
-   *          the clip boundaries;
-   * @param aFlagArea
-   *          the outer rectangle denoting the cursor boundaries (+ flag).
-   */
-  private void drawCursorLine( final Graphics2D aCanvas, final Rectangle aClip, final Rectangle aFlagArea )
-  {
-    int x = aFlagArea.x;
-
-    int y1 = aFlagArea.y;
-    if ( y1 < aClip.y )
-    {
-      y1 = aClip.y;
-    }
-    int y2 = aFlagArea.y + aFlagArea.height;
-
-    aCanvas.drawLine( x, y1, x, y2 );
   }
 }

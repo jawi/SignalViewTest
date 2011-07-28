@@ -61,18 +61,6 @@ public class SetCursorAction extends AbstractAction
   // METHODS
 
   /**
-   * {@inheritDoc}
-   */
-  @Override
-  public void actionPerformed( final ActionEvent aEvent )
-  {
-    final JMenuItem menuitem = ( JMenuItem )aEvent.getSource();
-
-    final Point location = getContextMenuLocation( menuitem );
-    this.controller.moveCursor( this.cursorIdx, location );
-  }
-
-  /**
    * Returns the context menu location client property of the given menu item's
    * popup menu.
    * 
@@ -82,7 +70,7 @@ public class SetCursorAction extends AbstractAction
    * @return a location denoting the context menu's position, never
    *         <code>null</code>.
    */
-  private Point getContextMenuLocation( final JMenuItem aMenuItem )
+  private static Point getContextMenuLocation( final JMenuItem aMenuItem )
   {
     final JComponent container = ( JComponent )aMenuItem.getParent();
 
@@ -94,5 +82,17 @@ public class SetCursorAction extends AbstractAction
     }
 
     return location;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void actionPerformed( final ActionEvent aEvent )
+  {
+    final JMenuItem menuitem = ( JMenuItem )aEvent.getSource();
+
+    final Point location = getContextMenuLocation( menuitem );
+    this.controller.moveCursor( this.cursorIdx, location );
   }
 }

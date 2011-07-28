@@ -207,10 +207,17 @@ public class Cursor implements Comparable<Cursor>, Cloneable
    * 
    * @return the timestamp, can be <code>null</code> if this cursor is
    *         undefined.
+   * @throws IllegalStateException
+   *           in case this cursor is undefined.
+   * @see #isDefined()
    */
-  public Long getTimestamp()
+  public long getTimestamp()
   {
-    return this.timestamp;
+    if ( this.timestamp == null )
+    {
+      throw new IllegalStateException( "Cannot get timestamp on undefined cursor!" );
+    }
+    return this.timestamp.longValue();
   }
 
   /**

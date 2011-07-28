@@ -225,6 +225,11 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
      */
     protected void keyReleased( final KeyEvent aEvent )
     {
+      if ( aEvent.getID() != KeyEvent.KEY_RELEASED )
+      {
+        return;
+      }
+
       Component comp = this.controller.getSignalDiagram();
       comp.setCursor( DEFAULT );
     }
@@ -485,10 +490,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
           contextMenu.putClientProperty( SetCursorAction.KEY, getCursorDropPoint( point ) );
         }
 
-        if ( contextMenu != null )
-        {
-          contextMenu.show( aEvent.getComponent(), aEvent.getX(), aEvent.getY() );
-        }
+        contextMenu.show( aEvent.getComponent(), aEvent.getX(), aEvent.getY() );
       }
       return popupTrigger;
     }
@@ -497,10 +499,10 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
   // CONSTANTS
 
-  private static final Cursor DEFAULT = Cursor.getDefaultCursor();
-  private static final Cursor CURSOR_HOVER = Cursor.getPredefinedCursor( Cursor.CROSSHAIR_CURSOR );
-  private static final Cursor CURSOR_MOVE_CURSOR = Cursor.getPredefinedCursor( Cursor.MOVE_CURSOR );
-  private static final Cursor CURSOR_MOVE_TIMESTAMP = Cursor.getPredefinedCursor( Cursor.E_RESIZE_CURSOR );
+  static final Cursor DEFAULT = Cursor.getDefaultCursor();
+  static final Cursor CURSOR_HOVER = Cursor.getPredefinedCursor( Cursor.CROSSHAIR_CURSOR );
+  static final Cursor CURSOR_MOVE_CURSOR = Cursor.getPredefinedCursor( Cursor.MOVE_CURSOR );
+  static final Cursor CURSOR_MOVE_TIMESTAMP = Cursor.getPredefinedCursor( Cursor.E_RESIZE_CURSOR );
 
   private static final boolean DEBUG = true;
 

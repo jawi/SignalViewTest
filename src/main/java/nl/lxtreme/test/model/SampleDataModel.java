@@ -144,7 +144,7 @@ public class SampleDataModel
   /**
    * {@inheritDoc}
    */
-  public void setCursor( final int aCursorIdx, final Long aTimestamp )
+  public void setCursor( final int aCursorIdx, final long aTimestamp )
   {
     if ( ( aCursorIdx < 0 ) || ( aCursorIdx > this.cursors.length ) )
     {

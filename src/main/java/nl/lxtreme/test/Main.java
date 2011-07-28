@@ -212,13 +212,14 @@ public class Main
 
   // VARIABLES
 
-  private SignalDiagramController controller;
   private SignalDiagramComponent signalDiagram;
   private SignalDetailsView signalDetails;
   private CaptureDetailsView captureDetails;
   private CursorDetailsView cursorDetails;
-  private JFrame mainFrame;
   private JMenuBar menuBar;
+
+  SignalDiagramController controller;
+  JFrame mainFrame;
 
   // METHODS
 
@@ -284,7 +285,7 @@ public class Main
   /**
    * 
    */
-  private void build()
+  void build()
   {
     final MyDoggyToolWindowManager wm = new MyDoggyToolWindowManager();
     ToolWindowGroup group = wm.getToolWindowGroup( "Main" );
@@ -335,7 +336,7 @@ public class Main
   /**
    * 
    */
-  private void init()
+  void init()
   {
     if ( !isMacOS() )
     {
@@ -450,7 +451,7 @@ public class Main
 
   /**
    */
-  private void run()
+  void run()
   {
     this.mainFrame.setVisible( true );
   }

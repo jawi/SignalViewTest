@@ -1192,7 +1192,8 @@ public class SignalDiagramModel
 
     this.zoomFactor = aZoomFactor;
 
-    this.propertyChangeSupport.firePropertyChange( "zoomFactor", oldFactor, aZoomFactor );
+    this.propertyChangeSupport.firePropertyChange( "zoomFactor", Double.valueOf( oldFactor ),
+        Double.valueOf( aZoomFactor ) );
   }
 
   /**

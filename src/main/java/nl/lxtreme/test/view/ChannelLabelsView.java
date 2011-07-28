@@ -68,6 +68,33 @@ public class ChannelLabelsView extends AbstractViewLayer
     // METHODS
 
     /**
+     * @param aDropRow
+     * @return
+     */
+    private static Point createChannelDropPoint( final Point aPoint, final ChannelLabelsView aView,
+        final Component aTargetComponent )
+    {
+      final int row = aView.getModel().findChannelRow( aPoint );
+
+      final int channelHeight = aView.getModel().getChannelHeight();
+      final Point dropPoint = new Point( 0, ( row + 1 ) * channelHeight );
+
+      SwingUtilities.convertPointToScreen( dropPoint, aView );
+      SwingUtilities.convertPointFromScreen( dropPoint, aTargetComponent );
+
+      return dropPoint;
+    }
+
+    /**
+     * @param aComponent
+     * @return
+     */
+    private static GhostGlassPane getGlassPane( final Component aComponent )
+    {
+      return ( GhostGlassPane )SwingUtilities.getRootPane( aComponent ).getGlassPane();
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -192,33 +219,6 @@ public class ChannelLabelsView extends AbstractViewLayer
     {
       // NO-op
     }
-
-    /**
-     * @param aDropRow
-     * @return
-     */
-    private Point createChannelDropPoint( final Point aPoint, final ChannelLabelsView aView,
-        final Component aTargetComponent )
-    {
-      final int row = aView.getModel().findChannelRow( aPoint );
-
-      final int channelHeight = aView.getModel().getChannelHeight();
-      final Point dropPoint = new Point( 0, ( row + 1 ) * channelHeight );
-
-      SwingUtilities.convertPointToScreen( dropPoint, aView );
-      SwingUtilities.convertPointFromScreen( dropPoint, aTargetComponent );
-
-      return dropPoint;
-    }
-
-    /**
-     * @param aComponent
-     * @return
-     */
-    private GhostGlassPane getGlassPane( final Component aComponent )
-    {
-      return ( GhostGlassPane )SwingUtilities.getRootPane( aComponent ).getGlassPane();
-    }
   }
 
   /**
@@ -329,7 +329,7 @@ public class ChannelLabelsView extends AbstractViewLayer
 
   private static final long serialVersionUID = 1L;
 
-  private static final Logger LOG = Logger.getLogger( ChannelLabelsView.class.getName() );
+  static final Logger LOG = Logger.getLogger( ChannelLabelsView.class.getName() );
 
   // VARIABLES
 

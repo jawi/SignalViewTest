@@ -64,6 +64,18 @@ public final class GhostGlassPane extends JPanel
   // METHODS
 
   /**
+   * Creates the rendering hints for this view.
+   */
+  private static RenderingHints createRenderingHints()
+  {
+    RenderingHints hints = new RenderingHints( RenderingHints.KEY_INTERPOLATION,
+        RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR );
+    hints.put( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
+    hints.put( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED );
+    return hints;
+  }
+
+  /**
    * Clears the location where the channel/cursor might be dropped. This
    * location is used to draw a marker indicating the drop point.
    */
@@ -167,17 +179,5 @@ public final class GhostGlassPane extends JPanel
     {
       g2d.dispose();
     }
-  }
-
-  /**
-   * Creates the rendering hints for this view.
-   */
-  private RenderingHints createRenderingHints()
-  {
-    RenderingHints hints = new RenderingHints( RenderingHints.KEY_INTERPOLATION,
-        RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR );
-    hints.put( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
-    hints.put( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED );
-    return hints;
   }
 }

@@ -56,6 +56,19 @@ public class TimeLineUI extends ComponentUI
   // METHODS
 
   /**
+   * Creates the rendering hints for this view.
+   */
+  private static RenderingHints createRenderingHints()
+  {
+    RenderingHints hints = new RenderingHints( KEY_INTERPOLATION, VALUE_INTERPOLATION_NEAREST_NEIGHBOR );
+    hints.put( KEY_ANTIALIASING, VALUE_ANTIALIAS_ON );
+    hints.put( KEY_ALPHA_INTERPOLATION, VALUE_ALPHA_INTERPOLATION_QUALITY );
+    hints.put( KEY_COLOR_RENDERING, VALUE_COLOR_RENDER_QUALITY );
+    hints.put( KEY_RENDERING, VALUE_RENDER_QUALITY );
+    return hints;
+  }
+
+  /**
    * {@inheritDoc}
    */
   @Override
@@ -182,19 +195,6 @@ public class TimeLineUI extends ComponentUI
   }
 
   /**
-   * Creates the rendering hints for this view.
-   */
-  private RenderingHints createRenderingHints()
-  {
-    RenderingHints hints = new RenderingHints( KEY_INTERPOLATION, VALUE_INTERPOLATION_NEAREST_NEIGHBOR );
-    hints.put( KEY_ANTIALIASING, VALUE_ANTIALIAS_ON );
-    hints.put( KEY_ALPHA_INTERPOLATION, VALUE_ALPHA_INTERPOLATION_QUALITY );
-    hints.put( KEY_COLOR_RENDERING, VALUE_COLOR_RENDER_QUALITY );
-    hints.put( KEY_RENDERING, VALUE_RENDER_QUALITY );
-    return hints;
-  }
-
-  /**
    * Paints the cursors on this timeline.
    * 
    * @param aCanvas
@@ -234,6 +234,7 @@ public class TimeLineUI extends ComponentUI
    * @param aTotalTime
    *          the total displayed time.
    */
+  @SuppressWarnings( "static-method" )
   private void renderHelpText( final TimeLineView aView, final Graphics2D aCanvas, final double aTickIncrement,
       final double aTotalTime )
   {

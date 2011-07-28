@@ -57,6 +57,62 @@ public class SignalUI extends ComponentUI
   // METHODS
 
   /**
+   * Creates the rendering hints for this the drawing of arrows.
+   */
+  private static RenderingHints createArrowRenderingHints()
+  {
+    RenderingHints hints = new RenderingHints( RenderingHints.KEY_INTERPOLATION,
+        RenderingHints.VALUE_INTERPOLATION_BICUBIC );
+    hints.put( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
+    hints.put( RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED );
+    hints.put( RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED );
+    hints.put( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY );
+    return hints;
+  }
+
+  /**
+   * Creates the rendering hints for this view.
+   */
+  private static RenderingHints createCursorRenderingHints()
+  {
+    RenderingHints hints = new RenderingHints( RenderingHints.KEY_INTERPOLATION,
+        RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR );
+    hints.put( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
+    hints.put( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED );
+    return hints;
+  }
+
+  /**
+   * Creates the rendering hints for this view.
+   */
+  private static RenderingHints createSignalRenderingHints()
+  {
+    RenderingHints hints = new RenderingHints( RenderingHints.KEY_INTERPOLATION,
+        RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR );
+    hints.put( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF );
+    hints.put( RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED );
+    hints.put( RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED );
+    hints.put( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED );
+    return hints;
+  }
+
+  /**
+   * Returns the Y-position where the cursor (+ flag) should be drawn.
+   * 
+   * @return a Y-position, in the coordinate space of this component.
+   */
+  private static int getYposition( final JComponent aComponent )
+  {
+    int result = 0;
+    if ( SwingUtilities.getAncestorOfClass( JViewport.class, aComponent ) != null )
+    {
+      // negative in order to ensure the flag itself is hidden
+      result = -40;
+    }
+    return result;
+  }
+
+  /**
    * Returns the current value of measurementRect.
    * 
    * @return the measurementRect
@@ -222,62 +278,6 @@ public class SignalUI extends ComponentUI
 
       this.listening = true;
     }
-  }
-
-  /**
-   * Creates the rendering hints for this the drawing of arrows.
-   */
-  private RenderingHints createArrowRenderingHints()
-  {
-    RenderingHints hints = new RenderingHints( RenderingHints.KEY_INTERPOLATION,
-        RenderingHints.VALUE_INTERPOLATION_BICUBIC );
-    hints.put( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
-    hints.put( RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED );
-    hints.put( RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED );
-    hints.put( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY );
-    return hints;
-  }
-
-  /**
-   * Creates the rendering hints for this view.
-   */
-  private RenderingHints createCursorRenderingHints()
-  {
-    RenderingHints hints = new RenderingHints( RenderingHints.KEY_INTERPOLATION,
-        RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR );
-    hints.put( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
-    hints.put( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED );
-    return hints;
-  }
-
-  /**
-   * Creates the rendering hints for this view.
-   */
-  private RenderingHints createSignalRenderingHints()
-  {
-    RenderingHints hints = new RenderingHints( RenderingHints.KEY_INTERPOLATION,
-        RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR );
-    hints.put( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF );
-    hints.put( RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED );
-    hints.put( RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED );
-    hints.put( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED );
-    return hints;
-  }
-
-  /**
-   * Returns the Y-position where the cursor (+ flag) should be drawn.
-   * 
-   * @return a Y-position, in the coordinate space of this component.
-   */
-  private int getYposition( final JComponent aComponent )
-  {
-    int result = 0;
-    if ( SwingUtilities.getAncestorOfClass( JViewport.class, aComponent ) != null )
-    {
-      // negative in order to ensure the flag itself is hidden
-      result = -40;
-    }
-    return result;
   }
 
   /**
