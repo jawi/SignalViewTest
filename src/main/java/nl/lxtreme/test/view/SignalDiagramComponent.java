@@ -540,7 +540,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
       LOG.log( Level.INFO, "Zoom factor set to " + getFactor() );
 
-      this.signalDiagram.repaint( 25L );
+      repaintSignalDiagram();
     }
 
     /**
@@ -550,7 +550,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     {
       zoomRelative( 2.0 );
 
-      this.signalDiagram.repaint( 25L );
+      repaintSignalDiagram();
     }
 
     /**
@@ -560,7 +560,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     {
       zoomAbsolute( 1.0 );
 
-      this.signalDiagram.repaint( 25L );
+      repaintSignalDiagram();
     }
 
     /**
@@ -570,7 +570,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     {
       zoomRelative( 0.5 );
 
-      this.signalDiagram.repaint( 25L );
+      repaintSignalDiagram();
     }
 
     /**
@@ -604,6 +604,23 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       final double length = model.getAbsoluteLength();
 
       return viewSize.getWidth() / length;
+    }
+
+    /**
+     * Repaints the signal diagram, keeping into account that this component
+     * might be placed inside a {@link JScrollPane}.
+     */
+    private void repaintSignalDiagram()
+    {
+      JScrollPane scrollPane = SwingUtils.getAncestorOfClass( JScrollPane.class, this.signalDiagram );
+      if ( scrollPane != null )
+      {
+        scrollPane.repaint( 25L );
+      }
+      else
+      {
+        this.signalDiagram.repaint( 25L );
+      }
     }
 
     /**
