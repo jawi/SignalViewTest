@@ -22,6 +22,7 @@ package nl.lxtreme.test.view;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.logging.*;
 
 import javax.swing.*;
 
@@ -37,14 +38,6 @@ import nl.lxtreme.test.view.model.*;
 public class SignalDiagramComponent extends JPanel implements Scrollable
 {
   // INNER TYPES
-
-  /**
-   * Defines a zoom factor, with a ratio and some additional properties.
-   */
-  public static class ZoomFactor
-  {
-    // TODO
-  }
 
   /**
    * Provides a transparent event listener to allow some of the functionality
@@ -168,13 +161,13 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
       try
       {
-        if ( getModel().isZoomAll() )
+        if ( isZoomAll() )
         {
-          this.controller.zoomAll();
+          zoomAll();
         }
         else
         {
-          this.controller.recalculateDimensions();
+          recalculateDimensions();
         }
       }
       finally
@@ -193,13 +186,13 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
       try
       {
-        if ( getModel().isZoomAll() )
+        if ( isZoomAll() )
         {
-          this.controller.zoomAll();
+          zoomAll();
         }
         else
         {
-          this.controller.recalculateDimensions();
+          recalculateDimensions();
         }
       }
       finally
@@ -246,19 +239,19 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
       if ( ( '+' == aEvent.getKeyChar() ) || ( '=' == aEvent.getKeyChar() ) )
       {
-        this.controller.zoomIn();
+        zoomIn();
       }
       else if ( ( '-' == aEvent.getKeyChar() ) || ( '_' == aEvent.getKeyChar() ) )
       {
-        this.controller.zoomOut();
+        zoomOut();
       }
       else if ( '0' == aEvent.getKeyChar() )
       {
-        this.controller.zoomAll();
+        zoomAll();
       }
       else if ( '1' == aEvent.getKeyChar() )
       {
-        this.controller.zoomOriginal();
+        zoomOriginal();
       }
     }
 
@@ -270,11 +263,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       if ( aEvent.isControlDown() )
       {
         final JComponent view = getDeepestComponentAt( aEvent );
-        if ( ( view == null ) || !SwingUtilities.isDescendingFrom( view, SignalDiagramComponent.this ) )
-        {
-          return;
-        }
-
         final Point point = SwingUtilities.convertPoint( aEvent.getComponent(), aEvent.getPoint(), view );
 
         final SignalHoverInfo signalHover = getModel().getSignalHover( point );
@@ -293,15 +281,11 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
      */
     protected void mouseDragged( final MouseEvent aEvent )
     {
-      final JComponent view = getDeepestComponentAt( aEvent );
-      if ( ( view == null ) || !SwingUtilities.isDescendingFrom( view, getComponentRoot() ) )
-      {
-        return;
-      }
-
       if ( getModel().isCursorMode() && ( this.movingCursor >= 0 ) )
       {
+        final JComponent view = getDeepestComponentAt( aEvent );
         final Point point = SwingUtilities.convertPoint( aEvent.getComponent(), aEvent.getPoint(), view );
+
         this.controller.moveCursor( this.movingCursor, getCursorDropPoint( point ) );
       }
     }
@@ -312,25 +296,24 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     protected void mouseMoved( final MouseEvent aEvent )
     {
       final JComponent view = getDeepestComponentAt( aEvent );
-      if ( ( view == null ) || !SwingUtilities.isDescendingFrom( view, getComponentRoot() ) )
-      {
-        return;
-      }
 
       view.setCursor( DEFAULT );
 
-      if ( getModel().isCursorMode() || getModel().isMeasurementMode() )
+      final SignalDiagramModel model = getModel();
+      if ( model.isCursorMode() || model.isMeasurementMode() )
       {
         final Point point = SwingUtilities.convertPoint( aEvent.getComponent(), aEvent.getPoint(), view );
 
-        if ( getModel().isMeasurementMode() )
+        if ( model.isMeasurementMode() )
         {
-          SignalHoverInfo signalHover = getModel().getSignalHover( point );
-          getModel().fireMeasurementEvent( signalHover );
+          SignalHoverInfo signalHover = model.getSignalHover( point );
+
+          model.fireMeasurementEvent( signalHover );
+
           view.setCursor( signalHover == null ? DEFAULT : CURSOR_HOVER );
         }
 
-        if ( getModel().isCursorMode() && ( findCursor( point ) >= 0 ) )
+        if ( model.isCursorMode() && ( findCursor( point ) >= 0 ) )
         {
           view.setCursor( CURSOR_MOVE_CURSOR );
         }
@@ -388,7 +371,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     {
       final long refIdx = getModel().locationToTimestamp( aPoint );
 
-      final double snapArea = CURSOR_SENSITIVITY_AREA / this.controller.getSignalDiagramModel().getZoomFactor();
+      final double snapArea = CURSOR_SENSITIVITY_AREA / getModel().getZoomFactor();
 
       return this.controller.getSignalDiagramModel().findCursor( refIdx, snapArea );
     }
@@ -497,6 +480,163 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
   }
 
+  /**
+   * Defines a zoom factor, with a ratio and some additional properties.
+   */
+  static class ZoomHelper
+  {
+    // CONSTANTS
+
+    private static final Logger LOG = Logger.getLogger( ZoomHelper.class.getName() );
+
+    // VARIABLES
+
+    private boolean zoomAll;
+
+    private final SignalDiagramComponent signalDiagram;
+
+    // CONSTRUCTORS
+
+    /**
+     * Creates a new SignalDiagramComponent.ZoomFactor instance.
+     * 
+     * @param aSignalDiagram
+     *          the signal diagram component to use.
+     */
+    public ZoomHelper( final SignalDiagramComponent aSignalDiagram )
+    {
+      this.signalDiagram = aSignalDiagram;
+    }
+
+    // METHODS
+
+    /**
+     * Returns the current value of factor.
+     * 
+     * @return the factor
+     */
+    public double getFactor()
+    {
+      return this.signalDiagram.getModel().getZoomFactor();
+    }
+
+    /**
+     * Returns the current value of zoomAll.
+     * 
+     * @return the zoomAll
+     */
+    public boolean isZoomAll()
+    {
+      return this.zoomAll;
+    }
+
+    /**
+     * Zooms to make all data visible in one screen.
+     */
+    public void zoomAll()
+    {
+      setFactor( getMinZoomLevel() );
+      this.zoomAll = true;
+
+      LOG.log( Level.INFO, "Zoom factor set to " + getFactor() );
+
+      this.signalDiagram.repaint( 25L );
+    }
+
+    /**
+     * Zooms in with a factor 1.5
+     */
+    public void zoomIn()
+    {
+      zoomRelative( 2.0 );
+
+      this.signalDiagram.repaint( 25L );
+    }
+
+    /**
+     * Zooms to a factor of 1.0.
+     */
+    public void zoomOriginal()
+    {
+      zoomAbsolute( 1.0 );
+
+      this.signalDiagram.repaint( 25L );
+    }
+
+    /**
+     * Zooms out with a factor 1.5
+     */
+    public void zoomOut()
+    {
+      zoomRelative( 0.5 );
+
+      this.signalDiagram.repaint( 25L );
+    }
+
+    /**
+     * Determines the maximum zoom level that we can handle without causing
+     * display problems.
+     * <p>
+     * It appears that the maximum width of a component can be
+     * {@link Short#MAX_VALUE} pixels wide.
+     * </p>
+     * 
+     * @return a maximum zoom level.
+     */
+    private double getMaxZoomLevel()
+    {
+      final SignalDiagramModel model = this.signalDiagram.getModel();
+      final double length = model.getAbsoluteLength();
+      return Math.floor( Integer.MAX_VALUE / length );
+    }
+
+    /**
+     * Determines the minimum zoom level that we can causes all signals to be
+     * displayed in the current width and height.
+     * 
+     * @return a minimum zoom level.
+     */
+    private double getMinZoomLevel()
+    {
+      final SignalDiagramModel model = this.signalDiagram.getModel();
+
+      Dimension viewSize = this.signalDiagram.getVisibleViewSize();
+      final double length = model.getAbsoluteLength();
+
+      return viewSize.getWidth() / length;
+    }
+
+    /**
+     * Sets the factor.
+     * 
+     * @param aFactor
+     *          the factor to set
+     */
+    private void setFactor( final double aFactor )
+    {
+      this.signalDiagram.getModel().setZoomFactor( aFactor );
+    }
+
+    /**
+     * @param aFactor
+     */
+    private void zoomAbsolute( final double aFactor )
+    {
+      setFactor( aFactor );
+      this.zoomAll = false;
+
+      LOG.log( Level.INFO, "Zoom factor set to " + getFactor() );
+    }
+
+    /**
+     * @param aFactor
+     */
+    private void zoomRelative( final double aFactor )
+    {
+      zoomAbsolute( Math.min( getMaxZoomLevel(), aFactor * getFactor() ) );
+    }
+  }
+
   // CONSTANTS
 
   static final Cursor DEFAULT = Cursor.getDefaultCursor();
@@ -514,6 +654,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   private final SignalView signalView;
   private final TransparentAWTListener awtListener;
   private final SignalDiagramModel model;
+  private final ZoomHelper zoomHelper;
 
   // CONSTRUCTORS
 
@@ -525,15 +666,17 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
    */
   private SignalDiagramComponent( final SignalDiagramController aController )
   {
-    super();
+    super( new BorderLayout( 4, 4 ) );
 
     this.controller = aController;
-    this.awtListener = new TransparentAWTListener( this.controller );
 
+    this.zoomHelper = new ZoomHelper( this );
+
+    this.awtListener = new TransparentAWTListener( this.controller );
     this.model = new SignalDiagramModel( this.controller );
     this.signalView = new SignalView( this.controller );
 
-    initComponent();
+    add( this.signalView, BorderLayout.CENTER );
   }
 
   // METHODS
@@ -610,21 +753,15 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   @Override
   public int getScrollableBlockIncrement( final Rectangle aVisibleRect, final int aOrientation, final int aDirection )
   {
-    final SignalDiagramModel model = this.controller.getSignalDiagramModel();
-
-    final int channelHeight = getModel().getChannelHeight();
-    final int channelCount = model.getSampleWidth();
-    final int lastSampleIdx = model.getSampleCount();
-
     final int inc;
     if ( aOrientation == SwingConstants.VERTICAL )
     {
-      inc = getVerticalBlockIncrement( aVisibleRect, aDirection, channelHeight, channelCount );
+      inc = this.model.getVerticalBlockIncrement( getSize(), aVisibleRect, aDirection );
     }
     else
     /* if ( aOrientation == SwingConstants.HORIZONTAL ) */
     {
-      inc = getHorizontalBlockIncrement( aVisibleRect, aDirection, lastSampleIdx );
+      inc = this.model.getHorizontalBlockIncrement( aVisibleRect, aDirection );
     }
 
     return inc;
@@ -760,6 +897,93 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   }
 
   /**
+   * Zooms to make all data visible in one screen.
+   */
+  public final void zoomAll()
+  {
+    this.zoomHelper.zoomAll();
+  }
+
+  /**
+   * Zooms in with a factor 1.5
+   */
+  public final void zoomIn()
+  {
+    this.zoomHelper.zoomIn();
+  }
+
+  /**
+   * Zooms to a factor of 1.0.
+   */
+  public final void zoomOriginal()
+  {
+    this.zoomHelper.zoomOriginal();
+  }
+
+  /**
+   * Zooms out with a factor 1.5
+   */
+  public final void zoomOut()
+  {
+    this.zoomHelper.zoomOut();
+  }
+
+  /**
+   * @return
+   */
+  final boolean isZoomAll()
+  {
+    return this.zoomHelper.isZoomAll();
+  }
+
+  /**
+   * Recalculates the dimensions of the main view.
+   */
+  final void recalculateDimensions()
+  {
+    final JScrollPane scrollPane = SwingUtils.getAncestorOfClass( JScrollPane.class, getSignalView() );
+    if ( scrollPane == null )
+    {
+      return;
+    }
+
+    final Rectangle viewPortSize = scrollPane.getViewport().getVisibleRect();
+
+    int width = this.model.getAbsoluteScreenWidth();
+    if ( width < viewPortSize.width )
+    {
+      width = viewPortSize.width;
+    }
+
+    int height = this.model.getAbsoluteScreenHeight();
+    if ( height < viewPortSize.height )
+    {
+      height = viewPortSize.height;
+    }
+
+    JComponent signalView = ( JComponent )scrollPane.getViewport().getView();
+    signalView.setPreferredSize( new Dimension( width, height ) );
+    signalView.revalidate();
+
+    TimeLineView timeline = ( TimeLineView )scrollPane.getColumnHeader().getView();
+    // the timeline component always follows the width of the signal view, but
+    // with a fixed height...
+    timeline.setPreferredSize( new Dimension( width, timeline.getTimeLineHeight() ) );
+    timeline.setMinimumSize( signalView.getPreferredSize() );
+    timeline.revalidate();
+
+    ChannelLabelsView channelLabels = ( ChannelLabelsView )scrollPane.getRowHeader().getView();
+    // the channel label component calculates its own 'optimal' width, but
+    // doesn't know squat about the correct height...
+    final Dimension minimumSize = channelLabels.getMinimumSize();
+    channelLabels.setMinimumSize( new Dimension( minimumSize.width, height ) );
+    channelLabels.setPreferredSize( new Dimension( minimumSize.width, height ) );
+    channelLabels.revalidate();
+
+    scrollPane.repaint();
+  }
+
+  /**
    * If this component is the <code>viewportView</code> of an enclosing
    * <code>JScrollPane</code> (the usual situation), configure this
    * <code>ScrollPane</code> by, amongst other things, installing the diagram's
@@ -770,7 +994,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
    */
   private void configureEnclosingScrollPane()
   {
-    JScrollPane scrollPane = ( JScrollPane )SwingUtilities.getAncestorOfClass( JScrollPane.class, this );
+    JScrollPane scrollPane = SwingUtils.getAncestorOfClass( JScrollPane.class, this );
     if ( scrollPane != null )
     {
       // Make certain we are the viewPort's view and not, for
@@ -793,141 +1017,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
   }
 
   /**
-   * Calculates the horizontal block increment.
-   * <p>
-   * The following rules are adhered for scrolling horizontally:
-   * </p>
-   * <ol>
-   * <li>unless the first or last sample is not shown, scroll a full block;
-   * otherwise</li>
-   * <li>do not scroll.</li>
-   * </ol>
-   * 
-   * @param aVisibleRect
-   *          the visible rectangle of the component, never <code>null</code>;
-   * @param aDirection
-   *          the direction in which to scroll (&gt; 0 to scroll left, &lt; 0 to
-   *          scroll right);
-   * @param aLastSampleIdx
-   *          the index of the last available sample in the data model.
-   * @return a horizontal block increment, determined according to the rules
-   *         described.
-   */
-  private int getHorizontalBlockIncrement( final Rectangle aVisibleRect, final int aDirection, final int aLastSampleIdx )
-  {
-    final int blockIncr = 50;
-
-    final int firstVisibleSample = getModel().locationToSampleIndex( aVisibleRect.getLocation() );
-    final int lastVisibleSample = getModel()
-        .locationToSampleIndex( new Point( aVisibleRect.x + aVisibleRect.width, 0 ) );
-
-    int inc = 0;
-    if ( aDirection < 0 )
-    {
-      // Scroll left
-      if ( firstVisibleSample > 0 )
-      {
-        inc = blockIncr;
-      }
-    }
-    else if ( aDirection > 0 )
-    {
-      // Scroll right
-      if ( lastVisibleSample < aLastSampleIdx )
-      {
-        inc = blockIncr;
-      }
-    }
-
-    return inc;
-  }
-
-  /**
-   * Calculates the vertical block increment.
-   * <p>
-   * The following rules are adhered for scrolling vertically:
-   * </p>
-   * <ol>
-   * <li>if the first shown channel is not completely visible, it will be made
-   * fully visible; otherwise</li>
-   * <li>scroll down to show the succeeding channel fully;</li>
-   * <li>if the last channel is fully shown, and there is some room left at the
-   * bottom, show the remaining space.</li>
-   * </ol>
-   * 
-   * @param aVisibleRect
-   *          the visible rectangle of the component, never <code>null</code>;
-   * @param aDirection
-   *          the direction in which to scroll (&gt; 0 to scroll down, &lt; 0 to
-   *          scroll up);
-   * @param aChannelHeight
-   *          the height of a single channel row (> 0);
-   * @param aChannelCount
-   *          the number of channels shown in this component (> 0).
-   * @return a vertical block increment, determined according to the rules
-   *         described.
-   */
-  private int getVerticalBlockIncrement( final Rectangle aVisibleRect, final int aDirection, final int aChannelHeight,
-      final int aChannelCount )
-  {
-    int inc;
-    int firstVisibleRow = ( int )( aVisibleRect.y / ( double )aChannelHeight );
-    int lastVisibleRow = ( int )( ( aVisibleRect.y + aVisibleRect.height ) / ( double )aChannelHeight );
-
-    inc = 0;
-    if ( aDirection < 0 )
-    {
-      // Scroll up...
-      if ( ( firstVisibleRow > 0 ) && ( lastVisibleRow <= aChannelCount ) )
-      {
-        // Scroll to the first fully visible channel row...
-        inc = aVisibleRect.y % aChannelHeight;
-      }
-      if ( inc == 0 )
-      {
-        // All rows are fully visible, scroll an entire row up...
-        inc = aChannelHeight;
-      }
-      if ( ( aVisibleRect.y - inc ) < 0 )
-      {
-        // Make sure that we do not scroll beyond the first row...
-        inc = aVisibleRect.y;
-      }
-    }
-    else if ( aDirection > 0 )
-    {
-      // Scroll down...
-      if ( ( firstVisibleRow >= 0 ) && ( lastVisibleRow < aChannelCount ) )
-      {
-        // Scroll to the first fully visible channel row...
-        inc = aVisibleRect.y % aChannelHeight;
-      }
-      if ( inc == 0 )
-      {
-        // All rows are fully visible, scroll an entire row up...
-        inc = aChannelHeight;
-      }
-      int height = getHeight();
-      if ( ( aVisibleRect.y + aVisibleRect.height + inc ) > height )
-      {
-        // Make sure that we do not scroll beyond the last row...
-        inc = height - aVisibleRect.y - aVisibleRect.height;
-      }
-    }
-    return inc;
-  }
-
-  /**
-   * Initializes this component.
-   */
-  private void initComponent()
-  {
-    setLayout( new BorderLayout() );
-
-    add( this.signalView, BorderLayout.CENTER );
-  }
-
-  /**
    * Reverses the effect of <code>configureEnclosingScrollPane</code> by
    * replacing the <code>columnHeaderView</code> of the enclosing scroll pane
    * with <code>null</code>.
@@ -937,7 +1026,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
    */
   private void unconfigureEnclosingScrollPane()
   {
-    JScrollPane scrollPane = ( JScrollPane )SwingUtilities.getAncestorOfClass( JScrollPane.class, this );
+    JScrollPane scrollPane = SwingUtils.getAncestorOfClass( JScrollPane.class, this );
     if ( scrollPane != null )
     {
       scrollPane.setColumnHeaderView( null );

@@ -22,9 +22,6 @@ package nl.lxtreme.test.view;
 
 import java.awt.*;
 import java.beans.*;
-import java.util.logging.*;
-
-import javax.swing.*;
 
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.dnd.*;
@@ -37,10 +34,6 @@ import nl.lxtreme.test.view.model.*;
  */
 public final class SignalDiagramController
 {
-  // CONSTANTS
-
-  private static final Logger LOG = Logger.getLogger( SignalDiagramController.class.getName() );
-
   // VARIABLES
 
   private final DragAndDropTargetController dndTargetController;
@@ -162,54 +155,6 @@ public final class SignalDiagramController
   }
 
   /**
-   * Recalculates the dimensions of the main view.
-   */
-  public void recalculateDimensions()
-  {
-    final JScrollPane scrollPane = SwingUtils.getAncestorOfClass( JScrollPane.class, getSignalView() );
-    if ( scrollPane == null )
-    {
-      return;
-    }
-
-    final Rectangle viewPortSize = scrollPane.getViewport().getVisibleRect();
-    final SignalDiagramModel model = getSignalDiagramModel();
-
-    int width = model.getAbsoluteScreenWidth();
-    if ( width < viewPortSize.width )
-    {
-      width = viewPortSize.width;
-    }
-
-    int height = model.getAbsoluteScreenHeight();
-    if ( height < viewPortSize.height )
-    {
-      height = viewPortSize.height;
-    }
-
-    JComponent signalView = ( JComponent )scrollPane.getViewport().getView();
-    signalView.setPreferredSize( new Dimension( width, height ) );
-    signalView.revalidate();
-
-    TimeLineView timeline = ( TimeLineView )scrollPane.getColumnHeader().getView();
-    // the timeline component always follows the width of the signal view, but
-    // with a fixed height...
-    timeline.setPreferredSize( new Dimension( width, timeline.getTimeLineHeight() ) );
-    timeline.setMinimumSize( signalView.getPreferredSize() );
-    timeline.revalidate();
-
-    ChannelLabelsView channelLabels = ( ChannelLabelsView )scrollPane.getRowHeader().getView();
-    // the channel label component calculates its own 'optimal' width, but
-    // doesn't know squat about the correct height...
-    final Dimension minimumSize = channelLabels.getMinimumSize();
-    channelLabels.setMinimumSize( new Dimension( minimumSize.width, height ) );
-    channelLabels.setPreferredSize( new Dimension( minimumSize.width, height ) );
-    channelLabels.revalidate();
-
-    scrollPane.repaint();
-  }
-
-  /**
    * Removes the cursor denoted by the given index. If the cursor with the given
    * index is <em>undefined</em> this method does nothing (not even call event
    * listeners!).
@@ -291,8 +236,6 @@ public final class SignalDiagramController
   public void setDataModel( final SampleDataModel aDataModel )
   {
     getSignalDiagramModel().setDataModel( aDataModel );
-
-    zoomOriginal();
   }
 
   /**
@@ -320,98 +263,11 @@ public final class SignalDiagramController
   }
 
   /**
-   * Zooms to make all data visible in one screen.
-   */
-  public void zoomAll()
-  {
-    final SignalDiagramModel model = getSignalDiagramModel();
-
-    try
-    {
-      Dimension viewSize = getVisibleViewSize();
-      model.setZoomFactor( viewSize.getWidth() / model.getAbsoluteLength() );
-    }
-    finally
-    {
-      model.setZoomAll( true );
-    }
-
-    LOG.log( Level.INFO, "Zoom factor set to " + model.getZoomFactor() );
-
-    recalculateDimensions();
-  }
-
-  /**
-   * Zooms in with a factor 1.5
-   */
-  public void zoomIn()
-  {
-    zoomRelative( 2.0 );
-
-    recalculateDimensions();
-  }
-
-  /**
-   * Zooms to a factor of 1.0.
-   */
-  public void zoomOriginal()
-  {
-    zoomAbsolute( 1.0 );
-
-    recalculateDimensions();
-  }
-
-  /**
-   * Zooms out with a factor 1.5
-   */
-  public void zoomOut()
-  {
-    zoomRelative( 0.5 );
-
-    recalculateDimensions();
-  }
-
-  /**
    * @param aComponent
    */
   final void setSignalDiagram( final SignalDiagramComponent aComponent )
   {
     this.signalDiagram = aComponent;
-  }
-
-  /**
-   * Returns the actual signal view component.
-   * 
-   * @return a signal view component, never <code>null</code>.
-   */
-  private SignalView getSignalView()
-  {
-    return this.signalDiagram.getSignalView();
-  }
-
-  /**
-   * Returns the dimensions of the visible view, taking care of viewports (such
-   * as used in {@link JScrollPane}).
-   * 
-   * @return a visible view size, as {@link Dimension}, never <code>null</code>.
-   */
-  private Dimension getVisibleViewSize()
-  {
-    final JComponent component = getSignalView();
-
-    final JScrollPane scrollPane = SwingUtils.getAncestorOfClass( JScrollPane.class, component );
-
-    final Rectangle rect;
-    if ( scrollPane != null )
-    {
-      rect = scrollPane.getViewport().getVisibleRect();
-    }
-    else
-    {
-      rect = this.signalDiagram.getVisibleRect();
-    }
-
-    return rect.getSize();
   }
 
   /**
@@ -421,33 +277,5 @@ public final class SignalDiagramController
   private long locationToTimestamp( final Point aPoint )
   {
     return this.signalDiagram.getModel().locationToTimestamp( aPoint );
-  }
-
-  /**
-   * @param aFactor
-   */
-  private void zoomAbsolute( final double aFactor )
-  {
-    try
-    {
-      getSignalDiagramModel().setZoomFactor( aFactor );
-    }
-    finally
-    {
-      getSignalDiagramModel().setZoomAll( false );
-    }
-
-    LOG.log( Level.INFO, "Zoom factor set to " + getSignalDiagramModel().getZoomFactor() );
-  }
-
-  /**
-   * @param aFactor
-   */
-  private void zoomRelative( final double aFactor )
-  {
-    final SignalDiagramModel model = getSignalDiagramModel();
-    final double newFactor = Math.min( model.getMaxZoomLevel(), aFactor * model.getZoomFactor() );
-
-    zoomAbsolute( newFactor );
   }
 }

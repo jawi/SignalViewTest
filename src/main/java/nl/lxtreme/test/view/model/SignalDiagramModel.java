@@ -98,8 +98,6 @@ public class SignalDiagramModel
 
   // VARIABLES
 
-  private double zoomFactor;
-  private boolean zoomAll;
   private int signalHeight;
   private int channelHeight;
   private int visibleMask;
@@ -120,6 +118,8 @@ public class SignalDiagramModel
   private final EventListenerList eventListeners;
   private final PropertyChangeSupport propertyChangeSupport;
 
+  private double zoomFactor;
+
   // CONSTRUCTORS
 
   /**
@@ -137,11 +137,11 @@ public class SignalDiagramModel
 
     this.signalHeight = 20;
     this.channelHeight = 40;
-    this.zoomFactor = 0.01;
 
     this.signalAlignment = SignalAlignment.CENTER;
     this.helpTextDisplay = HelpTextDisplay.TOOLTIP;
 
+    this.zoomFactor = 1.0;
     this.mode = 0;
 
     this.visibleMask = 0x555;
@@ -438,20 +438,51 @@ public class SignalDiagramModel
   }
 
   /**
-   * Determines the maximum zoom level that we can handle without causing
-   * display problems.
+   * Calculates the horizontal block increment.
    * <p>
-   * It appears that the maximum width of a component can be
-   * {@link Short#MAX_VALUE} pixels wide.
+   * The following rules are adhered for scrolling horizontally:
    * </p>
+   * <ol>
+   * <li>unless the first or last sample is not shown, scroll a full block;
+   * otherwise</li>
+   * <li>do not scroll.</li>
+   * </ol>
    * 
-   * @return a maximum zoom level.
+   * @param aVisibleRect
+   *          the visible rectangle of the component, never <code>null</code>;
+   * @param aDirection
+   *          the direction in which to scroll (&gt; 0 to scroll left, &lt; 0 to
+   *          scroll right);
+   * @return a horizontal block increment, determined according to the rules
+   *         described.
    */
-  public double getMaxZoomLevel()
+  public int getHorizontalBlockIncrement( final Rectangle aVisibleRect, final int aDirection )
   {
-    final double end = this.timestamps[this.timestamps.length - 1] + 1;
-    final double start = this.timestamps[0];
-    return Math.floor( Integer.MAX_VALUE / ( end - start ) );
+    final int blockIncr = 50;
+
+    final int firstVisibleSample = locationToSampleIndex( aVisibleRect.getLocation() );
+    final int lastVisibleSample = locationToSampleIndex( new Point( aVisibleRect.x + aVisibleRect.width, 0 ) );
+    final int lastSampleIdx = getSampleCount();
+
+    int inc = 0;
+    if ( aDirection < 0 )
+    {
+      // Scroll left
+      if ( firstVisibleSample > 0 )
+      {
+        inc = blockIncr;
+      }
+    }
+    else if ( aDirection > 0 )
+    {
+      // Scroll right
+      if ( lastVisibleSample < lastSampleIdx )
+      {
+        inc = blockIncr;
+      }
+    }
+
+    return inc;
   }
 
   /**
@@ -509,7 +540,7 @@ public class SignalDiagramModel
     // Calculate the "absolute" time based on the mouse position, use a
     // "over sampling" factor to allow intermediary (between two time stamps)
     // time value to be shown...
-    final double refTime = ( ( SignalHoverInfo.TIMESTAMP_FACTOR * aPoint.x ) / this.zoomFactor )
+    final double refTime = ( ( SignalHoverInfo.TIMESTAMP_FACTOR * aPoint.x ) / getZoomFactor() )
         / ( SignalHoverInfo.TIMESTAMP_FACTOR * this.sampleRate );
 
     final int virtualChannel = ( aPoint.y / this.channelHeight );
@@ -590,13 +621,13 @@ public class SignalDiagramModel
     }
 
     final Rectangle rect = new Rectangle();
-    rect.x = ( int )( this.zoomFactor * ts );
-    rect.width = ( int )( this.zoomFactor * ( te - ts ) );
+    rect.x = ( int )( getZoomFactor() * ts );
+    rect.width = ( int )( getZoomFactor() * ( te - ts ) );
     rect.y = ( virtualChannel * this.channelHeight ) + getSignalOffset();
     rect.height = this.signalHeight;
 
     // The position where the "other" signal transition should be...
-    middleXpos = ( int )( this.zoomFactor * tm );
+    middleXpos = ( int )( getZoomFactor() * tm );
 
     final double timeHigh = th / ( double )this.sampleRate;
     final double timeTotal = ( te - ts ) / ( double )this.sampleRate;
@@ -699,9 +730,84 @@ public class SignalDiagramModel
   }
 
   /**
-   * @return
+   * Calculates the vertical block increment.
+   * <p>
+   * The following rules are adhered for scrolling vertically:
+   * </p>
+   * <ol>
+   * <li>if the first shown channel is not completely visible, it will be made
+   * fully visible; otherwise</li>
+   * <li>scroll down to show the succeeding channel fully;</li>
+   * <li>if the last channel is fully shown, and there is some room left at the
+   * bottom, show the remaining space.</li>
+   * </ol>
+   * 
+   * @param aVisibleRect
+   *          the visible rectangle of the component, never <code>null</code>;
+   * @param aDirection
+   *          the direction in which to scroll (&gt; 0 to scroll down, &lt; 0 to
+   *          scroll up).
+   * @return a vertical block increment, determined according to the rules
+   *         described.
    */
-  public double getZoomFactor()
+  public int getVerticalBlockIncrement( final Dimension aViewDimensions, final Rectangle aVisibleRect,
+      final int aDirection )
+  {
+    final int channelCount = getSampleWidth();
+
+    int inc;
+    int firstVisibleRow = ( int )( aVisibleRect.y / ( double )this.channelHeight );
+    int lastVisibleRow = ( int )( ( aVisibleRect.y + aVisibleRect.height ) / ( double )this.channelHeight );
+
+    inc = 0;
+    if ( aDirection < 0 )
+    {
+      // Scroll up...
+      if ( ( firstVisibleRow > 0 ) && ( lastVisibleRow <= channelCount ) )
+      {
+        // Scroll to the first fully visible channel row...
+        inc = aVisibleRect.y % this.channelHeight;
+      }
+      if ( inc == 0 )
+      {
+        // All rows are fully visible, scroll an entire row up...
+        inc = this.channelHeight;
+      }
+      if ( ( aVisibleRect.y - inc ) < 0 )
+      {
+        // Make sure that we do not scroll beyond the first row...
+        inc = aVisibleRect.y;
+      }
+    }
+    else if ( aDirection > 0 )
+    {
+      // Scroll down...
+      if ( ( firstVisibleRow >= 0 ) && ( lastVisibleRow < channelCount ) )
+      {
+        // Scroll to the first fully visible channel row...
+        inc = aVisibleRect.y % this.channelHeight;
+      }
+      if ( inc == 0 )
+      {
+        // All rows are fully visible, scroll an entire row up...
+        inc = this.channelHeight;
+      }
+      int height = aViewDimensions.height;
+      if ( ( aVisibleRect.y + aVisibleRect.height + inc ) > height )
+      {
+        // Make sure that we do not scroll beyond the last row...
+        inc = height - aVisibleRect.y - aVisibleRect.height;
+      }
+    }
+    return inc;
+  }
+
+  /**
+   * Returns the current zoom factor.
+   * 
+   * @return a zoom factor.
+   */
+  public final double getZoomFactor()
   {
     return this.zoomFactor;
   }
@@ -766,14 +872,6 @@ public class SignalDiagramModel
   public boolean isTimeLineHelpTextDisplayed()
   {
     return HelpTextDisplay.INVISIBLE != this.helpTextDisplay;
-  }
-
-  /**
-   * @return the zoomAll
-   */
-  public boolean isZoomAll()
-  {
-    return this.zoomAll;
   }
 
   /**
@@ -1175,25 +1273,14 @@ public class SignalDiagramModel
   }
 
   /**
-   * @param aZoomAll
-   *          the zoomAll to set
-   */
-  public void setZoomAll( final boolean aZoomAll )
-  {
-    this.zoomAll = aZoomAll;
-  }
-
-  /**
+   * Sets the zoom factor.
+   * 
    * @param aZoomFactor
+   *          the zoom factor to set.
    */
-  public void setZoomFactor( final double aZoomFactor )
+  public final void setZoomFactor( final double aZoomFactor )
   {
-    double oldFactor = this.zoomFactor;
-
     this.zoomFactor = aZoomFactor;
-
-    this.propertyChangeSupport.firePropertyChange( "zoomFactor", Double.valueOf( oldFactor ),
-        Double.valueOf( aZoomFactor ) );
   }
 
   /**
