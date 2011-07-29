@@ -62,8 +62,9 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     private final SignalDiagramController controller;
     private JComponent compRoot;
 
-    private volatile Timer resizeTimeout;
     private volatile int movingCursor;
+
+    volatile Timer resizeTimeout;
 
     // CONSTRUCTORS
 
