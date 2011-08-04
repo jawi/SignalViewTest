@@ -50,6 +50,12 @@ public class SignalDiagramModel
 
   // CONSTANTS
 
+  /**
+   * Defines the area around each cursor in which the mouse cursor should be in
+   * before the cursor can be moved.
+   */
+  private static final int CURSOR_SENSITIVITY_AREA = 4;
+
   /** The tick increment (in pixels). */
   private static final int TIMELINE_INCREMENT = 5;
 
@@ -285,13 +291,33 @@ public class SignalDiagramModel
   }
 
   /**
+   * @param aPoint
+   * @return
+   */
+  public int findChannel( final Point aPoint )
+  {
+    final int virtualChannel = ( aPoint.y / this.channelHeight );
+    if ( ( virtualChannel < 0 ) || ( virtualChannel > ( this.sampleWidth - 1 ) ) )
+    {
+      // Trivial reject: invalid virtual channel...
+      return -1;
+    }
+
+    return virtualChannel;
+  }
+
+  /**
    * {@inheritDoc}
    */
-  public int findCursor( final long aTimestamp, final double aSensitivityArea )
+  public int findCursor( final Point aPoint )
   {
+    final long refIdx = locationToTimestamp( aPoint );
+
+    final double snapArea = CURSOR_SENSITIVITY_AREA / getZoomFactor();
+
     for ( Cursor cursor : this.cursors )
     {
-      if ( cursor.inArea( aTimestamp, aSensitivityArea ) )
+      if ( cursor.inArea( refIdx, snapArea ) )
       {
         return cursor.getIndex();
       }
@@ -403,6 +429,18 @@ public class SignalDiagramModel
       throw new IllegalArgumentException( "Invalid cursor index!" );
     }
     return this.cursors[aCursorIdx];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public String getCursorLabel( final int aCursorIdx )
+  {
+    if ( ( aCursorIdx < 0 ) || ( aCursorIdx > this.cursors.length ) )
+    {
+      throw new IllegalArgumentException( "Invalid cursor index!" );
+    }
+    return this.cursors[aCursorIdx].getLabel();
   }
 
   /**
@@ -528,8 +566,8 @@ public class SignalDiagramModel
     final double refTime = ( ( SignalHoverInfo.TIMESTAMP_FACTOR * aPoint.x ) / this.zoomFactor )
         / ( SignalHoverInfo.TIMESTAMP_FACTOR * this.sampleRate );
 
-    final int virtualChannel = ( aPoint.y / this.channelHeight );
-    if ( ( virtualChannel < 0 ) || ( virtualChannel > ( this.sampleWidth - 1 ) ) )
+    final int virtualChannel = findChannel( aPoint );
+    if ( virtualChannel < 0 )
     {
       // Trivial reject: invalid virtual channel...
       return null;
@@ -1005,8 +1043,31 @@ public class SignalDiagramModel
   }
 
   /**
+   * Sets the channel with the given index to a given label.
+   * 
    * @param aChannelIdx
+   *          the index of the channel to set the label for;
+   * @param aLabel
+   *          the new label to set, can be <code>null</code> or empty.
+   */
+  public void setChannelLabel( final int aChannelIdx, final String aLabel )
+  {
+    if ( ( aChannelIdx < 0 ) || ( aChannelIdx >= this.virtualRowMapping.length ) )
+    {
+      throw new IllegalArgumentException( "Invalid channel index!" );
+    }
+
+    this.channelLabels[aChannelIdx] = ( aLabel == null ) ? null : aLabel.trim();
+  }
+
+  /**
+   * Marks a channel as either visible or invisible.
+   * 
+   * @param aChannelIdx
+   *          the index of the channel to set the label for;
    * @param aVisible
+   *          <code>true</code> to set the channel as visible,
+   *          <code>false</code> to hide the channel.
    */
   public void setChannelVisible( final int aChannelIdx, final boolean aVisible )
   {
@@ -1042,34 +1103,57 @@ public class SignalDiagramModel
     // Update the time stamp of the cursor...
     cursor.setTimestamp( aTimestamp );
 
-    ICursorChangeListener[] listeners = this.eventListeners.getListeners( ICursorChangeListener.class );
-    for ( ICursorChangeListener listener : listeners )
-    {
-      if ( !oldCursor.isDefined() )
-      {
-        listener.cursorAdded( cursor );
-      }
-      else
-      {
-        listener.cursorChanged( oldCursor, cursor );
-      }
-    }
+    fireCursorChangeEvent( ICursorChangeListener.PROPERTY_TIMESTAMP, oldCursor, cursor );
   }
 
   /**
    * Returns the color for a cursor with the given index.
    * 
-   * @param aCursorIndex
-   *          the index of the cursor to retrieve the color for.
+   * @param aCursorIdx
+   *          the index of the cursor to retrieve the color for;
+   * @param aColor
+   *          the color to set, cannot be <code>null</code>.
    * @return a cursor color, never <code>null</code>.
    */
-  public void setCursorColor( final int aCursorIndex, final Color aColor )
+  public void setCursorColor( final int aCursorIdx, final Color aColor )
   {
-    final Cursor cursor = getCursor( aCursorIndex );
-    Color oldColor = cursor.getColor();
+    if ( ( aCursorIdx < 0 ) || ( aCursorIdx > this.cursors.length ) )
+    {
+      throw new IllegalArgumentException( "Invalid cursor index!" );
+    }
+
+    final Cursor cursor = this.cursors[aCursorIdx];
+    final Cursor oldCursor = cursor.clone();
+
+    // Update the color of the cursor...
     cursor.setColor( aColor );
 
-    this.propertyChangeSupport.fireIndexedPropertyChange( "cursorColor", aCursorIndex, oldColor, aColor );
+    fireCursorChangeEvent( ICursorChangeListener.PROPERTY_COLOR, oldCursor, cursor );
+  }
+
+  /**
+   * Returns the color for a cursor with the given index.
+   * 
+   * @param aCursorIdx
+   *          the index of the cursor to retrieve the color for;
+   * @param aLabel
+   *          the label to set, cannot be <code>null</code>.
+   * @return a cursor color, never <code>null</code>.
+   */
+  public void setCursorLabel( final int aCursorIdx, final String aLabel )
+  {
+    if ( ( aCursorIdx < 0 ) || ( aCursorIdx > this.cursors.length ) )
+    {
+      throw new IllegalArgumentException( "Invalid cursor index!" );
+    }
+
+    final Cursor cursor = this.cursors[aCursorIdx];
+    final Cursor oldCursor = cursor.clone();
+
+    // Update the label of the cursor...
+    cursor.setLabel( aLabel );
+
+    fireCursorChangeEvent( ICursorChangeListener.PROPERTY_LABEL, oldCursor, cursor );
   }
 
   /**
@@ -1276,5 +1360,25 @@ public class SignalDiagramModel
       }
     }
     return -1;
+  }
+
+  /**
+   * @param aOldCursor
+   * @param aCursor
+   */
+  private void fireCursorChangeEvent( final String aPropertyName, final Cursor aOldCursor, final Cursor aCursor )
+  {
+    ICursorChangeListener[] listeners = this.eventListeners.getListeners( ICursorChangeListener.class );
+    for ( ICursorChangeListener listener : listeners )
+    {
+      if ( !aOldCursor.isDefined() )
+      {
+        listener.cursorAdded( aCursor );
+      }
+      else
+      {
+        listener.cursorChanged( aPropertyName, aOldCursor, aCursor );
+      }
+    }
   }
 }

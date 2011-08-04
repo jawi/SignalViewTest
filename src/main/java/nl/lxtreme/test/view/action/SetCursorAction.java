@@ -29,7 +29,7 @@ import nl.lxtreme.test.view.*;
 
 
 /**
- * 
+ * Provides an action to set a cursor on a certain location.
  */
 public class SetCursorAction extends AbstractAction
 {

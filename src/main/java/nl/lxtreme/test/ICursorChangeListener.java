@@ -31,6 +31,12 @@ import nl.lxtreme.test.model.*;
  */
 public interface ICursorChangeListener extends EventListener
 {
+  // CONSTANTS
+
+  public static final String PROPERTY_TIMESTAMP = "timestamp";
+  public static final String PROPERTY_COLOR = "color";
+  public static final String PROPERTY_LABEL = "label";
+
   // METHODS
 
   /**
@@ -44,12 +50,14 @@ public interface ICursorChangeListener extends EventListener
   /**
    * Called when a single cursor is changed/moved.
    * 
+   * @param aPropertyName
+   *          the name of the property that is changed, never <code>null</code>;
    * @param aOldCursor
    *          the old cursor, cannot be <code>null</code>;
    * @param aNewCursor
    *          the new cursor, cannot be <code>null</code>.
    */
-  void cursorChanged( Cursor aOldCursor, Cursor aNewCursor );
+  void cursorChanged( String aPropertyName, Cursor aOldCursor, Cursor aNewCursor );
 
   /**
    * Called when a single cursor is removed.

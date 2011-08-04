@@ -89,7 +89,7 @@ public class SignalView extends AbstractViewLayer implements IMeasurementListene
    * {@inheritDoc}
    */
   @Override
-  public void cursorChanged( final Cursor aOldCursor, final Cursor aNewCursor )
+  public void cursorChanged( final String aPropertyName, final Cursor aOldCursor, final Cursor aNewCursor )
   {
     final int visibleHeight = getVisibleRect().height;
 

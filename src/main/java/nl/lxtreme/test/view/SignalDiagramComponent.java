@@ -49,14 +49,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
    */
   final class TransparentAWTListener implements AWTEventListener
   {
-    // CONSTANTS
-
-    /**
-     * Defines the area around each cursor in which the mouse cursor should be
-     * in before the cursor can be moved.
-     */
-    private static final int CURSOR_SENSITIVITY_AREA = 4;
-
     // VARIABLES
 
     private final SignalDiagramController controller;
@@ -309,6 +301,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       {
         final JComponent view = getDeepestComponentAt( aEvent );
         final Point point = SwingUtilities.convertPoint( aEvent.getComponent(), aEvent.getPoint(), view );
+        System.out.println( "Hovering over cursor #" + this.movingCursor );
 
         this.controller.moveCursor( this.movingCursor, getCursorDropPoint( point ) );
       }
@@ -350,13 +343,16 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     protected void mousePressed( final MouseEvent aEvent )
     {
       final JComponent view = getDeepestComponentAt( aEvent );
-
-      if ( !handlePopupTrigger( aEvent ) )
+      if ( ( view == null ) || !SwingUtilities.isDescendingFrom( view, getComponentRoot() ) )
       {
-        if ( ( view != null ) && getModel().isCursorMode() )
-        {
-          final Point point = SwingUtilities.convertPoint( aEvent.getComponent(), aEvent.getPoint(), view );
+        return;
+      }
+      final Point point = SwingUtilities.convertPoint( aEvent.getComponent(), aEvent.getPoint(), view );
 
+      if ( !handlePopupTrigger( view, point, aEvent ) )
+      {
+        if ( getModel().isCursorMode() )
+        {
           int hoveredCursor = findCursor( point );
           this.movingCursor = hoveredCursor >= 0 ? hoveredCursor : -1;
         }
@@ -369,18 +365,102 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     protected void mouseReleased( final MouseEvent aEvent )
     {
       final JComponent view = getDeepestComponentAt( aEvent );
-      if ( view != null )
+      if ( ( view == null ) || !SwingUtilities.isDescendingFrom( view, getComponentRoot() ) )
       {
-        view.setCursor( DEFAULT );
+        return;
+      }
+      final Point point = SwingUtilities.convertPoint( aEvent.getComponent(), aEvent.getPoint(), view );
+
+      view.setCursor( DEFAULT );
+
+      if ( !handlePopupTrigger( view, point, aEvent ) )
+      {
+        this.movingCursor = -1;
+      }
+    }
+
+    /**
+     * Creates the context-sensitive popup menu for channel labels.
+     * 
+     * @param aPoint
+     *          the current mouse location to show the popup menu, cannot be
+     *          <code>null</code>.
+     * @return a popup menu, can be <code>null</code> if the given mouse point
+     *         is not above a channel.
+     */
+    private JPopupMenu createChannelLabelPopup( final Point aPoint )
+    {
+      JPopupMenu result = null;
+
+      int channel = findChannel( aPoint );
+      if ( channel >= 0 )
+      {
+        result = new JPopupMenu();
+
+        JMenuItem mi;
+
+        mi = new JMenuItem( new EditChannelLabelAction( this.controller, channel ) );
+        result.add( mi );
+        result.addSeparator();
+
+        mi = new JCheckBoxMenuItem( new SetChannelVisibilityAction( this.controller, channel ) );
+        result.add( mi );
       }
 
-      if ( !handlePopupTrigger( aEvent ) )
+      return result;
+    }
+
+    /**
+     * Creates the context-sensitive popup menu for cursors.
+     * 
+     * @param aPoint
+     *          the current mouse location to show the cursor, cannot be
+     *          <code>null</code>.
+     * @return a popup menu, never <code>null</code>.
+     */
+    private JPopupMenu createCursorPopup( final Point aPoint )
+    {
+      final JPopupMenu contextMenu = new JPopupMenu();
+
+      int cursor = findCursor( aPoint );
+      if ( cursor >= 0 )
       {
-        if ( getModel().isCursorMode() )
-        {
-          this.movingCursor = -1;
-        }
+        // Hovering above existing cursor, show remove menu...
+        contextMenu.add( new EditCursorLabelAction( this.controller, cursor ) );
+        contextMenu.addSeparator();
+
+        contextMenu.add( new DeleteCursorAction( this.controller, cursor ) );
+        contextMenu.add( new DeleteAllCursorsAction( this.controller ) );
       }
+      else
+      {
+        // Not hovering above existing cursor, show add menu...
+        for ( int i = 0; i < nl.lxtreme.test.model.Cursor.MAX_CURSORS; i++ )
+        {
+          final SetCursorAction action = new SetCursorAction( this.controller, i );
+          contextMenu.add( new JCheckBoxMenuItem( action ) );
+        }
+        contextMenu.addSeparator();
+        contextMenu.add( new DeleteAllCursorsAction( this.controller ) );
+        // when an action is selected, we *no* longer know where the point was
+        // where the user clicked. Therefore, we need to store it separately
+        // for later use...
+        contextMenu.putClientProperty( SetCursorAction.KEY, getCursorDropPoint( aPoint ) );
+      }
+      return contextMenu;
+    }
+
+    /**
+     * Finds the channel under the given point.
+     * 
+     * @param aPoint
+     *          the coordinate of the potential channel, cannot be
+     *          <code>null</code>.
+     * @return the channel index, or -1 if not found.
+     */
+    private int findChannel( final Point aPoint )
+    {
+      return getModel().findChannel( aPoint );
     }
 
     /**
@@ -393,11 +473,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
      */
     private int findCursor( final Point aPoint )
     {
-      final long refIdx = getModel().locationToTimestamp( aPoint );
-
-      final double snapArea = CURSOR_SENSITIVITY_AREA / getModel().getZoomFactor();
-
-      return this.controller.getSignalDiagramModel().findCursor( refIdx, snapArea );
+      return getModel().findCursor( aPoint );
     }
 
     /**
@@ -458,50 +534,46 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     /**
      * @param aEvent
      */
-    private boolean handlePopupTrigger( final MouseEvent aEvent )
+    private boolean handlePopupTrigger( final JComponent view, final Point point, final MouseEvent aEvent )
     {
-      final boolean popupTrigger = getModel().isCursorMode() && aEvent.isPopupTrigger();
+      final boolean popupTrigger = aEvent.isPopupTrigger();
       if ( popupTrigger )
       {
-        final JComponent view = getDeepestComponentAt( aEvent );
-        if ( ( view == null ) || !SwingUtilities.isDescendingFrom( view, getComponentRoot() ) )
+        JPopupMenu contextMenu = null;
+        if ( isCursorTrigger( view ) )
         {
-          return false;
+          contextMenu = createCursorPopup( point );
         }
-        final Point point = SwingUtilities.convertPoint( aEvent.getComponent(), aEvent.getPoint(), view );
-
-        final JPopupMenu contextMenu;
-
-        int cursor = findCursor( point );
-        if ( cursor >= 0 )
+        else if ( isChannelLabelTrigger( view ) )
         {
-          // Hovering above existing cursor, show remove menu...
-          contextMenu = new JPopupMenu();
-          contextMenu.add( new DeleteCursorAction( this.controller, cursor ) );
-          contextMenu.add( new DeleteAllCursorsAction( this.controller ) );
-        }
-        else
-        {
-          // Not hovering above existing cursor, show add menu...
-          contextMenu = new JPopupMenu();
-          for ( int i = 0; i < nl.lxtreme.test.model.Cursor.MAX_CURSORS; i++ )
-          {
-            final SetCursorAction action = new SetCursorAction( this.controller, i );
-            contextMenu.add( new JCheckBoxMenuItem( action ) );
-          }
-          contextMenu.addSeparator();
-          contextMenu.add( new DeleteAllCursorsAction( this.controller ) );
-          // when an action is selected, we *no* longer know where the point was
-          // where the user clicked. Therefore, we need to store it separately
-          // for later use...
-          contextMenu.putClientProperty( SetCursorAction.KEY, getCursorDropPoint( point ) );
+          contextMenu = createChannelLabelPopup( point );
         }
 
-        contextMenu.show( aEvent.getComponent(), aEvent.getX(), aEvent.getY() );
+        if ( contextMenu != null )
+        {
+          contextMenu.show( aEvent.getComponent(), aEvent.getX(), aEvent.getY() );
+        }
       }
       return popupTrigger;
     }
 
+    /**
+     * @param aView
+     * @return
+     */
+    private boolean isChannelLabelTrigger( final JComponent aView )
+    {
+      return ( aView instanceof ChannelLabelsView );
+    }
+
+    /**
+     * @param aView
+     * @return
+     */
+    private boolean isCursorTrigger( final JComponent aView )
+    {
+      return getModel().isCursorMode() && ( ( aView instanceof SignalView ) || ( aView instanceof TimeLineView ) );
+    }
   }
 
   /**

@@ -94,9 +94,12 @@ public class CursorDetailsView extends AbstractViewLayer implements ICursorChang
    * {@inheritDoc}
    */
   @Override
-  public void cursorChanged( final Cursor aOldCursor, final Cursor aNewCursor )
+  public void cursorChanged( final String aPropertyName, final Cursor aOldCursor, final Cursor aNewCursor )
   {
-    updateViewText();
+    if ( !ICursorChangeListener.PROPERTY_COLOR.equals( aPropertyName ) )
+    {
+      updateViewText();
+    }
   }
 
   /**
