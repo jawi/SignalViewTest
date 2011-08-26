@@ -156,14 +156,14 @@ public class EditCursorLabelAction extends AbstractAction
    * 
    * @param aController
    *          the {@link SignalDiagramController} to use;
-   * @param aCursorIdx
-   *          the index of the cursor to edit the label for.
+   * @param aCursor
+   *          the cursor to edit the label for.
    */
-  public EditCursorLabelAction( final SignalDiagramController aController, final int aCursorIdx )
+  public EditCursorLabelAction( final SignalDiagramController aController, final nl.lxtreme.test.model.Cursor aCursor )
   {
     super( "Edit label" );
     this.controller = aController;
-    this.cursorIdx = aCursorIdx;
+    this.cursorIdx = aCursor.getIndex();
   }
 
   // METHODS

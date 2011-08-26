@@ -24,6 +24,7 @@ import java.awt.*;
 
 import javax.swing.*;
 
+import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.view.*;
 import nl.lxtreme.test.view.laf.*;
 
@@ -105,7 +106,17 @@ public class ChannelLabelsViewModel extends AbstractViewModel
       return -1;
     }
 
-    return toVirtualRow( row );
+    // return toVirtualRow( row );
+    System.out.println( "TODO IMPLEMENT ME!" ); // XXX
+    return -1;
+  }
+
+  /**
+   * @return
+   */
+  public final Channel[] getAllChannels()
+  {
+    return getChannelGroupManager().getAllChannels();
   }
 
   /**
@@ -194,6 +205,7 @@ public class ChannelLabelsViewModel extends AbstractViewModel
   public void moveChannelRows( final int aMovedRow, final int aInsertRow )
   {
     // Update the screen model...
-    getSignalDiagramModel().moveRows( aMovedRow, aInsertRow );
+    // getSignalDiagramModel().moveRows( aMovedRow, aInsertRow );
+    System.out.println( "NOT IMPLEMENTED YET!!!" );
   }
 }

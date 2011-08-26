@@ -25,6 +25,7 @@ import java.awt.*;
 import javax.swing.*;
 import javax.swing.plaf.*;
 
+import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.view.*;
 import nl.lxtreme.test.view.model.*;
 import nl.lxtreme.test.view.renderer.*;
@@ -39,6 +40,10 @@ public class ChannelLabelsUI extends ComponentUI
   // CONSTANTS
 
   private static final String MINIMAL_LABEL = "W88";
+
+  private static final int ARC_WIDTH = 12;
+  private static final int PADDING_Y = 2;
+  private static final int PADDING_X = 4;
 
   // VARIABLES
 
@@ -67,9 +72,8 @@ public class ChannelLabelsUI extends ComponentUI
   public Dimension getMaximumSize( final JComponent aComponent )
   {
     final ChannelLabelsView view = ( ChannelLabelsView )aComponent;
-    final ChannelLabelsViewModel model = view.getModel();
 
-    return determineSize( view, model );
+    return determineSize( view );
   }
 
   /**
@@ -79,9 +83,8 @@ public class ChannelLabelsUI extends ComponentUI
   public Dimension getMinimumSize( final JComponent aComponent )
   {
     final ChannelLabelsView view = ( ChannelLabelsView )aComponent;
-    final ChannelLabelsViewModel model = view.getModel();
 
-    return determineSize( view, model );
+    return determineSize( view );
   }
 
   /**
@@ -105,41 +108,45 @@ public class ChannelLabelsUI extends ComponentUI
       canvas.clearRect( clip.x, clip.y, clip.width, clip.height );
 
       final int channelHeight = model.getChannelHeight();
-      // Where is the signal to be drawn?
-      final int signalOffset = model.getSignalOffset();
+      // Where is the text to be drawn?
+      final int textOffset = ( int )( ( channelHeight - model.getSignalHeight() ) / 2.0 );
 
       final int compWidth = view.getWidth();
       final int dataWidth = model.getSampleWidth();
 
+      final ChannelGroupManager channelGroupManager = model.getChannelGroupManager();
+
       // Determine which bits of the actual signal should be drawn...
+      // NOTE: the computation of these two numbers are a tad bit different than
+      // used in SignalUI!
+      // The reason for this is that we want to draw the channel label itself
+      // even when it does not entirely fit on screen, so the user gets a clue
+      // that more channels are to come...
       int startBit = ( int )Math.max( 0, Math.floor( clip.y / ( double )channelHeight ) );
-      int endBit = ( int )Math.min( dataWidth, Math.ceil( ( clip.y + clip.height ) / ( double )channelHeight ) );
+      int endBit = ( int )Math.min( dataWidth - 1, Math.round( ( clip.y + clip.height ) / ( double )channelHeight ) );
 
-      for ( int b = 0; b < dataWidth; b++ )
+      // Start drawing at the correct position in the clipped region...
+      canvas.translate( 0, ( startBit * channelHeight ) );
+
+      final Channel[] channels = channelGroupManager.getChannels( startBit, endBit );
+      for ( Channel channel : channels )
       {
-        final int virtualRow = model.toVirtualRow( b );
-        if ( ( virtualRow < startBit ) || ( virtualRow > endBit ) )
-        {
-          // Trivial reject: we don't have to paint this row, as it is not asked
-          // from us (due to clip boundaries)!
-          continue;
-        }
-
-        final int yOffset = channelHeight * virtualRow;
-        final int textYoffset = signalOffset + yOffset;
-
-        final String label = model.getChannelLabel( b );
+        final String label = channel.getLabel();
 
         canvas.setFont( model.getLabelFont() );
         canvas.setColor( model.getLabelBackgroundColor() );
 
-        canvas.fillRoundRect( clip.x - 10, yOffset + 2, clip.width + 8, channelHeight - 2, 12, 12 );
+        canvas.fillRoundRect( clip.x - ARC_WIDTH, PADDING_Y, clip.width + ( ARC_WIDTH - PADDING_X ), channelHeight
+            - PADDING_Y, ARC_WIDTH, ARC_WIDTH );
 
-        this.renderer.setContext( Integer.valueOf( b ), Integer.valueOf( compWidth ), label );
+        this.renderer.setContext( Integer.valueOf( channel.getIndex() ), Integer.valueOf( compWidth ), label );
 
         canvas.setColor( model.getLabelForegroundColor() );
 
-        this.renderer.render( canvas, 0, textYoffset );
+        this.renderer.render( canvas, 0, textOffset );
+
+        // Advance to the next channel...
+        canvas.translate( 0, channelHeight );
       }
     }
     finally
@@ -158,7 +165,7 @@ public class ChannelLabelsUI extends ComponentUI
    *          the model of the view to determine the size for.
    * @return a size, never <code>null</code>.
    */
-  private Dimension determineSize( final ChannelLabelsView aView, final ChannelLabelsViewModel aModel )
+  private Dimension determineSize( final ChannelLabelsView aView )
   {
     Dimension result = super.getPreferredSize( aView );
     if ( result == null )
@@ -171,9 +178,9 @@ public class ChannelLabelsUI extends ComponentUI
     int minWidth = -1;
 
     final FontMetrics fm = aView.getFontMetrics( model.getLabelFont() );
-    for ( int i = 0; i < aModel.getSampleWidth(); i++ )
+    for ( Channel channel : model.getAllChannels() )
     {
-      String label = aModel.getChannelLabel( i );
+      String label = channel.getLabel();
       if ( ( label == null ) || label.trim().isEmpty() )
       {
         label = MINIMAL_LABEL;

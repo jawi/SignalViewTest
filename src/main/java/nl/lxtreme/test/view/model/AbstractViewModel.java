@@ -51,12 +51,11 @@ abstract class AbstractViewModel
   // METHODS
 
   /**
-   * @param aChannelIndex
    * @return
    */
-  public Color getChannelColor( final int aChannelIndex )
+  public final ChannelGroupManager getChannelGroupManager()
   {
-    return getSignalDiagramModel().getChannelColor( aChannelIndex );
+    return getSignalDiagramModel().getChannelGroupManager();
   }
 
   /**
@@ -65,15 +64,6 @@ abstract class AbstractViewModel
   public int getChannelHeight()
   {
     return getSignalDiagramModel().getChannelHeight();
-  }
-
-  /**
-   * @param aChannelIdx
-   * @return
-   */
-  public String getChannelLabel( final int aChannelIdx )
-  {
-    return getSignalDiagramModel().getChannelLabel( aChannelIdx );
   }
 
   /**
@@ -202,15 +192,6 @@ abstract class AbstractViewModel
   }
 
   /**
-   * @param aB
-   * @return
-   */
-  public boolean isChannelVisible( final int aChannelIndex )
-  {
-    return getSignalDiagramModel().isChannelVisible( aChannelIndex );
-  }
-
-  /**
    * @return
    */
   public boolean isCursorMode()
@@ -241,15 +222,6 @@ abstract class AbstractViewModel
       return Integer.MAX_VALUE;
     }
     return ( int )result;
-  }
-
-  /**
-   * @param aB
-   * @return
-   */
-  public int toVirtualRow( final int aChannelIndex )
-  {
-    return getSignalDiagramModel().toVirtualRow( aChannelIndex );
   }
 
   /**

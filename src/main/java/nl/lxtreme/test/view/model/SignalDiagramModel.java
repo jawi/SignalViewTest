@@ -24,7 +24,6 @@ package nl.lxtreme.test.view.model;
 import java.awt.*;
 import java.beans.*;
 import java.util.*;
-
 import javax.swing.event.*;
 
 import nl.lxtreme.test.*;
@@ -63,49 +62,11 @@ public class SignalDiagramModel
   private static final int SNAP_CURSOR_MODE = ( 1 << 1 );
   private static final int MEASUREMENT_MODE = ( 1 << 2 );
 
-  private static final Color[] SALEAE_COLORS = { //
-  Utils.parseColor( "000000" ), //
-      Utils.parseColor( "8B4513" ), //
-      Utils.parseColor( "FF0000" ), //
-      Utils.parseColor( "FFA500" ), //
-      Utils.parseColor( "FFFF00" ), //
-      Utils.parseColor( "00FF00" ), //
-      Utils.parseColor( "0000FF" ), //
-      Utils.parseColor( "A020F0" ), //
-      Utils.parseColor( "CDC9C9" ) //
-  };
-  private static final Color[] OLS_COLORS = { //
-  Utils.parseColor( "000000" ), //
-      Utils.parseColor( "FFFFFF" ), //
-      Utils.parseColor( "00FF00" ), //
-      Utils.parseColor( "FF0000" ), //
-      Utils.parseColor( "0000FF" ), //
-      Utils.parseColor( "00FF00" ), //
-      Utils.parseColor( "FFFF00" ), //
-      Utils.parseColor( "0000FF" ), //
-      Utils.parseColor( "FF0000" ) //
-  };
-  private static final Color[] DARK_COLORS = { //
-  Utils.parseColor( "7bf9dd" ), //
-      Utils.parseColor( "7bf9dd" ), //
-      Utils.parseColor( "7bf9dd" ), //
-      Utils.parseColor( "7bf9dd" ), //
-      Utils.parseColor( "7bf9dd" ), //
-      Utils.parseColor( "7bf9dd" ), //
-      Utils.parseColor( "7bf9dd" ), //
-      Utils.parseColor( "7bf9dd" ), //
-      Utils.parseColor( "7bf9dd" ) //
-  };
-
   // VARIABLES
 
   private int signalHeight;
   private int channelHeight;
-  private int visibleMask;
   private int mode;
-  private int[] virtualRowMapping;
-  private Color[] colors;
-  private String[] channelLabels;
   private SignalAlignment signalAlignment;
 
   private int[] values;
@@ -114,6 +75,7 @@ public class SignalDiagramModel
   private int sampleRate;
   private int sampleWidth;
 
+  private final ChannelGroupManager channelGroupManager;
   private final SignalDiagramController controller;
   private final EventListenerList eventListeners;
   private final PropertyChangeSupport propertyChangeSupport;
@@ -132,6 +94,7 @@ public class SignalDiagramModel
   {
     this.controller = aController;
 
+    this.channelGroupManager = new ChannelGroupManager( this );
     this.eventListeners = new EventListenerList();
     this.propertyChangeSupport = new PropertyChangeSupport( this );
 
@@ -143,12 +106,9 @@ public class SignalDiagramModel
     this.zoomFactor = 0.0;
     this.mode = 0;
 
-    this.visibleMask = 0x555;
-
-    this.virtualRowMapping = new int[0];
-    this.colors = new Color[0];
-    this.channelLabels = new String[0];
     this.cursors = new Cursor[0];
+
+    addDataModelChangeListener( this.channelGroupManager );
   }
 
   // METHODS
@@ -291,25 +251,34 @@ public class SignalDiagramModel
   }
 
   /**
+   * Finds a channel based on a given screen coordinate.
+   * 
    * @param aPoint
-   * @return
+   *          the coordinate to find the channel for, cannot be
+   *          <code>null</code>.
+   * @return the channel if found, or <code>null</code> if no channel was found.
    */
-  public int findChannel( final Point aPoint )
+  public Channel findChannel( final Point aPoint )
   {
-    final int virtualChannel = ( aPoint.y / this.channelHeight );
-    if ( ( virtualChannel < 0 ) || ( virtualChannel > ( this.sampleWidth - 1 ) ) )
+    final int virtualChannelIdx = ( aPoint.y / this.channelHeight );
+    if ( ( virtualChannelIdx < 0 ) || ( virtualChannelIdx > ( this.sampleWidth - 1 ) ) )
     {
       // Trivial reject: invalid virtual channel...
-      return -1;
+      return null;
     }
 
-    return virtualChannel;
+    return this.channelGroupManager.getChannelByVirtualIndex( virtualChannelIdx );
   }
 
   /**
-   * {@inheritDoc}
+   * Finds a cursor based on a given screen coordinate.
+   * 
+   * @param aPoint
+   *          the coordinate to find the cursor for, cannot be <code>null</code>
+   *          .
+   * @return the cursor if found, or <code>null</code> if no cursor was found.
    */
-  public int findCursor( final Point aPoint )
+  public Cursor findCursor( final Point aPoint )
   {
     final long refIdx = locationToTimestamp( aPoint );
 
@@ -319,11 +288,11 @@ public class SignalDiagramModel
     {
       if ( cursor.inArea( refIdx, snapArea ) )
       {
-        return cursor.getIndex();
+        return cursor;
       }
     }
 
-    return -1;
+    return null;
   }
 
   /**
@@ -368,7 +337,7 @@ public class SignalDiagramModel
    */
   public int getAbsoluteScreenHeight()
   {
-    return getChannelHeight() * getSampleWidth();
+    return getChannelHeight() * this.channelGroupManager.getVisibleChannelCount();
   }
 
   /**
@@ -395,11 +364,13 @@ public class SignalDiagramModel
   }
 
   /**
-   * @return the colors
+   * Returns channel group manager.
+   * 
+   * @return the channel group manager, never <code>null</code>.
    */
-  public Color getChannelColor( final int aChannelIdx )
+  public final ChannelGroupManager getChannelGroupManager()
   {
-    return this.colors[aChannelIdx];
+    return this.channelGroupManager;
   }
 
   /**
@@ -408,15 +379,6 @@ public class SignalDiagramModel
   public int getChannelHeight()
   {
     return this.channelHeight;
-  }
-
-  /**
-   * @param aChannelIdx
-   * @return
-   */
-  public String getChannelLabel( final int aChannelIdx )
-  {
-    return this.channelLabels[aChannelIdx];
   }
 
   /**
@@ -566,20 +528,20 @@ public class SignalDiagramModel
     final double refTime = ( ( SignalHoverInfo.TIMESTAMP_FACTOR * aPoint.x ) / this.zoomFactor )
         / ( SignalHoverInfo.TIMESTAMP_FACTOR * this.sampleRate );
 
-    final int virtualChannel = findChannel( aPoint );
-    if ( virtualChannel < 0 )
+    final Channel channel = findChannel( aPoint );
+    if ( channel == null )
     {
       // Trivial reject: invalid virtual channel...
       return null;
     }
 
-    final int realChannel = toRealRow( virtualChannel );
-    final String channelLabel = getChannelLabel( realChannel );
+    final int realChannelIdx = channel.getIndex();
+    final String channelLabel = channel.getLabel();
 
-    if ( !isChannelVisible( realChannel ) )
+    if ( !channel.isEnabled() )
     {
       // Trivial reject: real channel is invisible...
-      return new SignalHoverInfo( realChannel, channelLabel, refTime );
+      return new SignalHoverInfo( realChannelIdx, channelLabel, refTime );
     }
 
     final long[] timestamps = getTimestamps();
@@ -596,7 +558,7 @@ public class SignalDiagramModel
     final int[] values = getValues();
     if ( ( refIdx >= 0 ) && ( refIdx < values.length ) )
     {
-      final int mask = ( 1 << realChannel );
+      final int mask = ( 1 << realChannelIdx );
       final int refValue = ( values[refIdx] & mask );
 
       int idx = refIdx;
@@ -646,7 +608,7 @@ public class SignalDiagramModel
     final Rectangle rect = new Rectangle();
     rect.x = ( int )( getZoomFactor() * ts );
     rect.width = ( int )( getZoomFactor() * ( te - ts ) );
-    rect.y = ( virtualChannel * this.channelHeight ) + getSignalOffset();
+    rect.y = ( channel.getVirtualIndex() * this.channelHeight ) + getSignalOffset();
     rect.height = this.signalHeight;
 
     // The position where the "other" signal transition should be...
@@ -655,7 +617,7 @@ public class SignalDiagramModel
     final double timeHigh = th / ( double )this.sampleRate;
     final double timeTotal = ( te - ts ) / ( double )this.sampleRate;
 
-    return new SignalHoverInfo( realChannel, channelLabel, rect, ts, te, refTime, timeHigh, timeTotal, middleXpos );
+    return new SignalHoverInfo( realChannelIdx, channelLabel, rect, ts, te, refTime, timeHigh, timeTotal, middleXpos );
   }
 
   /**
@@ -677,7 +639,7 @@ public class SignalDiagramModel
     }
     else
     {
-      signalOffset = 1;
+      signalOffset = 2;
     }
     return signalOffset;
   }
@@ -836,21 +798,6 @@ public class SignalDiagramModel
   }
 
   /**
-   * @param aChannelIdx
-   * @return
-   */
-  public boolean isChannelVisible( final int aChannelIdx )
-  {
-    if ( ( aChannelIdx < 0 ) || ( aChannelIdx >= this.virtualRowMapping.length ) )
-    {
-      throw new IllegalArgumentException( "Invalid channel index!" );
-    }
-
-    int mask = ( 1 << aChannelIdx );
-    return ( this.visibleMask & mask ) != 0;
-  }
-
-  /**
    * {@inheritDoc}
    */
   public boolean isCursorDefined( final int aCursorIdx )
@@ -932,37 +879,6 @@ public class SignalDiagramModel
   }
 
   /**
-   * Moves the given "old" row index to the new row index position.
-   * 
-   * @param aOldRowIdx
-   *          the old (virtual) row to move;
-   * @param aNewRowIdx
-   *          the new (virtual) row to insert the "old" row to.
-   */
-  public void moveRows( final int aOldRowIdx, final int aNewRowIdx )
-  {
-    final int dataWidth = this.virtualRowMapping.length;
-    if ( ( aOldRowIdx < 0 ) || ( aOldRowIdx >= dataWidth ) )
-    {
-      throw new IllegalArgumentException( "Moved row invalid!" );
-    }
-    if ( ( aNewRowIdx < 0 ) || ( aNewRowIdx >= dataWidth ) )
-    {
-      throw new IllegalArgumentException( "Insert row invalid!" );
-    }
-
-    if ( aOldRowIdx == aNewRowIdx )
-    {
-      return;
-    }
-
-    final int row = toRealRow( aOldRowIdx );
-    final int newRow = toRealRow( aNewRowIdx );
-
-    shiftElements( this.virtualRowMapping, row, newRow );
-  }
-
-  /**
    * @param aCursorIdx
    */
   public void removeCursor( final int aCursorIdx )
@@ -1040,51 +956,6 @@ public class SignalDiagramModel
   public void setChannelHeight( final int aChannelHeight )
   {
     this.channelHeight = aChannelHeight;
-  }
-
-  /**
-   * Sets the channel with the given index to a given label.
-   * 
-   * @param aChannelIdx
-   *          the index of the channel to set the label for;
-   * @param aLabel
-   *          the new label to set, can be <code>null</code> or empty.
-   */
-  public void setChannelLabel( final int aChannelIdx, final String aLabel )
-  {
-    if ( ( aChannelIdx < 0 ) || ( aChannelIdx >= this.virtualRowMapping.length ) )
-    {
-      throw new IllegalArgumentException( "Invalid channel index!" );
-    }
-
-    this.channelLabels[aChannelIdx] = ( aLabel == null ) ? null : aLabel.trim();
-  }
-
-  /**
-   * Marks a channel as either visible or invisible.
-   * 
-   * @param aChannelIdx
-   *          the index of the channel to set the label for;
-   * @param aVisible
-   *          <code>true</code> to set the channel as visible,
-   *          <code>false</code> to hide the channel.
-   */
-  public void setChannelVisible( final int aChannelIdx, final boolean aVisible )
-  {
-    if ( ( aChannelIdx < 0 ) || ( aChannelIdx >= this.virtualRowMapping.length ) )
-    {
-      throw new IllegalArgumentException( "Invalid channel index!" );
-    }
-
-    int mask = ( 1 << aChannelIdx );
-    if ( aVisible )
-    {
-      this.visibleMask |= mask;
-    }
-    else
-    {
-      this.visibleMask &= ~mask;
-    }
   }
 
   /**
@@ -1202,58 +1073,35 @@ public class SignalDiagramModel
     }
 
     final int[] dmValues = aDataModel.getValues();
-    this.values = Arrays.copyOf( dmValues, dmValues.length );
-
     final long[] dmTimestamps = aDataModel.getTimestamps();
-    this.timestamps = Arrays.copyOf( dmTimestamps, dmTimestamps.length );
+
+    // Correct the timestamps so they always start at zero...
+    if ( ( dmTimestamps.length > 0 ) && ( dmTimestamps[0] != 0L ) )
+    {
+      final int newSize = dmTimestamps.length + 1;
+
+      this.values = new int[newSize];
+      this.timestamps = new long[newSize];
+
+      // Initial point...
+      this.values[0] = dmValues[0];
+      this.timestamps[0] = 0L;
+
+      // All other points...
+      System.arraycopy( dmValues, 0, this.values, 1, dmValues.length );
+      System.arraycopy( dmTimestamps, 0, this.timestamps, 1, dmTimestamps.length );
+    }
+    else
+    {
+      this.values = Arrays.copyOf( dmValues, dmValues.length );
+      this.timestamps = Arrays.copyOf( dmTimestamps, dmTimestamps.length );
+    }
 
     final Cursor[] dmCursors = aDataModel.getCursors();
     this.cursors = Arrays.copyOf( dmCursors, dmCursors.length );
 
     this.sampleRate = aDataModel.getSampleRate();
     this.sampleWidth = aDataModel.getWidth();
-
-    this.virtualRowMapping = new int[this.sampleWidth];
-    for ( int i = 0; i < this.sampleWidth; i++ )
-    {
-      this.virtualRowMapping[i] = i;
-    }
-
-    // Default turn all channels on...
-    this.visibleMask = ( int )( ( 1L << this.sampleWidth ) - 1 );
-
-    this.colors = new Color[this.sampleWidth];
-    int value = 2;
-    if ( value == 0 )
-    {
-      for ( int i = 0; i < this.sampleWidth; i++ )
-      {
-        int idx = ( i % ( OLS_COLORS.length - 1 ) ) + 1;
-        this.colors[i] = OLS_COLORS[idx];
-      }
-    }
-    else if ( value == 1 )
-    {
-      for ( int i = 0; i < this.sampleWidth; i++ )
-      {
-        int idx = ( i % ( SALEAE_COLORS.length - 1 ) ) + 1;
-        this.colors[i] = SALEAE_COLORS[idx];
-      }
-    }
-    else if ( value == 2 )
-    {
-      for ( int i = 0; i < this.sampleWidth; i++ )
-      {
-        int idx = ( i % ( DARK_COLORS.length - 1 ) ) + 1;
-        this.colors[i] = DARK_COLORS[idx];
-      }
-    }
-
-    this.channelLabels = new String[this.sampleWidth];
-    for ( int i = 0; i < this.channelLabels.length; i++ )
-    {
-      this.channelLabels[i] = String.format( "Channel %c", Integer.valueOf( i + 'A' ) );
-    }
 
     final IDataModelChangeListener[] listeners = this.eventListeners.getListeners( IDataModelChangeListener.class );
     for ( IDataModelChangeListener listener : listeners )
@@ -1335,31 +1183,6 @@ public class SignalDiagramModel
 
     this.propertyChangeSupport.firePropertyChange( "zoomFactor", Double.valueOf( oldFactor ),
         Double.valueOf( aZoomFactor ) );
-  }
-
-  /**
-   * @param aRowIdx
-   * @return
-   */
-  public int toRealRow( final int aRowIdx )
-  {
-    return this.virtualRowMapping[aRowIdx];
-  }
-
-  /**
-   * @param aRowIdx
-   * @return
-   */
-  public int toVirtualRow( final int aRowIdx )
-  {
-    for ( int i = 0; i < this.virtualRowMapping.length; i++ )
-    {
-      if ( this.virtualRowMapping[i] == aRowIdx )
-      {
-        return i;
-      }
-    }
-    return -1;
   }
 
   /**

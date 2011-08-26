@@ -24,8 +24,7 @@ import java.awt.event.*;
 
 import javax.swing.*;
 
-import nl.lxtreme.test.view.*;
-import nl.lxtreme.test.view.model.*;
+import nl.lxtreme.test.model.*;
 
 
 /**
@@ -39,25 +38,21 @@ public class SetChannelVisibilityAction extends AbstractAction
 
   // VARIABLES
 
-  private final SignalDiagramController controller;
-  private final int channelIdx;
+  private final Channel channel;
 
   // CONSTRUCTORS
 
   /**
    * Creates a new SetChannelVisibilityAction instance.
    */
-  public SetChannelVisibilityAction( final SignalDiagramController aController, final int aChannelIdx )
+  public SetChannelVisibilityAction( final Channel aChannel )
   {
     super();
 
-    this.controller = aController;
-    this.channelIdx = aChannelIdx;
+    this.channel = aChannel;
 
-    final SignalDiagramModel signalDiagramModel = aController.getSignalDiagramModel();
-
-    putValue( Action.NAME, getLabel( signalDiagramModel, Integer.valueOf( aChannelIdx ) ) );
-    putValue( Action.SELECTED_KEY, Boolean.valueOf( signalDiagramModel.isChannelVisible( aChannelIdx ) ) );
+    putValue( Action.NAME, getLabel( aChannel ) );
+    putValue( Action.SELECTED_KEY, Boolean.valueOf( aChannel.isEnabled() ) );
   }
 
   // METHODS
@@ -67,14 +62,15 @@ public class SetChannelVisibilityAction extends AbstractAction
    * @param aChannelIdx
    * @return
    */
-  private static String getLabel( final SignalDiagramModel aSignalDiagramModel, final Integer aChannelIdx )
+  private static String getLabel( final Channel aChannel )
   {
-    if ( aSignalDiagramModel.isChannelVisible( aChannelIdx.intValue() ) )
+    final Integer index = Integer.valueOf( aChannel.getIndex() );
+    if ( aChannel.isEnabled() )
     {
-      return String.format( "Hide channel %d", aChannelIdx );
+      return String.format( "Hide channel %d", index );
     }
 
-    return String.format( "Show channel %d", aChannelIdx );
+    return String.format( "Show channel %d", index );
   }
 
   /**
@@ -84,8 +80,7 @@ public class SetChannelVisibilityAction extends AbstractAction
   public void actionPerformed( final ActionEvent aEvent )
   {
     final JCheckBoxMenuItem menuitem = ( JCheckBoxMenuItem )aEvent.getSource();
-    final SignalDiagramModel model = this.controller.getSignalDiagramModel();
 
-    model.setChannelVisible( this.channelIdx, menuitem.getState() );
+    this.channel.setEnabled( menuitem.getState() );
   }
 }

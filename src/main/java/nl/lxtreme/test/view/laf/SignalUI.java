@@ -25,6 +25,7 @@ import java.awt.*;
 import javax.swing.*;
 import javax.swing.plaf.*;
 
+import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.model.Cursor;
 import nl.lxtreme.test.view.*;
 import nl.lxtreme.test.view.model.*;
@@ -183,80 +184,74 @@ public class SignalUI extends ComponentUI
       final int signalOffset = model.getSignalOffset();
       final double zoomFactor = model.getZoomFactor();
 
+      final ChannelGroupManager channelGroupManager = model.getChannelGroupManager();
+
       // Determine which bits of the actual signal should be drawn...
-      int startBit = ( int )Math.max( 0, Math.floor( clip.y / ( double )channelHeight ) );
-      int endBit = ( int )Math.min( dataWidth, Math.ceil( ( clip.y + clip.height ) / ( double )channelHeight ) );
+      // TODO this works for linear channels, but when channel groups are
+      // hidden, this no longer will work...
+      int startBit = ( int )Math.max( 0, Math.round( clip.y / ( double )channelHeight ) );
+      int endBit = ( int )Math.min( dataWidth, Math.round( ( clip.y + clip.height ) / ( double )channelHeight ) ) - 1;
 
-      for ( int b = 0; b < dataWidth; b++ )
+      // Start drawing at the correct position in the clipped region...
+      canvas.translate( 0, ( startBit * channelHeight ) + signalOffset );
+
+      final Channel[] channels = channelGroupManager.getChannels( startBit, endBit );
+      for ( Channel channel : channels )
       {
-        final int virtualRow = model.toVirtualRow( b );
-        if ( ( virtualRow < startBit ) || ( virtualRow > endBit ) )
+        if ( !channel.isEnabled() )
         {
-          // Trivial reject: we don't have to paint this row, as it is not asked
-          // from us (due to clip boundaries)!
-          continue;
-        }
-
-        final Color channelColor = model.getChannelColor( b );
-
-        final int mask = ( 1 << b );
-        // determine where we really should draw the signal...
-        final int dy = signalOffset + ( channelHeight * virtualRow );
-
-        int p;
-
-        if ( !model.isChannelVisible( b ) )
-        {
-          canvas.setColor( channelColor );
+          canvas.setColor( channel.getColor() );
           // Make sure we always start with time 0...
-          long timestamp = ( startIdx == 0 ) ? 0 : timestamps[startIdx];
+          long timestamp = timestamps[startIdx];
 
           // Forced zero'd channel is *very* easy to draw...
-          canvas.translate( 0, dy + signalHeight );
+          canvas.translate( 0, signalHeight );
           canvas.drawLine( ( int )( zoomFactor * timestamp ), 0, ( int )( zoomFactor * timestamps[endIdx] ), 0 );
-          canvas.translate( 0, -( dy + signalHeight ) );
         }
         else
         {
           // "Normal" data set; draw as accurate as possible...
-          canvas.setColor( channelColor );
+          canvas.setColor( channel.getColor() );
+
+          final int mask = channel.getMask();
 
           // Make sure we always start with time 0...
-          long timestamp = ( startIdx == 0 ) ? 0 : timestamps[startIdx];
-          int prevSampleValue = 1 - ( ( values[startIdx] & mask ) >>> b );
+          long timestamp = timestamps[startIdx];
+          int prevSampleValue = ( values[startIdx] & mask );
 
           int xValue = ( int )( zoomFactor * timestamp );
-          int yValue = signalHeight * prevSampleValue;
+          int yValue = ( prevSampleValue == 0 ? signalHeight : 0 );
 
           x[0] = xValue;
           y[0] = yValue;
-          p = 1;
+          int p = 1;
 
-          for ( int sampleIdx = startIdx; sampleIdx < endIdx; sampleIdx++ )
+          for ( int sampleIdx = startIdx + 1; sampleIdx < endIdx; sampleIdx++ )
           {
             timestamp = timestamps[sampleIdx];
-            int sampleValue = 1 - ( ( values[sampleIdx] & mask ) >>> b );
+            int sampleValue = ( values[sampleIdx] & mask );
 
             xValue = ( int )( zoomFactor * timestamp );
 
             if ( prevSampleValue != sampleValue )
             {
               x[p] = xValue;
-              y[p] = ( signalHeight * prevSampleValue );
+              y[p] = ( prevSampleValue == 0 ? signalHeight : 0 );
               p++;
             }
 
             x[p] = xValue;
-            y[p] = ( signalHeight * sampleValue );
+            y[p] = ( sampleValue == 0 ? signalHeight : 0 );
             p++;
 
             prevSampleValue = sampleValue;
           }
 
-          canvas.translate( 0, dy );
           canvas.drawPolyline( x, y, p );
-          canvas.translate( 0, -dy );
         }
+
+        // Advance to the next channel...
+        canvas.translate( 0, channelHeight );
       }
 
       // Draw the cursor "flags"...

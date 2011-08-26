@@ -21,12 +21,14 @@ package nl.lxtreme.test.view;
 
 
 import java.awt.*;
+import java.awt.Cursor;
 import java.awt.event.*;
 import java.util.logging.*;
 
 import javax.swing.*;
 
 import nl.lxtreme.test.*;
+import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.view.action.*;
 import nl.lxtreme.test.view.model.*;
 
@@ -301,7 +303,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       {
         final JComponent view = getDeepestComponentAt( aEvent );
         final Point point = SwingUtilities.convertPoint( aEvent.getComponent(), aEvent.getPoint(), view );
-        System.out.println( "Hovering over cursor #" + this.movingCursor );
 
         this.controller.moveCursor( this.movingCursor, getCursorDropPoint( point ) );
       }
@@ -330,7 +331,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
           view.setCursor( signalHover == null ? DEFAULT : CURSOR_HOVER );
         }
 
-        if ( model.isCursorMode() && ( findCursor( point ) >= 0 ) )
+        if ( model.isCursorMode() && ( findCursor( point ) != null ) )
         {
           view.setCursor( CURSOR_MOVE_CURSOR );
         }
@@ -353,8 +354,8 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       {
         if ( getModel().isCursorMode() )
         {
-          int hoveredCursor = findCursor( point );
-          this.movingCursor = hoveredCursor >= 0 ? hoveredCursor : -1;
+          nl.lxtreme.test.model.Cursor hoveredCursor = findCursor( point );
+          this.movingCursor = ( hoveredCursor != null ) ? hoveredCursor.getIndex() : -1;
         }
       }
     }
@@ -392,18 +393,18 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     {
       JPopupMenu result = null;
 
-      int channel = findChannel( aPoint );
-      if ( channel >= 0 )
+      Channel channel = findChannel( aPoint );
+      if ( channel != null )
       {
         result = new JPopupMenu();
 
         JMenuItem mi;
 
-        mi = new JMenuItem( new EditChannelLabelAction( this.controller, channel ) );
+        mi = new JMenuItem( new EditChannelLabelAction( channel ) );
         result.add( mi );
         result.addSeparator();
 
-        mi = new JCheckBoxMenuItem( new SetChannelVisibilityAction( this.controller, channel ) );
+        mi = new JCheckBoxMenuItem( new SetChannelVisibilityAction( channel ) );
         result.add( mi );
       }
 
@@ -422,8 +423,8 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     {
       final JPopupMenu contextMenu = new JPopupMenu();
 
-      int cursor = findCursor( aPoint );
-      if ( cursor >= 0 )
+      nl.lxtreme.test.model.Cursor cursor = findCursor( aPoint );
+      if ( cursor != null )
       {
         // Hovering above existing cursor, show remove menu...
         contextMenu.add( new EditCursorLabelAction( this.controller, cursor ) );
@@ -458,7 +459,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
      *          <code>null</code>.
      * @return the channel index, or -1 if not found.
      */
-    private int findChannel( final Point aPoint )
+    private Channel findChannel( final Point aPoint )
     {
       return getModel().findChannel( aPoint );
     }
@@ -471,7 +472,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
      *          <code>null</code>.
      * @return the cursor index, or -1 if not found.
      */
-    private int findCursor( final Point aPoint )
+    private nl.lxtreme.test.model.Cursor findCursor( final Point aPoint )
     {
       return getModel().findCursor( aPoint );
     }
@@ -986,7 +987,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     Rectangle rect = new Rectangle();
     rect.width = visibleRect.width;
     rect.height = visibleRect.height;
-    rect.x = ( int )( ( this.controller.getSignalDiagramModel().getZoomFactor() * aTimestamp ) - rect.getCenterX() );
+    rect.x = ( int )( ( getModel().getZoomFactor() * aTimestamp ) - rect.getCenterX() );
     rect.y = visibleRect.y;
 
     signalView.scrollRectToVisible( rect );

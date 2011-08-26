@@ -48,15 +48,23 @@ public class Main
     @Override
     public int getSampleData( final int[] aValues, final long[] aTimestamps, final int aSize )
     {
-      for ( int i = 0; i < aSize; i++ )
+      aValues[0] = 0;
+      aTimestamps[0] = 0;
+      aValues[1] = 0xFFFFFFFF;
+      aTimestamps[1] = 10;
+      aValues[2] = 0;
+      aTimestamps[2] = 20;
+
+      int si = 3;
+      for ( int i = si; i < aSize; i++ )
       {
-        if ( i > 0 )
+        if ( i > si )
         {
-          aValues[i] = aValues[i - 1] == 0xAAAA ? 0x5555 : 0xAAAA;
+          aValues[i] = aValues[i - 1] == 0xAAAAAAAA ? 0x55555555 : 0xAAAAAAAA;
         }
         else
         {
-          aValues[i] = 0xAAAA;
+          aValues[i] = 0xAAAAAAAA;
         }
         aTimestamps[i] = ( i * 10 );
       }
@@ -437,7 +445,7 @@ public class Main
 
     // final SampleDataModel model = new SampleDataModel( 256 * 1024, new
     // AlternatingDataWithSpacesProvider() );
-    final SampleDataModel model = new SampleDataModel( 512 * 1024, new RandomDataProvider() );
+    final SampleDataModel model = new SampleDataModel( 512 * 1024, new AlternatingDataProvider() );
 
     this.controller = new SignalDiagramController();
 

@@ -159,7 +159,7 @@ public class ChannelLabelsView extends AbstractViewLayer
       final Point dropPoint = createChannelDropPoint( coordinate, sourceComponent, glassPane );
 
       final ChannelInsertionPointRenderer renderer = new ChannelInsertionPointRenderer();
-      renderer.setContext( model.getChannelLabel( channelRow ) );
+      // renderer.setContext( model.getChannelLabel( channelRow ) ); XXX
 
       glassPane.setDropPoint( dropPoint, renderer );
       glassPane.setVisible( true );

@@ -26,8 +26,7 @@ import java.awt.event.*;
 
 import javax.swing.*;
 
-import nl.lxtreme.test.view.*;
-import nl.lxtreme.test.view.model.*;
+import nl.lxtreme.test.model.*;
 
 
 /**
@@ -55,15 +54,18 @@ public class EditChannelLabelAction extends AbstractAction
     // CONSTRUCTORS
 
     /**
-     * Creates a new EditChannelLabelAction.EditChannelDialog instance.
+     * Creates a new EditChannelDialog instance.
+     * 
+     * @param aChannel
+     *          the channel to edit the label for, cannot be <code>null</code>.
      */
-    public EditChannelDialog( final int aChannelIdx, final String aLabel )
+    public EditChannelDialog( final Channel aChannel )
     {
       super( null /* owner */, ModalityType.DOCUMENT_MODAL );
 
-      setTitle( String.format( "Edit label channel %d", Integer.valueOf( aChannelIdx ) ) );
+      setTitle( String.format( "Edit label channel %d", Integer.valueOf( aChannel.getIndex() ) ) );
 
-      initDialog( aChannelIdx, aLabel );
+      initDialog( aChannel.getIndex(), aChannel.getLabel() );
     }
 
     /**
@@ -146,24 +148,20 @@ public class EditChannelLabelAction extends AbstractAction
 
   // VARIABLES
 
-  private final SignalDiagramController controller;
-  private final int channelIdx;
+  private final Channel channel;
 
   // CONSTRUCTORS
 
   /**
    * Creates a new EditCursorLabelAction instance.
    * 
-   * @param aController
-   *          the {@link SignalDiagramController} to use;
-   * @param aChannelIdx
-   *          the index of the channel to edit the label for.
+   * @param aChannel
+   *          the channel to edit the label for.
    */
-  public EditChannelLabelAction( final SignalDiagramController aController, final int aChannelIdx )
+  public EditChannelLabelAction( final Channel aChannel )
   {
     super( "Edit label" );
-    this.controller = aController;
-    this.channelIdx = aChannelIdx;
+    this.channel = aChannel;
   }
 
   // METHODS
@@ -174,12 +172,10 @@ public class EditChannelLabelAction extends AbstractAction
   @Override
   public void actionPerformed( final ActionEvent aEvent )
   {
-    final SignalDiagramModel model = this.controller.getSignalDiagramModel();
-
-    final EditChannelDialog dialog = new EditChannelDialog( this.channelIdx, model.getChannelLabel( this.channelIdx ) );
+    final EditChannelDialog dialog = new EditChannelDialog( this.channel );
     if ( dialog.showDialog() )
     {
-      model.setChannelLabel( this.channelIdx, dialog.getLabel() );
+      this.channel.setLabel( dialog.getLabel() );
     }
   }
 }

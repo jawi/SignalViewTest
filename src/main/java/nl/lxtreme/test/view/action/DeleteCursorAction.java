@@ -24,6 +24,7 @@ import java.awt.event.*;
 
 import javax.swing.*;
 
+import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.view.*;
 
 
@@ -46,11 +47,11 @@ public class DeleteCursorAction extends AbstractAction
   /**
    * Creates a new DeleteCursorAction instance.
    */
-  public DeleteCursorAction( final SignalDiagramController aController, final int aCursorIdx )
+  public DeleteCursorAction( final SignalDiagramController aController, final Cursor aCursor )
   {
-    super( "Delete cursor " + ( aCursorIdx + 1 ) );
+    super( "Delete cursor " + ( aCursor.getIndex() + 1 ) );
     this.controller = aController;
-    this.cursorIdx = aCursorIdx;
+    this.cursorIdx = aCursor.getIndex();
   }
 
   // METHODS
