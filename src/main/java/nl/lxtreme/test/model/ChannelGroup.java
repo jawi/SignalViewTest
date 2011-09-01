@@ -18,12 +18,10 @@
  * Copyright (C) 2006-2010 Michael Poppitz, www.sump.org
  * Copyright (C) 2010 J.W. Janssen, www.lxtreme.nl
  */
-package nl.lxtreme.test.view.model;
+package nl.lxtreme.test.model;
 
 
 import java.util.*;
-
-import nl.lxtreme.test.model.*;
 
 
 /**
@@ -32,12 +30,54 @@ import nl.lxtreme.test.model.*;
  */
 public class ChannelGroup
 {
+  // INNER TYPES
+
+  public static enum ChannelElementType
+  {
+    // CONSTANTS
+
+    DIGITAL_SIGNALS( 1 ), //
+    DATA_VALUES( 2 ), //
+    ANALOG_SIGNAL( 4 ); //
+
+    // VARIABLES
+
+    private int mask;
+
+    // CONSTRUCTORS
+
+    /**
+     * Creates a new ChannelScreenElementType instance.
+     * 
+     * @param aValue
+     *          the numeric value, >= 1.
+     */
+    private ChannelElementType( final int aValue )
+    {
+      this.mask = ( 1 << aValue );
+    }
+
+    // METHODS
+
+    /**
+     * Returns the mask of this {@link ChannelElementType}.
+     * 
+     * @return the mask value, >= 1.
+     */
+    public int getMask()
+    {
+      return this.mask;
+    }
+  }
+
   // VARIABLES
 
   private final Collection<Channel> channels;
 
+  private int mask;
   private String name;
   private boolean visible;
+  private int viewOptions;
 
   // CONSTRUCTORS
 
@@ -57,9 +97,12 @@ public class ChannelGroup
       throw new IllegalArgumentException( "Name cannot be null or empty!" );
     }
 
+    this.mask = 0;
     this.name = aName;
     // By default visible...
     this.visible = true;
+    // By default only the digital signals are shown...
+    this.viewOptions = ChannelElementType.DATA_VALUES.mask | ChannelElementType.ANALOG_SIGNAL.mask;
 
     this.channels = new ArrayList<Channel>();
   }
@@ -80,17 +123,30 @@ public class ChannelGroup
    */
   public void addChannel( final Channel aChannel )
   {
-    if ( !hasChannel( aChannel ) )
+    if ( hasChannel( aChannel ) )
     {
-      this.channels.add( aChannel );
-
-      if ( !aChannel.hasName() )
-      {
-        aChannel.setLabel( getChannelName( aChannel ) );
-      }
-      // Make other defaults...
-      aChannel.setVirtualIndex( aChannel.getIndex() );
+      // Nothing to do; this channel already is in this group...
+      return;
     }
+
+    // Make sure we've disconnected the channel from its former channel group...
+    final ChannelGroup oldChannelGroup = aChannel.getChannelGroup();
+    if ( oldChannelGroup != null )
+    {
+      oldChannelGroup.removeChannel( aChannel );
+    }
+
+    this.channels.add( aChannel );
+    // Make sure the channel links back to this channel group...
+    aChannel.setChannelGroup( this );
+
+    if ( !aChannel.hasName() )
+    {
+      aChannel.setLabel( getChannelName( aChannel ) );
+    }
+
+    // Update our local mask...
+    this.mask |= aChannel.getMask();
   }
 
   /**
@@ -108,7 +164,7 @@ public class ChannelGroup
       return false;
     }
 
-    ChannelGroup other = ( ChannelGroup )aObject;
+    final ChannelGroup other = ( ChannelGroup )aObject;
     if ( this.name == null )
     {
       if ( other.name != null )
@@ -145,6 +201,26 @@ public class ChannelGroup
   }
 
   /**
+   * Returns the channel with the given index.
+   * 
+   * @param aIndex
+   *          the channel index to return the channel for.
+   * @return a channel with the given index, or <code>null</code> if no such
+   *         channel exists.
+   */
+  public Channel getChannelByIndex( final int aIndex )
+  {
+    for ( Channel channel : this.channels )
+    {
+      if ( channel.getIndex() == aIndex )
+      {
+        return channel;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Returns the channel with the given virtual index.
    * 
    * @param aIndex
@@ -165,6 +241,16 @@ public class ChannelGroup
   }
 
   /**
+   * Returns the number of channels in this channel group.
+   * 
+   * @return a channel count, >= 0.
+   */
+  public int getChannelCount()
+  {
+    return this.channels.size();
+  }
+
+  /**
    * Returns all channels assigned to this channel group.
    * 
    * @return an array of channels, never <code>null</code>.
@@ -173,6 +259,17 @@ public class ChannelGroup
   {
     final int size = this.channels.size();
     return this.channels.toArray( new Channel[size] );
+  }
+
+  /**
+   * Returns the bitwise mask for all channels that belong to this channel
+   * group.
+   * 
+   * @return a bitmask, >= 0.
+   */
+  public int getMask()
+  {
+    return this.mask;
   }
 
   /**
@@ -229,6 +326,39 @@ public class ChannelGroup
   }
 
   /**
+   * Returns whether we should show the analog signal for this group.
+   * 
+   * @return <code>true</code> if the analog signal is to be shown,
+   *         <code>false</code> to hide it.
+   */
+  public boolean isShowAnalogSignal()
+  {
+    return ( this.viewOptions & ChannelElementType.ANALOG_SIGNAL.getMask() ) != 0;
+  }
+
+  /**
+   * Returns whether we should show data values in this group.
+   * 
+   * @return <code>true</code> if the data values are to be shown,
+   *         <code>false</code> to hide them.
+   */
+  public boolean isShowDataValues()
+  {
+    return ( this.viewOptions & ChannelElementType.DATA_VALUES.getMask() ) != 0;
+  }
+
+  /**
+   * Returns whether we should show digital signals in this group.
+   * 
+   * @return <code>true</code> if the individual digital signals are to be
+   *         shown, <code>false</code> to hide them.
+   */
+  public boolean isShowDigitalSignals()
+  {
+    return ( this.viewOptions & ChannelElementType.DIGITAL_SIGNALS.getMask() ) != 0;
+  }
+
+  /**
    * Returns whether or not this entire channel group is visible.
    * 
    * @return <code>true</code> if this channel group is visible,
@@ -256,6 +386,11 @@ public class ChannelGroup
     if ( hasChannel( aChannel ) )
     {
       this.channels.remove( aChannel );
+      // Make sure the channel no longer links back to this channel group...
+      aChannel.removeChannelGroup();
+
+      // Remove channel's mask from our local mask...
+      this.mask &= ~aChannel.getMask();
     }
   }
 
@@ -277,6 +412,66 @@ public class ChannelGroup
   }
 
   /**
+   * Sets whether or not the analog signal is to be shown.
+   * 
+   * @param aShowAnalogSignal
+   *          <code>true</code> to show the analog signal, <code>false</code> to
+   *          hide it.
+   */
+  public void setShowAnalogSignal( final boolean aShowAnalogSignal )
+  {
+    int mask = ChannelElementType.ANALOG_SIGNAL.getMask();
+    if ( aShowAnalogSignal )
+    {
+      this.viewOptions |= mask;
+    }
+    else
+    {
+      this.viewOptions &= ~mask;
+    }
+  }
+
+  /**
+   * Sets whether or not the data values are to be shown.
+   * 
+   * @param aShowDataValues
+   *          <code>true</code> to show the data values, <code>false</code> to
+   *          hide it.
+   */
+  public void setShowDataValues( final boolean aShowDataValues )
+  {
+    int mask = ChannelElementType.DATA_VALUES.getMask();
+    if ( aShowDataValues )
+    {
+      this.viewOptions |= mask;
+    }
+    else
+    {
+      this.viewOptions &= ~mask;
+    }
+  }
+
+  /**
+   * Sets whether or not the individual digital signals are to be shown.
+   * 
+   * @param aShowDigitalSignals
+   *          <code>true</code> to show the individual digital signals,
+   *          <code>false</code> to hide them.
+   */
+  public void setShowDigitalSignals( final boolean aShowDigitalSignals )
+  {
+    int mask = ChannelElementType.DIGITAL_SIGNALS.getMask();
+    if ( aShowDigitalSignals )
+    {
+      this.viewOptions |= mask;
+    }
+    else
+    {
+      this.viewOptions &= ~mask;
+    }
+  }
+
+  /**
    * Sets visible to the given value.
    * 
    * @param aVisible
@@ -285,6 +480,25 @@ public class ChannelGroup
   public void setVisible( final boolean aVisible )
   {
     this.visible = aVisible;
+  }
+
+  /**
+   * @param aChannel
+   * @return
+   */
+  final int getVirtualIndex( final Channel aChannel )
+  {
+    Iterator<Channel> channelIter = this.channels.iterator();
+    int i = 0;
+    while ( channelIter.hasNext() )
+    {
+      if ( aChannel == channelIter.next() )
+      {
+        return i;
+      }
+      i++;
+    }
+    return -1;
   }
 
   /**

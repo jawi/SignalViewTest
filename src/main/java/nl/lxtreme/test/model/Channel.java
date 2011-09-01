@@ -51,10 +51,12 @@ public class Channel implements Comparable<Channel>
 
   private final int index;
   private final int mask;
+
+  private ChannelGroup group;
+
   private String label;
   private Color color;
   private boolean enabled;
-  private int virtualIndex;
 
   // TODO annotations!
 
@@ -76,7 +78,6 @@ public class Channel implements Comparable<Channel>
     this.enabled = true;
     this.index = aChannelIdx;
     this.mask = ( int )( 1L << aChannelIdx );
-    this.virtualIndex = this.index;
     // Make sure we've got a default color set...
     this.color = DEFAULT_COLORS[aChannelIdx % DEFAULT_COLORS.length];
   }
@@ -117,9 +118,21 @@ public class Channel implements Comparable<Channel>
   }
 
   /**
-   * Returns the current value of color.
+   * Returns channel group this channel is assigned to.
    * 
-   * @return the color
+   * @return the channel group, can be <code>null</code> if this channel is not
+   *         assigned to a channel group.
+   * @see #isAssigned()
+   */
+  public final ChannelGroup getChannelGroup()
+  {
+    return this.group;
+  }
+
+  /**
+   * Returns the color signals should be drawn in.
+   * 
+   * @return the a signal color, never <code>null</code>.
    */
   public Color getColor()
   {
@@ -127,9 +140,9 @@ public class Channel implements Comparable<Channel>
   }
 
   /**
-   * Returns the current value of index.
+   * Returns the index of this channel.
    * 
-   * @return the index
+   * @return a channel index, >= 0 && < {@value #MAX_CHANNELS}.
    */
   public int getIndex()
   {
@@ -137,9 +150,9 @@ public class Channel implements Comparable<Channel>
   }
 
   /**
-   * Returns the current value of name.
+   * Returns the (user defined) label for this channel.
    * 
-   * @return the name
+   * @return a label, can be <code>null</code>.
    */
   public String getLabel()
   {
@@ -147,7 +160,7 @@ public class Channel implements Comparable<Channel>
   }
 
   /**
-   * Returns bit-mask to use for this channel.
+   * Returns the bit-mask to use for this channel.
    * 
    * @return a bit-mask (= always a power of two), >= 1.
    */
@@ -157,13 +170,18 @@ public class Channel implements Comparable<Channel>
   }
 
   /**
-   * Returns the current value of virtualIndex.
+   * Returns the virtual index of this channel.
    * 
-   * @return the virtualIndex
+   * @return the virtualIndex, >= 0.
    */
   public int getVirtualIndex()
   {
-    return this.virtualIndex;
+    int result = -1;
+    if ( this.group != null )
+    {
+      result = this.group.getVirtualIndex( this );
+    }
+    return result;
   }
 
   /**
@@ -187,6 +205,17 @@ public class Channel implements Comparable<Channel>
   public boolean hasName()
   {
     return ( this.label != null ) && !this.label.trim().isEmpty();
+  }
+
+  /**
+   * Returns whether or not this channel is assigned to a channel group.
+   * 
+   * @return <code>true</code> if this channel is assigned to a channel group,
+   *         <code>false</code> otherwise.
+   */
+  public final boolean isAssigned()
+  {
+    return this.group != null;
   }
 
   /**
@@ -241,22 +270,43 @@ public class Channel implements Comparable<Channel>
   }
 
   /**
-   * Sets virtualIndex to the given value.
-   * 
-   * @param aVirtualIndex
-   *          the virtualIndex to set.
-   */
-  public void setVirtualIndex( final int aVirtualIndex )
-  {
-    this.virtualIndex = aVirtualIndex;
-  }
-
-  /**
    * {@inheritDoc}
    */
   @Override
   public String toString()
   {
     return this.index + ": " + getLabel();
+  }
+
+  /**
+   * If this channel is assigned to a channel group, removes it from that
+   * channel group. Otherwise, this method does nothing.
+   */
+  final void removeChannelGroup()
+  {
+    this.group = null;
+  }
+
+  /**
+   * Sets the channel group for this channel.
+   * 
+   * @param aGroup
+   *          the channel group to set, cannot be <code>null</code>.
+   * @throws IllegalArgumentException
+   *           in case the given group was <code>null</code>;
+   * @throws IllegalStateException
+   *           in case this channel already has a group assigned.
+   */
+  final void setChannelGroup( final ChannelGroup aGroup )
+  {
+    if ( aGroup == null )
+    {
+      throw new IllegalArgumentException( "Group cannot be null!" );
+    }
+    if ( this.group != null )
+    {
+      throw new IllegalStateException( "Channel already belongs to a group!" );
+    }
+    this.group = aGroup;
   }
 }

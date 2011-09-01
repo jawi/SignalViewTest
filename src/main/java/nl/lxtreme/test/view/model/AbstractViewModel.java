@@ -21,8 +21,12 @@ package nl.lxtreme.test.view.model;
 
 
 import java.awt.*;
+import java.util.*;
+import java.util.List;
 
 import nl.lxtreme.test.*;
+import nl.lxtreme.test.model.*;
+import nl.lxtreme.test.model.ChannelGroup.ChannelElementType;
 import nl.lxtreme.test.view.*;
 
 
@@ -64,6 +68,67 @@ abstract class AbstractViewModel
   public int getChannelHeight()
   {
     return getSignalDiagramModel().getChannelHeight();
+  }
+
+  /**
+   * Returns all channels the given range of all visible channel groups.
+   * 
+   * @param aStartIndex
+   *          the start channel index to return (0..31);
+   * @param aEndIndex
+   *          the end channel index to return (0..31).
+   * @return an array of channels, never <code>null</code>.
+   */
+  public ChannelElement[] getChannels( final int aStartIndex, final int aEndIndex )
+  {
+    final List<ChannelElement> elements = new ArrayList<ChannelElement>();
+
+    final int channelHeight = getChannelHeight();
+    final int dataValueRowHeight = getSignalDiagramModel().getDataValueRowHeight();
+    final int scopeHeight = getSignalDiagramModel().getScopeHeight();
+
+    // Calculate the start & end Y position...
+    int startYpos = aStartIndex * channelHeight;
+    int endYpos = aEndIndex * channelHeight;
+
+    int yPos = 0;
+    for ( ChannelGroup cg : getChannelGroupManager().getChannelGroups() )
+    {
+      if ( !cg.isVisible() )
+      {
+        continue;
+      }
+
+      if ( cg.isShowDigitalSignals() )
+      {
+        final List<Channel> channels = Arrays.asList( cg.getChannels() );
+        for ( Channel channel : channels )
+        {
+          // Does this individual channel fit?
+          if ( ( yPos >= startYpos ) && ( yPos <= endYpos ) )
+          {
+            elements.add( new ChannelElement( ChannelElementType.DIGITAL_SIGNALS, channel.getMask(),
+                channel.getIndex(), channelHeight ) );
+          }
+          yPos += channelHeight;
+        }
+      }
+      // Always keep these heights into account...
+      if ( cg.isShowDataValues() )
+      {
+        elements.add( new ChannelElement( ChannelElementType.DATA_VALUES, cg.getMask(), cg.getChannelCount(),
+            dataValueRowHeight ) );
+        yPos += dataValueRowHeight;
+      }
+      if ( cg.isShowAnalogSignal() )
+      {
+        elements.add( new ChannelElement( ChannelElementType.ANALOG_SIGNAL, cg.getMask(), cg.getChannelCount(),
+            scopeHeight ) );
+        yPos += scopeHeight;
+      }
+    }
+
+    return elements.toArray( new ChannelElement[elements.size()] );
   }
 
   /**
@@ -158,9 +223,25 @@ abstract class AbstractViewModel
   /**
    * @return
    */
+  public int getDataValuesRowHeight()
+  {
+    return getSignalDiagramModel().getDataValueRowHeight();
+  }
+
+  /**
+   * @return
+   */
   public int getSampleWidth()
   {
     return getSignalDiagramModel().getSampleWidth();
+  }
+
+  /**
+   * @return
+   */
+  public int getScopeHeight()
+  {
+    return getSignalDiagramModel().getScopeHeight();
   }
 
   /**

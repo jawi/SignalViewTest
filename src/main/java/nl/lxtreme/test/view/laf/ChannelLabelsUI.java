@@ -108,8 +108,12 @@ public class ChannelLabelsUI extends ComponentUI
       canvas.clearRect( clip.x, clip.y, clip.width, clip.height );
 
       final int channelHeight = model.getChannelHeight();
+      final int dataValueRowHeight = model.getDataValuesRowHeight();
+      final int scopeHeight = model.getScopeHeight();
+
       // Where is the text to be drawn?
-      final int textOffset = ( int )( ( channelHeight - model.getSignalHeight() ) / 2.0 );
+      final int textOffsetChannel = ( int )( ( channelHeight - model.getSignalHeight() ) / 2.0 );
+      final int textOffsetScope = ( int )( scopeHeight / 2.0 );
 
       final int compWidth = view.getWidth();
       final int dataWidth = model.getSampleWidth();
@@ -128,25 +132,58 @@ public class ChannelLabelsUI extends ComponentUI
       // Start drawing at the correct position in the clipped region...
       canvas.translate( 0, ( startBit * channelHeight ) );
 
-      final Channel[] channels = channelGroupManager.getChannels( startBit, endBit );
-      for ( Channel channel : channels )
+      final ChannelElement[] channelElements = model.getChannels( startBit, endBit );
+      for ( ChannelElement channelElement : channelElements )
       {
-        final String label = channel.getLabel();
+        if ( channelElement.isDigitalChannel() )
+        {
+          final Channel channel = channelGroupManager.getChannelByIndex( channelElement.getCount() );
+
+          canvas.setFont( model.getLabelFont() );
+          canvas.setColor( model.getLabelBackgroundColor() );
+
+          canvas.fillRoundRect( clip.x - ARC_WIDTH, PADDING_Y, clip.width + ( ARC_WIDTH - PADDING_X ), channelHeight
+              - PADDING_Y, ARC_WIDTH, ARC_WIDTH );
+
+          this.renderer.setContext( Integer.valueOf( channel.getIndex() ), Integer.valueOf( compWidth ),
+              channel.getLabel() );
+
+          canvas.setColor( model.getLabelForegroundColor() );
+
+          this.renderer.render( canvas, 0, textOffsetChannel );
+
+          // Advance to the next channel...
+          canvas.translate( 0, channelHeight );
+        }
 
         canvas.setFont( model.getLabelFont() );
         canvas.setColor( model.getLabelBackgroundColor() );
 
-        canvas.fillRoundRect( clip.x - ARC_WIDTH, PADDING_Y, clip.width + ( ARC_WIDTH - PADDING_X ), channelHeight
-            - PADDING_Y, ARC_WIDTH, ARC_WIDTH );
+        // Before drawing the new channel, we should "finish" up the old
+        // channel group...
+        if ( channelElement.isDataValues() )
+        {
+          canvas.fillRoundRect( clip.x - ARC_WIDTH, PADDING_Y, clip.width + ( ARC_WIDTH - PADDING_X ),
+              dataValueRowHeight - PADDING_Y, ARC_WIDTH, ARC_WIDTH );
 
-        this.renderer.setContext( Integer.valueOf( channel.getIndex() ), Integer.valueOf( compWidth ), label );
+          // TODO label...
 
-        canvas.setColor( model.getLabelForegroundColor() );
+          canvas.translate( 0, dataValueRowHeight );
+        }
 
-        this.renderer.render( canvas, 0, textOffset );
+        if ( channelElement.isAnalogSignal() )
+        {
+          canvas.fillRoundRect( clip.x - ARC_WIDTH, PADDING_Y, clip.width + ( ARC_WIDTH - PADDING_X ), scopeHeight
+              - PADDING_Y, ARC_WIDTH, ARC_WIDTH );
 
-        // Advance to the next channel...
-        canvas.translate( 0, channelHeight );
+          this.renderer.setContext( Integer.valueOf( 0 ), Integer.valueOf( compWidth ), "SCOPE" ); // XXX
+
+          canvas.setColor( model.getLabelForegroundColor() );
+
+          this.renderer.render( canvas, 0, textOffsetScope );
+
+          canvas.translate( 0, scopeHeight );
+        }
       }
     }
     finally

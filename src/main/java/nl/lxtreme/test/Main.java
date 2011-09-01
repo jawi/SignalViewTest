@@ -202,6 +202,23 @@ public class Main
   }
 
   /**
+   * Provides only samples that together form a sine-wave.
+   */
+  static class SineDataProvider implements SampleDataProvider
+  {
+    @Override
+    public int getSampleData( final int[] aValues, final long[] aTimestamps, final int aSize )
+    {
+      for ( int i = 0; i < aSize; i++ )
+      {
+        aValues[i] = ( int )( 8.0 + ( 8.0 * Math.sin( i / 10.0 ) ) );
+        aTimestamps[i] = i;
+      }
+      return 100000000; // 100MHz
+    }
+  }
+
+  /**
    * Provides only zero samples.
    */
   static class ZeroDataProvider implements SampleDataProvider
@@ -445,7 +462,7 @@ public class Main
 
     // final SampleDataModel model = new SampleDataModel( 256 * 1024, new
     // AlternatingDataWithSpacesProvider() );
-    final SampleDataModel model = new SampleDataModel( 512 * 1024, new AlternatingDataProvider() );
+    final SampleDataModel model = new SampleDataModel( 512 * 1024, new CounterDataProvider() );
 
     this.controller = new SignalDiagramController();
 

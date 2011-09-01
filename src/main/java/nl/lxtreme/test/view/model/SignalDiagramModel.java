@@ -66,6 +66,8 @@ public class SignalDiagramModel
 
   private int signalHeight;
   private int channelHeight;
+  private int scopeHeight;
+  private int dataValueRowHeight;
   private int mode;
   private SignalAlignment signalAlignment;
 
@@ -75,12 +77,12 @@ public class SignalDiagramModel
   private int sampleRate;
   private int sampleWidth;
 
+  private double zoomFactor;
+
   private final ChannelGroupManager channelGroupManager;
   private final SignalDiagramController controller;
   private final EventListenerList eventListeners;
   private final PropertyChangeSupport propertyChangeSupport;
-
-  private double zoomFactor;
 
   // CONSTRUCTORS
 
@@ -100,6 +102,8 @@ public class SignalDiagramModel
 
     this.signalHeight = 20;
     this.channelHeight = 40;
+    this.dataValueRowHeight = 24;
+    this.scopeHeight = 96;
 
     this.signalAlignment = SignalAlignment.CENTER;
 
@@ -374,7 +378,7 @@ public class SignalDiagramModel
   }
 
   /**
-   * @return
+   * {@inheritDoc}
    */
   public int getChannelHeight()
   {
@@ -403,6 +407,14 @@ public class SignalDiagramModel
       throw new IllegalArgumentException( "Invalid cursor index!" );
     }
     return this.cursors[aCursorIdx].getLabel();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public int getDataValueRowHeight()
+  {
+    return this.dataValueRowHeight;
   }
 
   /**
@@ -492,6 +504,14 @@ public class SignalDiagramModel
   public int getSampleWidth()
   {
     return this.sampleWidth;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public int getScopeHeight()
+  {
+    return this.scopeHeight;
   }
 
   /**
@@ -1111,6 +1131,17 @@ public class SignalDiagramModel
   }
 
   /**
+   * Sets the height of the data-value row
+   * 
+   * @param aHeight
+   *          the height, in pixels, to set.
+   */
+  public void setDataValueRowHeight( final int aHeight )
+  {
+    this.dataValueRowHeight = aHeight;
+  }
+
+  /**
    * @param aEnabled
    */
   public void setMeasurementMode( final boolean aEnabled )
@@ -1136,6 +1167,17 @@ public class SignalDiagramModel
         listener.disableMeasurementMode();
       }
     }
+  }
+
+  /**
+   * Sets the height of the analogue scope.
+   * 
+   * @param aScopeHeight
+   *          the height, in pixels, to set.
+   */
+  public void setScopeHeight( final int aScopeHeight )
+  {
+    this.scopeHeight = aScopeHeight;
   }
 
   /**
