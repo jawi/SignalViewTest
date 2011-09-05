@@ -33,7 +33,7 @@ public class ChannelElement
 
   private final ChannelElementType type;
   private final int height;
-  private final int count;
+  private final int index;
   private final int mask;
 
   // TODO add label, color & font...
@@ -45,15 +45,34 @@ public class ChannelElement
    * 
    * @param aType
    *          the type of this channel element, cannot be <code>null</code>;
+   * @param aMask
+   *          the mask of channel elements;
    * @param aHeight
    *          the height of this channel element, in pixels, >= 0.
    */
-  public ChannelElement( final ChannelElementType aType, final int aMask, final int aCount, final int aHeight )
+  public ChannelElement( final ChannelElementType aType, final int aMask, final int aHeight )
+  {
+    this( aType, aMask, -1, aHeight );
+  }
+
+  /**
+   * Creates a new ChannelElement instance.
+   * 
+   * @param aType
+   *          the type of this channel element, cannot be <code>null</code>;
+   * @param aMask
+   *          the mask of channel elements;
+   * @param aIndex
+   *          the channel index;
+   * @param aHeight
+   *          the height of this channel element, in pixels, >= 0.
+   */
+  public ChannelElement( final ChannelElementType aType, final int aMask, final int aIndex, final int aHeight )
   {
     this.type = aType;
     this.height = aHeight;
     this.mask = aMask;
-    this.count = aCount;
+    this.index = aIndex;
   }
 
   // METHODS
@@ -87,16 +106,6 @@ public class ChannelElement
   }
 
   /**
-   * Returns the current value of count.
-   * 
-   * @return the count
-   */
-  public int getCount()
-  {
-    return this.count;
-  }
-
-  /**
    * Returns the current value of height.
    * 
    * @return the height, in pixels.
@@ -104,6 +113,16 @@ public class ChannelElement
   public int getHeight()
   {
     return this.height;
+  }
+
+  /**
+   * Returns the index of the channel.
+   * 
+   * @return the channel index, >= 0.
+   */
+  public int getIndex()
+  {
+    return this.index;
   }
 
   /**

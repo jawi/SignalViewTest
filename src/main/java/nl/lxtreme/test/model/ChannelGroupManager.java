@@ -168,12 +168,12 @@ public final class ChannelGroupManager implements IDataModelChangeListener
     this.channels = createChannels( aDataModel.getWidth() );
 
     // Reset channel groups so they align with the given data model...
-    final int maxI = 8;
+    final int maxI = 4;
     final int maxJ = Channel.MAX_CHANNELS / maxI;
     for ( int i = 0; i < maxI; i++ )
     {
       ChannelGroup channelGroup = addChannelGroup( "Group " + ( i + 1 ) );
-      channelGroup.setVisible( ( i % 2 ) == 0 );
+      // channelGroup.setVisible( ( i % 2 ) == 0 );
 
       for ( int j = 0; j < maxJ; j++ )
       {

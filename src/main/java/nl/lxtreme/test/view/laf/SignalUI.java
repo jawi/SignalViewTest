@@ -205,7 +205,7 @@ public class SignalUI extends ComponentUI
 
         if ( channelElement.isDigitalChannel() )
         {
-          final Channel channel = channelGroupManager.getChannelByIndex( channelElement.getCount() );
+          final Channel channel = channelGroupManager.getChannelByIndex( channelElement.getIndex() );
           if ( !channel.isEnabled() )
           {
             canvas.setColor( channel.getColor() );

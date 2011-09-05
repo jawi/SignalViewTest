@@ -137,7 +137,7 @@ public class ChannelLabelsUI extends ComponentUI
       {
         if ( channelElement.isDigitalChannel() )
         {
-          final Channel channel = channelGroupManager.getChannelByIndex( channelElement.getCount() );
+          final Channel channel = channelGroupManager.getChannelByIndex( channelElement.getIndex() );
 
           canvas.setFont( model.getLabelFont() );
           canvas.setColor( model.getLabelBackgroundColor() );
