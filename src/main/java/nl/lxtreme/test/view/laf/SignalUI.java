@@ -309,7 +309,9 @@ public class SignalUI extends ComponentUI
         if ( channelElement.isAnalogSignal() )
         {
           int mask = channelElement.getMask();
-          final int maxValue = ( int )( 1L << channelElement.getCount() );
+          final int trailingZeros = Integer.numberOfTrailingZeros( mask );
+          final int onesCount = Integer.SIZE - Integer.numberOfLeadingZeros( mask ) - trailingZeros;
+          final int maxValue = ( int )( 1L << onesCount );
           double scaleFactor = scopeHeight / ( maxValue + 1.0 );
 
           // Make sure we always start with time 0...
@@ -317,7 +319,7 @@ public class SignalUI extends ComponentUI
           for ( int sampleIdx = startIdx; sampleIdx < endIdx; sampleIdx++ )
           {
             long timestamp = timestamps[sampleIdx];
-            int sampleValue = maxValue - ( values[sampleIdx] & mask );
+            int sampleValue = maxValue - ( ( values[sampleIdx] & mask ) >> trailingZeros );
 
             x[p] = ( int )( zoomFactor * timestamp );
             y[p] = ( int )( scaleFactor * sampleValue );

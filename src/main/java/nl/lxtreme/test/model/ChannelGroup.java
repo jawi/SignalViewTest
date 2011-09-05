@@ -102,7 +102,8 @@ public class ChannelGroup
     // By default visible...
     this.visible = true;
     // By default only the digital signals are shown...
-    this.viewOptions = ChannelElementType.DATA_VALUES.mask | ChannelElementType.ANALOG_SIGNAL.mask;
+    this.viewOptions = ChannelElementType.DIGITAL_SIGNALS.mask | ChannelElementType.DATA_VALUES.mask
+        | ChannelElementType.ANALOG_SIGNAL.mask;
 
     this.channels = new ArrayList<Channel>();
   }

@@ -123,7 +123,7 @@ public class Main
     {
       for ( int i = 0; i < aSize; i++ )
       {
-        aValues[i] = i % 1024;
+        aValues[i] = i % ( 1024 * 1024 * 1024 );
         aTimestamps[i] = i;
       }
       return 100000000; // 100MHz
