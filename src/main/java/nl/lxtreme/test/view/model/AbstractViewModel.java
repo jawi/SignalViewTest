@@ -73,13 +73,13 @@ abstract class AbstractViewModel
   /**
    * Returns all channels the given range of all visible channel groups.
    * 
-   * @param aStartIndex
-   *          the start channel index to return (0..31);
-   * @param aEndIndex
-   *          the end channel index to return (0..31).
+   * @param aY
+   *          the screen Y-coordinate;
+   * @param aHeight
+   *          the screen height.
    * @return an array of channels, never <code>null</code>.
    */
-  public ChannelElement[] getChannels( final int aStartIndex, final int aEndIndex )
+  public ChannelElement[] getChannels( final int aY, final int aHeight )
   {
     final List<ChannelElement> elements = new ArrayList<ChannelElement>();
 
@@ -87,9 +87,8 @@ abstract class AbstractViewModel
     final int dataValueRowHeight = getSignalDiagramModel().getDataValueRowHeight();
     final int scopeHeight = getSignalDiagramModel().getScopeHeight();
 
-    // Calculate the start & end Y position...
-    int startYpos = aStartIndex * channelHeight;
-    int endYpos = aEndIndex * channelHeight;
+    final int y1 = aY;
+    final int y2 = aHeight + aY;
 
     int yPos = 0;
     for ( ChannelGroup cg : getChannelGroupManager().getChannelGroups() )
@@ -105,7 +104,7 @@ abstract class AbstractViewModel
         for ( Channel channel : channels )
         {
           // Does this individual channel fit?
-          if ( ( yPos >= startYpos ) && ( yPos <= endYpos ) )
+          if ( ( yPos >= y1 ) && ( yPos <= y2 ) )
           {
             elements.add( new ChannelElement( ChannelElementType.DIGITAL_SIGNALS, channel.getMask(),
                 channel.getIndex(), channelHeight ) );
@@ -116,14 +115,20 @@ abstract class AbstractViewModel
       // Always keep these heights into account...
       if ( cg.isShowDataValues() )
       {
-        elements.add( new ChannelElement( ChannelElementType.DATA_VALUES, cg.getMask(), cg.getChannelCount(),
-            dataValueRowHeight ) );
+        if ( ( yPos >= y1 ) && ( yPos <= y2 ) )
+        {
+          elements.add( new ChannelElement( ChannelElementType.DATA_VALUES, cg.getMask(), cg.getChannelCount(),
+              dataValueRowHeight ) );
+        }
         yPos += dataValueRowHeight;
       }
       if ( cg.isShowAnalogSignal() )
       {
-        elements.add( new ChannelElement( ChannelElementType.ANALOG_SIGNAL, cg.getMask(), cg.getChannelCount(),
-            scopeHeight ) );
+        if ( ( yPos >= y1 ) && ( yPos <= y2 ) )
+        {
+          elements.add( new ChannelElement( ChannelElementType.ANALOG_SIGNAL, cg.getMask(), cg.getChannelCount(),
+              scopeHeight ) );
+        }
         yPos += scopeHeight;
       }
     }

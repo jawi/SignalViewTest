@@ -198,7 +198,10 @@ public class SignalUI extends ComponentUI
       // Start drawing at the correct position in the clipped region...
       canvas.translate( 0, ( startBit * channelHeight ) + signalOffset );
 
-      final ChannelElement[] channelElements = model.getChannels( startBit, endBit );
+      final int sampleIncr = ( int )Math.max( 1.0, ( 1.0 / zoomFactor ) );
+      System.out.printf( "Sample incr = %d px\n", sampleIncr );
+
+      final ChannelElement[] channelElements = model.getChannels( clip.y, clip.height );
       for ( ChannelElement channelElement : channelElements )
       {
         canvas.setColor( Color.YELLOW ); // XXX
@@ -208,13 +211,10 @@ public class SignalUI extends ComponentUI
           final Channel channel = channelGroupManager.getChannelByIndex( channelElement.getIndex() );
           if ( !channel.isEnabled() )
           {
-            canvas.setColor( channel.getColor() );
-            // Make sure we always start with time 0...
-            long timestamp = timestamps[startIdx];
-
             // Forced zero'd channel is *very* easy to draw...
+            canvas.setColor( channel.getColor() );
             canvas.translate( 0, signalHeight );
-            canvas.drawLine( ( int )( zoomFactor * timestamp ), 0, ( int )( zoomFactor * timestamps[endIdx] ), 0 );
+            canvas.drawLine( clip.x, 0, clip.x + clip.width, 0 );
           }
           else
           {
@@ -272,16 +272,15 @@ public class SignalUI extends ComponentUI
           int prevSampleValue = values[startIdx] & mask;
           int prevX = ( int )( zoomFactor * timestamps[startIdx] );
 
-          for ( int sampleIdx = startIdx + 1; sampleIdx < endIdx; sampleIdx++ )
+          for ( int sampleIdx = startIdx + 1; sampleIdx < endIdx; sampleIdx += sampleIncr )
           {
             int sampleValue = ( values[sampleIdx] & mask );
 
             if ( sampleValue != prevSampleValue )
             {
-              //
               int x = ( int )( zoomFactor * timestamps[sampleIdx] );
 
-              String text = String.format( "%02x", Integer.valueOf( prevSampleValue ) );
+              String text = String.format( "%x", Integer.valueOf( prevSampleValue ) );
               FontMetrics fm = canvas.getFontMetrics();
 
               int textWidth = fm.stringWidth( text ) + ( 2 * PADDING_X );
@@ -316,10 +315,15 @@ public class SignalUI extends ComponentUI
 
           // Make sure we always start with time 0...
           int p = 0;
-          for ( int sampleIdx = startIdx; sampleIdx < endIdx; sampleIdx++ )
+          for ( int sampleIdx = startIdx + sampleIncr; sampleIdx < endIdx; sampleIdx += sampleIncr )
           {
-            long timestamp = timestamps[sampleIdx];
-            int sampleValue = maxValue - ( ( values[sampleIdx] & mask ) >> trailingZeros );
+            long timestamp = timestamps[sampleIdx - sampleIncr];
+            int sampleValue = 0;
+            for ( int i = sampleIdx - sampleIncr; i < sampleIdx; i++ )
+            {
+              sampleValue += ( ( values[sampleIdx] & mask ) >> trailingZeros );
+            }
+            sampleValue = maxValue - ( sampleValue / sampleIncr );
 
             x[p] = ( int )( zoomFactor * timestamp );
             y[p] = ( int )( scaleFactor * sampleValue );

@@ -341,7 +341,30 @@ public class SignalDiagramModel
    */
   public int getAbsoluteScreenHeight()
   {
-    return getChannelHeight() * this.channelGroupManager.getVisibleChannelCount();
+    int height = 0;
+    for ( ChannelGroup cg : getChannelGroupManager().getChannelGroups() )
+    {
+      if ( !cg.isVisible() )
+      {
+        continue;
+      }
+
+      if ( cg.isShowDigitalSignals() )
+      {
+        height += getChannelHeight() * cg.getChannelCount();
+      }
+      // Always keep these heights into account...
+      if ( cg.isShowDataValues() )
+      {
+        height += getDataValueRowHeight();
+      }
+      if ( cg.isShowAnalogSignal() )
+      {
+        height += getScopeHeight();
+      }
+    }
+
+    return height;
   }
 
   /**
