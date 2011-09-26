@@ -253,6 +253,7 @@ public class Main
    */
   public static void main( final String[] aArgs ) throws Exception
   {
+    System.out.println( "os.name == " + System.getProperty( "os.name" ) );
     final Runnable runner = new Runnable()
     {
       @Override

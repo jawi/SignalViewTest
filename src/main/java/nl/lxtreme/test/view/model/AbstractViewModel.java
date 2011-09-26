@@ -21,12 +21,8 @@ package nl.lxtreme.test.view.model;
 
 
 import java.awt.*;
-import java.util.*;
-import java.util.List;
-
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.model.*;
-import nl.lxtreme.test.model.ChannelGroup.ChannelElementType;
 import nl.lxtreme.test.view.*;
 
 
@@ -79,61 +75,9 @@ abstract class AbstractViewModel
    *          the screen height.
    * @return an array of channels, never <code>null</code>.
    */
-  public ChannelElement[] getChannels( final int aY, final int aHeight )
+  public ChannelElement[] getChannelElements( final int aY, final int aHeight )
   {
-    final List<ChannelElement> elements = new ArrayList<ChannelElement>();
-
-    final int channelHeight = getChannelHeight();
-    final int dataValueRowHeight = getSignalDiagramModel().getDataValueRowHeight();
-    final int scopeHeight = getSignalDiagramModel().getScopeHeight();
-
-    final int y1 = aY;
-    final int y2 = aHeight + aY;
-
-    int yPos = 0;
-    for ( ChannelGroup cg : getChannelGroupManager().getChannelGroups() )
-    {
-      if ( !cg.isVisible() )
-      {
-        continue;
-      }
-
-      if ( cg.isShowDigitalSignals() )
-      {
-        final List<Channel> channels = Arrays.asList( cg.getChannels() );
-        for ( Channel channel : channels )
-        {
-          // Does this individual channel fit?
-          if ( ( yPos >= y1 ) && ( yPos <= y2 ) )
-          {
-            elements.add( new ChannelElement( ChannelElementType.DIGITAL_SIGNALS, channel.getMask(),
-                channel.getIndex(), channelHeight ) );
-          }
-          yPos += channelHeight;
-        }
-      }
-      // Always keep these heights into account...
-      if ( cg.isShowDataValues() )
-      {
-        if ( ( yPos >= y1 ) && ( yPos <= y2 ) )
-        {
-          elements.add( new ChannelElement( ChannelElementType.DATA_VALUES, cg.getMask(), cg.getChannelCount(),
-              dataValueRowHeight ) );
-        }
-        yPos += dataValueRowHeight;
-      }
-      if ( cg.isShowAnalogSignal() )
-      {
-        if ( ( yPos >= y1 ) && ( yPos <= y2 ) )
-        {
-          elements.add( new ChannelElement( ChannelElementType.ANALOG_SIGNAL, cg.getMask(), cg.getChannelCount(),
-              scopeHeight ) );
-        }
-        yPos += scopeHeight;
-      }
-    }
-
-    return elements.toArray( new ChannelElement[elements.size()] );
+    return getSignalDiagramModel().getChannelElements( aY, aHeight );
   }
 
   /**

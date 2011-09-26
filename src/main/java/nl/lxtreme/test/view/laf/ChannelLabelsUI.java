@@ -132,7 +132,7 @@ public class ChannelLabelsUI extends ComponentUI
       // Start drawing at the correct position in the clipped region...
       canvas.translate( 0, ( startBit * channelHeight ) );
 
-      final ChannelElement[] channelElements = model.getChannels( clip.y, clip.height );
+      final ChannelElement[] channelElements = model.getChannelElements( clip.y, clip.height );
       for ( ChannelElement channelElement : channelElements )
       {
         if ( channelElement.isDigitalChannel() )

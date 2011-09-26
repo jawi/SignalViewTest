@@ -24,11 +24,14 @@ package nl.lxtreme.test.view.model;
 import java.awt.*;
 import java.beans.*;
 import java.util.*;
+import java.util.List;
+
 import javax.swing.event.*;
 
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.model.Cursor;
+import nl.lxtreme.test.model.ChannelGroup.*;
 import nl.lxtreme.test.view.*;
 
 
@@ -388,6 +391,72 @@ public class SignalDiagramModel
   public double getCaptureLength()
   {
     return getAbsoluteLength() / ( double )getSampleRate();
+  }
+
+  /**
+   * Returns all channels the given range of all visible channel groups.
+   * 
+   * @param aY
+   *          the screen Y-coordinate;
+   * @param aHeight
+   *          the screen height.
+   * @return an array of channels, never <code>null</code>.
+   */
+  public ChannelElement[] getChannelElements( final int aY, final int aHeight )
+  {
+    final List<ChannelElement> elements = new ArrayList<ChannelElement>();
+
+    final int channelHeight = getChannelHeight();
+    final int dataValueRowHeight = getDataValueRowHeight();
+    final int scopeHeight = getScopeHeight();
+
+    final int y1 = aY;
+    final int y2 = aHeight + aY;
+
+    int yPos = 0;
+    for ( ChannelGroup cg : getChannelGroupManager().getChannelGroups() )
+    {
+      if ( !cg.isVisible() )
+      {
+        continue;
+      }
+
+      if ( cg.isShowDigitalSignals() )
+      {
+        final List<Channel> channels = Arrays.asList( cg.getChannels() );
+        for ( Channel channel : channels )
+        {
+          // Does this individual channel fit?
+          if ( ( yPos >= y1 ) && ( yPos <= y2 ) )
+          {
+            elements.add( new ChannelElement( ChannelElementType.DIGITAL_SIGNALS, channel.getMask(),
+                channel.getIndex(), channelHeight ) );
+          }
+          yPos += channelHeight;
+        }
+      }
+      // Always keep these heights into account...
+      if ( cg.isShowDataValues() )
+      {
+        if ( ( yPos >= y1 ) && ( yPos <= y2 ) )
+        {
+          elements.add( new ChannelElement( ChannelElementType.DATA_VALUES, cg.getMask(), cg.getChannelCount(),
+              dataValueRowHeight ) );
+        }
+        yPos += dataValueRowHeight;
+      }
+      if ( cg.isShowAnalogSignal() )
+      {
+        if ( ( yPos >= y1 ) && ( yPos <= y2 ) )
+        {
+          elements.add( new ChannelElement( ChannelElementType.ANALOG_SIGNAL, cg.getMask(), cg.getChannelCount(),
+              scopeHeight ) );
+        }
+        yPos += scopeHeight;
+      }
+    }
+
+    return elements.toArray( new ChannelElement[elements.size()] );
   }
 
   /**
@@ -781,25 +850,16 @@ public class SignalDiagramModel
   public int getVerticalBlockIncrement( final Dimension aViewDimensions, final Rectangle aVisibleRect,
       final int aDirection )
   {
-    final int channelCount = getSampleWidth();
+    final ChannelElement[] channelElements = getChannelElements( aVisibleRect.y, aVisibleRect.height );
 
-    int inc;
-    int firstVisibleRow = ( int )( aVisibleRect.y / ( double )this.channelHeight );
-    int lastVisibleRow = ( int )( ( aVisibleRect.y + aVisibleRect.height ) / ( double )this.channelHeight );
-
-    inc = 0;
+    int inc = 0;
     if ( aDirection < 0 )
     {
       // Scroll up...
-      if ( ( firstVisibleRow > 0 ) && ( lastVisibleRow <= channelCount ) )
+      inc = aVisibleRect.y - channelElements[0].getHeight();
+      if ( inc < 0 )
       {
-        // Scroll to the first fully visible channel row...
-        inc = aVisibleRect.y % this.channelHeight;
-      }
-      if ( inc == 0 )
-      {
-        // All rows are fully visible, scroll an entire row up...
-        inc = this.channelHeight;
+        inc = 0;
       }
       if ( ( aVisibleRect.y - inc ) < 0 )
       {
@@ -810,16 +870,8 @@ public class SignalDiagramModel
     else if ( aDirection > 0 )
     {
       // Scroll down...
-      if ( ( firstVisibleRow >= 0 ) && ( lastVisibleRow < channelCount ) )
-      {
-        // Scroll to the first fully visible channel row...
-        inc = aVisibleRect.y % this.channelHeight;
-      }
-      if ( inc == 0 )
-      {
-        // All rows are fully visible, scroll an entire row up...
-        inc = this.channelHeight;
-      }
+      inc = aVisibleRect.y + channelElements[channelElements.length - 1].getHeight();
+
       int height = aViewDimensions.height;
       if ( ( aVisibleRect.y + aVisibleRect.height + inc ) > height )
       {

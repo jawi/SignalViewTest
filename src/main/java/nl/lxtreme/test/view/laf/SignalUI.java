@@ -201,7 +201,7 @@ public class SignalUI extends ComponentUI
       final int sampleIncr = ( int )Math.max( 1.0, ( 1.0 / zoomFactor ) );
       System.out.printf( "Sample incr = %d px\n", sampleIncr );
 
-      final ChannelElement[] channelElements = model.getChannels( clip.y, clip.height );
+      final ChannelElement[] channelElements = model.getChannelElements( clip.y, clip.height );
       for ( ChannelElement channelElement : channelElements )
       {
         canvas.setColor( Color.YELLOW ); // XXX
