@@ -419,6 +419,11 @@ public class SignalDiagramModel
       {
         continue;
       }
+      if ( yPos > y2 )
+      {
+        // Optimization: no need to continue after the requested end position...
+        break;
+      }
 
       if ( cg.isShowDigitalSignals() )
       {
