@@ -21,7 +21,8 @@
 package nl.lxtreme.test.view.model;
 
 
-import nl.lxtreme.test.model.ChannelGroup.*;
+import nl.lxtreme.test.model.*;
+import nl.lxtreme.test.model.ChannelGroup.ChannelElementType;
 
 
 /**
@@ -32,9 +33,12 @@ public class ChannelElement
   // VARIABLES
 
   private final ChannelElementType type;
+  private final int yPosition;
   private final int height;
-  private final int index;
   private final int mask;
+
+  private Channel channel;
+  private ChannelGroup channelGroup;
 
   // TODO add label, color & font...
 
@@ -47,35 +51,74 @@ public class ChannelElement
    *          the type of this channel element, cannot be <code>null</code>;
    * @param aMask
    *          the mask of channel elements;
+   * @param aYposition
+   *          the Y-position on screen, >= 0;
    * @param aHeight
    *          the height of this channel element, in pixels, >= 0.
    */
-  public ChannelElement( final ChannelElementType aType, final int aMask, final int aHeight )
-  {
-    this( aType, aMask, -1, aHeight );
-  }
-
-  /**
-   * Creates a new ChannelElement instance.
-   * 
-   * @param aType
-   *          the type of this channel element, cannot be <code>null</code>;
-   * @param aMask
-   *          the mask of channel elements;
-   * @param aIndex
-   *          the channel index;
-   * @param aHeight
-   *          the height of this channel element, in pixels, >= 0.
-   */
-  public ChannelElement( final ChannelElementType aType, final int aMask, final int aIndex, final int aHeight )
+  private ChannelElement( final ChannelElementType aType, final int aMask, final int aYposition, final int aHeight )
   {
     this.type = aType;
-    this.height = aHeight;
     this.mask = aMask;
-    this.index = aIndex;
+    this.yPosition = aYposition;
+    this.height = aHeight;
   }
 
   // METHODS
+
+  /**
+   * Factory method for creating a {@link ChannelElement} instance representing
+   * an analog scope for a channel group.
+   * 
+   * @param aChannelGroup
+   *          the channel group to create a channel element for, cannot be
+   *          <code>null</code>.
+   * @return a new {@link ChannelElement} instance, never <code>null</code>.
+   */
+  public static ChannelElement createAnalogScopeElement( final ChannelGroup aChannelGroup, final int aYposition,
+      final int aHeight )
+  {
+    final ChannelElement channelElement = new ChannelElement( ChannelElementType.ANALOG_SIGNAL,
+        aChannelGroup.getMask(), aYposition, aHeight );
+    channelElement.channelGroup = aChannelGroup;
+    return channelElement;
+  }
+
+  /**
+   * Factory method for creating a {@link ChannelElement} instance representing
+   * a data values row for a channel group.
+   * 
+   * @param aChannelGroup
+   *          the channel group to create a channel element for, cannot be
+   *          <code>null</code>.
+   * @return a new {@link ChannelElement} instance, never <code>null</code>.
+   */
+  public static ChannelElement createDataValueElement( final ChannelGroup aChannelGroup, final int aYposition,
+      final int aHeight )
+  {
+    final ChannelElement channelElement = new ChannelElement( ChannelElementType.DATA_VALUES, aChannelGroup.getMask(),
+        aYposition, aHeight );
+    channelElement.channelGroup = aChannelGroup;
+    return channelElement;
+  }
+
+  /**
+   * Factory method for creating a {@link ChannelElement} instance representing
+   * a digital signal.
+   * 
+   * @param aChannel
+   *          the channel to create a channel element for, cannot be
+   *          <code>null</code>.
+   * @return a new {@link ChannelElement} instance, never <code>null</code>.
+   */
+  public static ChannelElement createDigitalSignalElement( final Channel aChannel, final int aYposition,
+      final int aHeight )
+  {
+    final ChannelElement channelElement = new ChannelElement( ChannelElementType.DIGITAL_SIGNALS, aChannel.getMask(),
+        aYposition, aHeight );
+    channelElement.channel = aChannel;
+    return channelElement;
+  }
 
   /**
    * {@inheritDoc}
@@ -97,12 +140,40 @@ public class ChannelElement
     {
       return false;
     }
+    if ( this.yPosition != other.yPosition )
+    {
+      return false;
+    }
     if ( this.type != other.type )
     {
       return false;
     }
 
     return true;
+  }
+
+  /**
+   * @return the channel
+   */
+  public Channel getChannel()
+  {
+    if ( this.channel == null )
+    {
+      throw new NullPointerException();
+    }
+    return this.channel;
+  }
+
+  /**
+   * @return the channelGroup
+   */
+  public ChannelGroup getChannelGroup()
+  {
+    if ( this.channelGroup == null )
+    {
+      throw new NullPointerException();
+    }
+    return this.channelGroup;
   }
 
   /**
@@ -116,16 +187,6 @@ public class ChannelElement
   }
 
   /**
-   * Returns the index of the channel.
-   * 
-   * @return the channel index, >= 0.
-   */
-  public int getIndex()
-  {
-    return this.index;
-  }
-
-  /**
    * Returns the current value of mask.
    * 
    * @return the mask
@@ -133,6 +194,16 @@ public class ChannelElement
   public int getMask()
   {
     return this.mask;
+  }
+
+  /**
+   * Returns the Y-position of this channel element on screen.
+   * 
+   * @return the Y-position, >= 0.
+   */
+  public int getYposition()
+  {
+    return this.yPosition;
   }
 
   /**

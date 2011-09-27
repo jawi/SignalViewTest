@@ -168,6 +168,13 @@ public class SignalUI extends ComponentUI
     try
     {
       final Rectangle clip = canvas.getClipBounds();
+
+      final ChannelElement[] channelElements = model.getChannelElements( clip.y, clip.height );
+      if ( channelElements.length == 0 )
+      {
+        return; // XXX
+      }
+
       // Tell Swing how we would like to render ourselves...
       canvas.setRenderingHints( createSignalRenderingHints() );
 
@@ -176,7 +183,6 @@ public class SignalUI extends ComponentUI
 
       final int[] values = model.getDataValues();
       final long[] timestamps = model.getTimestamps();
-      final int dataWidth = model.getSampleWidth();
 
       final int startIdx = model.getStartIndex( clip );
       final int endIdx = model.getEndIndex( clip, values.length );
@@ -189,26 +195,19 @@ public class SignalUI extends ComponentUI
       final int signalOffset = model.getSignalOffset();
       final double zoomFactor = model.getZoomFactor();
 
-      final ChannelGroupManager channelGroupManager = model.getChannelGroupManager();
-
-      // Determine which bits of the actual signal should be drawn...
-      int startBit = ( int )Math.max( 0, Math.round( clip.y / ( double )channelHeight ) );
-      int endBit = ( int )Math.min( dataWidth, Math.round( ( clip.y + clip.height ) / ( double )channelHeight ) ) - 1;
-
       // Start drawing at the correct position in the clipped region...
-      canvas.translate( 0, ( startBit * channelHeight ) + signalOffset );
+      canvas.translate( 0, channelElements[0].getYposition() + signalOffset );
 
       final int sampleIncr = ( int )Math.max( 1.0, ( 1.0 / zoomFactor ) );
       System.out.printf( "Sample incr = %d px\n", sampleIncr );
 
-      final ChannelElement[] channelElements = model.getChannelElements( clip.y, clip.height );
       for ( ChannelElement channelElement : channelElements )
       {
         canvas.setColor( Color.YELLOW ); // XXX
 
         if ( channelElement.isDigitalChannel() )
         {
-          final Channel channel = channelGroupManager.getChannelByIndex( channelElement.getIndex() );
+          final Channel channel = channelElement.getChannel();
           if ( !channel.isEnabled() )
           {
             // Forced zero'd channel is *very* easy to draw...

@@ -31,7 +31,6 @@ import javax.swing.event.*;
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.model.Cursor;
-import nl.lxtreme.test.model.ChannelGroup.*;
 import nl.lxtreme.test.view.*;
 
 
@@ -423,14 +422,12 @@ public class SignalDiagramModel
 
       if ( cg.isShowDigitalSignals() )
       {
-        final List<Channel> channels = Arrays.asList( cg.getChannels() );
-        for ( Channel channel : channels )
+        for ( Channel channel : cg.getChannels() )
         {
           // Does this individual channel fit?
           if ( ( yPos >= y1 ) && ( yPos <= y2 ) )
           {
-            elements.add( new ChannelElement( ChannelElementType.DIGITAL_SIGNALS, channel.getMask(),
-                channel.getIndex(), channelHeight ) );
+            elements.add( ChannelElement.createDigitalSignalElement( channel, yPos, channelHeight ) );
           }
           yPos += channelHeight;
         }
@@ -440,8 +437,7 @@ public class SignalDiagramModel
       {
         if ( ( yPos >= y1 ) && ( yPos <= y2 ) )
         {
-          elements.add( new ChannelElement( ChannelElementType.DATA_VALUES, cg.getMask(), cg.getChannelCount(),
-              dataValueRowHeight ) );
+          elements.add( ChannelElement.createDataValueElement( cg, yPos, dataValueRowHeight ) );
         }
         yPos += dataValueRowHeight;
       }
@@ -449,8 +445,7 @@ public class SignalDiagramModel
       {
         if ( ( yPos >= y1 ) && ( yPos <= y2 ) )
         {
-          elements.add( new ChannelElement( ChannelElementType.ANALOG_SIGNAL, cg.getMask(), cg.getChannelCount(),
-              scopeHeight ) );
+          elements.add( ChannelElement.createAnalogScopeElement( cg, yPos, scopeHeight ) );
         }
         yPos += scopeHeight;
       }
@@ -850,33 +845,49 @@ public class SignalDiagramModel
   public int getVerticalBlockIncrement( final Dimension aViewDimensions, final Rectangle aVisibleRect,
       final int aDirection )
   {
-    final ChannelElement[] channelElements = getChannelElements( aVisibleRect.y, aVisibleRect.height );
+    ChannelElement[] channelElements = getChannelElements( aVisibleRect.y, aVisibleRect.height );
 
     int inc = 0;
-    if ( aDirection < 0 )
+    if ( channelElements.length > 0 )
     {
-      // Scroll up...
-      inc = aVisibleRect.y - channelElements[0].getHeight();
-      if ( inc < 0 )
-      {
-        inc = 0;
-      }
-      if ( ( aVisibleRect.y - inc ) < 0 )
-      {
-        // Make sure that we do not scroll beyond the first row...
-        inc = aVisibleRect.y;
-      }
-    }
-    else if ( aDirection > 0 )
-    {
-      // Scroll down...
-      inc = aVisibleRect.y + channelElements[channelElements.length - 1].getHeight();
+      int height = channelElements[0].getHeight();
+      int yPos = channelElements[0].getYposition();
 
-      int height = aViewDimensions.height;
-      if ( ( aVisibleRect.y + aVisibleRect.height + inc ) > height )
+      if ( aDirection > 0 )
       {
-        // Make sure that we do not scroll beyond the last row...
-        inc = height - aVisibleRect.y - aVisibleRect.height;
+        // Scroll down...
+        inc = ( height - ( aVisibleRect.y - yPos ) );
+      }
+      else if ( aDirection < 0 )
+      {
+        // Scroll up...
+        if ( yPos == aVisibleRect.y )
+        {
+          if ( yPos == 0 )
+          {
+            // The first row is completely visible and it's row 0...
+            return 0;
+          }
+          else
+          {
+            // Row > 0, and completely visible; take the full height of the
+            // row prior to the top row...
+            channelElements = getChannelElements( 0, aVisibleRect.y - 1 );
+            if ( channelElements.length > 0 )
+            {
+              inc = channelElements[channelElements.length - 1].getHeight();
+            }
+          }
+        }
+        else
+        {
+          channelElements = getChannelElements( 0, aVisibleRect.y - 1 );
+          if ( channelElements.length > 0 )
+          {
+            // Make sure the first element is completely shown...
+            inc = aVisibleRect.y - channelElements[channelElements.length - 1].getYposition();
+          }
+        }
       }
     }
     return inc;

@@ -101,6 +101,13 @@ public class ChannelLabelsUI extends ComponentUI
     try
     {
       final Rectangle clip = canvas.getClipBounds();
+
+      final ChannelElement[] channelElements = model.getChannelElements( clip.y, clip.height );
+      if ( channelElements.length == 0 )
+      {
+        return; // XXX
+      }
+
       // Tell Swing how we would like to render ourselves...
       canvas.setRenderingHints( createRenderingHints() );
 
@@ -116,28 +123,15 @@ public class ChannelLabelsUI extends ComponentUI
       final int textOffsetScope = ( int )( scopeHeight / 2.0 );
 
       final int compWidth = view.getWidth();
-      final int dataWidth = model.getSampleWidth();
-
-      final ChannelGroupManager channelGroupManager = model.getChannelGroupManager();
-
-      // Determine which bits of the actual signal should be drawn...
-      // NOTE: the computation of these two numbers are a tad bit different than
-      // used in SignalUI!
-      // The reason for this is that we want to draw the channel label itself
-      // even when it does not entirely fit on screen, so the user gets a clue
-      // that more channels are to come...
-      int startBit = ( int )Math.max( 0, Math.floor( clip.y / ( double )channelHeight ) );
-      int endBit = ( int )Math.min( dataWidth - 1, Math.round( ( clip.y + clip.height ) / ( double )channelHeight ) );
 
       // Start drawing at the correct position in the clipped region...
-      canvas.translate( 0, ( startBit * channelHeight ) );
+      canvas.translate( 0, channelElements[0].getYposition() );
 
-      final ChannelElement[] channelElements = model.getChannelElements( clip.y, clip.height );
       for ( ChannelElement channelElement : channelElements )
       {
         if ( channelElement.isDigitalChannel() )
         {
-          final Channel channel = channelGroupManager.getChannelByIndex( channelElement.getIndex() );
+          final Channel channel = channelElement.getChannel();
 
           canvas.setFont( model.getLabelFont() );
           canvas.setColor( model.getLabelBackgroundColor() );
