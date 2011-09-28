@@ -251,4 +251,31 @@ public class ChannelElement
   {
     return ( this.type == ChannelElementType.DIGITAL_SIGNALS );
   }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public String toString()
+  {
+    StringBuilder builder = new StringBuilder();
+    builder.append( "ChannelElement [type=" );
+    builder.append( this.type );
+    builder.append( ", yPosition=" );
+    builder.append( this.yPosition );
+    builder.append( ", height=" );
+    builder.append( this.height );
+    if ( this.channel != null )
+    {
+      builder.append( ", channel=" );
+      builder.append( this.channel );
+    }
+    if ( this.channelGroup != null )
+    {
+      builder.append( ", channelGroup=" );
+      builder.append( this.channelGroup );
+    }
+    builder.append( "]" );
+    return builder.toString();
+  }
 }

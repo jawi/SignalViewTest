@@ -24,6 +24,7 @@ import java.awt.*;
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.view.*;
+import nl.lxtreme.test.view.model.SignalDiagramModel.*;
 
 
 /**
@@ -51,6 +52,22 @@ abstract class AbstractViewModel
   // METHODS
 
   /**
+   * Returns all channels the given range of all visible channel groups.
+   * 
+   * @param aY
+   *          the screen Y-coordinate;
+   * @param aHeight
+   *          the screen height.
+   * @return an array of channels, never <code>null</code>.
+   */
+  public ChannelElement[] getChannelElements( final int aY, final int aHeight )
+  {
+    // Return all channel elements within the given boundaries, even if they do
+    // not completely fit...
+    return getSignalDiagramModel().getChannelElements( aY, aHeight, ChannelElementMeasurer.LOOSE_MEASURER );
+  }
+
+  /**
    * @return
    */
   public final ChannelGroupManager getChannelGroupManager()
@@ -64,20 +81,6 @@ abstract class AbstractViewModel
   public int getChannelHeight()
   {
     return getSignalDiagramModel().getChannelHeight();
-  }
-
-  /**
-   * Returns all channels the given range of all visible channel groups.
-   * 
-   * @param aY
-   *          the screen Y-coordinate;
-   * @param aHeight
-   *          the screen height.
-   * @return an array of channels, never <code>null</code>.
-   */
-  public ChannelElement[] getChannelElements( final int aY, final int aHeight )
-  {
-    return getSignalDiagramModel().getChannelElements( aY, aHeight );
   }
 
   /**
