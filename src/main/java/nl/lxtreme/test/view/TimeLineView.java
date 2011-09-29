@@ -106,12 +106,12 @@ public class TimeLineView extends AbstractViewLayer implements ICursorChangeList
     final TimeLineViewModel model = getModel();
 
     int cursorPos = model.timestampToCoordinate( aOldCursor.getTimestamp() );
-    int width = getStringWidth( model.getCursorFlagText( aOldCursor.getIndex(), aOldCursor.getTimestamp() ) ) + 10;
-    repaint( new Rectangle( cursorPos - 1, 0, width, visibleHeight ) );
+    int width = getStringWidth( model.getCursorFlagText( aOldCursor.getIndex(), aOldCursor.getTimestamp() ) );
+    repaint( new Rectangle( cursorPos - ( width / 2 ) - 5, 0, width + 10, visibleHeight ) );
 
     cursorPos = model.timestampToCoordinate( aNewCursor.getTimestamp() );
-    width = getStringWidth( model.getCursorFlagText( aNewCursor.getIndex(), aNewCursor.getTimestamp() ) ) + 10;
-    repaint( 0, cursorPos - 1, 0, width, visibleHeight );
+    width = getStringWidth( model.getCursorFlagText( aNewCursor.getIndex(), aNewCursor.getTimestamp() ) );
+    repaint( 0, cursorPos - ( width / 2 ) - 5, 0, width + 10, visibleHeight );
   }
 
   /**

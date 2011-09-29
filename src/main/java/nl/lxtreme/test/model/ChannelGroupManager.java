@@ -139,7 +139,7 @@ public final class ChannelGroupManager implements IDataModelChangeListener
       throw new IllegalStateException( "No channels left!" );
     }
 
-    ChannelGroup result = new ChannelGroup( aName );
+    ChannelGroup result = new ChannelGroup( this.channelGroups.size(), aName );
     // For convenience, add the first available channel to this group...
     result.addChannel( firstAvailableChannel );
 

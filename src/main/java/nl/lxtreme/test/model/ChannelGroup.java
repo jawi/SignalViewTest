@@ -36,8 +36,8 @@ public class ChannelGroup
   {
     // CONSTANTS
 
-    DIGITAL_SIGNALS( 1 ), //
-    DATA_VALUES( 2 ), //
+    DIGITAL_SIGNAL( 1 ), //
+    GROUP_SUMMARY( 2 ), //
     ANALOG_SIGNAL( 4 ); //
 
     // VARIABLES
@@ -74,8 +74,14 @@ public class ChannelGroup
 
   private final Collection<Channel> channels;
 
+  private int index;
   private int mask;
+  /** The name of this group. */
   private String name;
+  /** The label used for the group summary. */
+  private String summaryLabel;
+  /** The label used for the analog signal. */
+  private String analogSignalLabel;
   private boolean visible;
   private int viewOptions;
 
@@ -84,25 +90,28 @@ public class ChannelGroup
   /**
    * Creates a new ChannelGroup instance.
    * 
+   * @param aIndex
+   *          the index of this channel group, >= 0;
    * @param aName
    *          the name of this channel group, cannot be <code>null</code> or
    *          empty.
    * @throws IllegalArgumentException
    *           in case the given name was <code>null</code> or empty.
    */
-  ChannelGroup( final String aName )
+  ChannelGroup( final int aIndex, final String aName )
   {
     if ( ( aName == null ) || aName.trim().isEmpty() )
     {
       throw new IllegalArgumentException( "Name cannot be null or empty!" );
     }
 
-    this.mask = 0;
+    this.index = aIndex;
     this.name = aName;
+    this.mask = 0;
     // By default visible...
     this.visible = true;
     // By default only the digital signals are shown...
-    this.viewOptions = ChannelElementType.DIGITAL_SIGNALS.mask | ChannelElementType.DATA_VALUES.mask
+    this.viewOptions = ChannelElementType.DIGITAL_SIGNAL.mask | ChannelElementType.GROUP_SUMMARY.mask
         | ChannelElementType.ANALOG_SIGNAL.mask;
 
     this.channels = new ArrayList<Channel>();
@@ -141,11 +150,6 @@ public class ChannelGroup
     // Make sure the channel links back to this channel group...
     aChannel.setChannelGroup( this );
 
-    if ( !aChannel.hasName() )
-    {
-      aChannel.setLabel( getChannelName( aChannel ) );
-    }
-
     // Update our local mask...
     this.mask |= aChannel.getMask();
   }
@@ -179,6 +183,20 @@ public class ChannelGroup
     }
 
     return true;
+  }
+
+  /**
+   * Returns the label used for the analog scope of this channel group.
+   * 
+   * @return the label for the analog scope, can be <code>null</code>.
+   */
+  public String getAnalogSignalLabel()
+  {
+    if ( ( this.analogSignalLabel == null ) || this.analogSignalLabel.trim().isEmpty() )
+    {
+      return getDefaultAnalogSignalName();
+    }
+    return this.analogSignalLabel;
   }
 
   /**
@@ -263,6 +281,28 @@ public class ChannelGroup
   }
 
   /**
+   * Returns the label used for the group summary of this channel group.
+   * 
+   * @return the label for the group summary, can be <code>null</code>.
+   */
+  public String getGroupSummaryLabel()
+  {
+    if ( ( this.summaryLabel == null ) || this.summaryLabel.trim().isEmpty() )
+    {
+      return getDefaultGroupSummaryName();
+    }
+    return this.summaryLabel;
+  }
+
+  /**
+   * @return the index
+   */
+  public int getIndex()
+  {
+    return this.index;
+  }
+
+  /**
    * Returns the bitwise mask for all channels that belong to this channel
    * group.
    * 
@@ -338,17 +378,6 @@ public class ChannelGroup
   }
 
   /**
-   * Returns whether we should show data values in this group.
-   * 
-   * @return <code>true</code> if the data values are to be shown,
-   *         <code>false</code> to hide them.
-   */
-  public boolean isShowDataValues()
-  {
-    return ( this.viewOptions & ChannelElementType.DATA_VALUES.getMask() ) != 0;
-  }
-
-  /**
    * Returns whether we should show digital signals in this group.
    * 
    * @return <code>true</code> if the individual digital signals are to be
@@ -356,7 +385,18 @@ public class ChannelGroup
    */
   public boolean isShowDigitalSignals()
   {
-    return ( this.viewOptions & ChannelElementType.DIGITAL_SIGNALS.getMask() ) != 0;
+    return ( this.viewOptions & ChannelElementType.DIGITAL_SIGNAL.getMask() ) != 0;
+  }
+
+  /**
+   * Returns whether we should show the summary for this group.
+   * 
+   * @return <code>true</code> if the summary is to be shown, <code>false</code>
+   *         to hide this summary.
+   */
+  public boolean isShowGroupSummary()
+  {
+    return ( this.viewOptions & ChannelElementType.GROUP_SUMMARY.getMask() ) != 0;
   }
 
   /**
@@ -393,6 +433,48 @@ public class ChannelGroup
       // Remove channel's mask from our local mask...
       this.mask &= ~aChannel.getMask();
     }
+  }
+
+  /**
+   * Sets the label for the analog signal of this channel group.
+   * 
+   * @param aSignalLabel
+   *          the label to set for the analog signal of this channel group.
+   */
+  public void setAnalogSignalLabel( final String aSignalLabel )
+  {
+    this.analogSignalLabel = aSignalLabel;
+  }
+
+  /**
+   * Sets whether or not the data values are to be shown.
+   * 
+   * @param aShowSummary
+   *          <code>true</code> to show the group summary, <code>false</code> to
+   *          hide it.
+   */
+  public void setGroupSummary( final boolean aShowSummary )
+  {
+    int mask = ChannelElementType.GROUP_SUMMARY.getMask();
+    if ( aShowSummary )
+    {
+      this.viewOptions |= mask;
+    }
+    else
+    {
+      this.viewOptions &= ~mask;
+    }
+  }
+
+  /**
+   * Sets the label for the group summary of this channel group.
+   * 
+   * @param aSummaryLabel
+   *          the label to set for the group summary.
+   */
+  public void setGroupSummaryLabel( final String aSummaryLabel )
+  {
+    this.summaryLabel = aSummaryLabel;
   }
 
   /**
@@ -433,26 +515,6 @@ public class ChannelGroup
   }
 
   /**
-   * Sets whether or not the data values are to be shown.
-   * 
-   * @param aShowDataValues
-   *          <code>true</code> to show the data values, <code>false</code> to
-   *          hide it.
-   */
-  public void setShowDataValues( final boolean aShowDataValues )
-  {
-    int mask = ChannelElementType.DATA_VALUES.getMask();
-    if ( aShowDataValues )
-    {
-      this.viewOptions |= mask;
-    }
-    else
-    {
-      this.viewOptions &= ~mask;
-    }
-  }
-
-  /**
    * Sets whether or not the individual digital signals are to be shown.
    * 
    * @param aShowDigitalSignals
@@ -461,7 +523,7 @@ public class ChannelGroup
    */
   public void setShowDigitalSignals( final boolean aShowDigitalSignals )
   {
-    int mask = ChannelElementType.DIGITAL_SIGNALS.getMask();
+    int mask = ChannelElementType.DIGITAL_SIGNAL.getMask();
     if ( aShowDigitalSignals )
     {
       this.viewOptions |= mask;
@@ -503,15 +565,31 @@ public class ChannelGroup
   }
 
   /**
-   * Crafts a proposed channel name for use when a channel is added to this
-   * channel group.
-   * 
-   * @param aChannel
-   *          the channel to add, cannot be <code>null</code>.
-   * @return a proposed channel name, never <code>null</code>.
+   * @param aIndex
+   *          the index to set
    */
-  private String getChannelName( final Channel aChannel )
+  final void setIndex( final int aIndex )
   {
-    return String.format( "%s-%d", getName(), Integer.valueOf( aChannel.getIndex() + 1 ) );
+    this.index = aIndex;
+  }
+
+  /**
+   * Crafts a default name for use when an analog scope has no label set.
+   * 
+   * @return an analog scope name, never <code>null</code>.
+   */
+  private String getDefaultAnalogSignalName()
+  {
+    return String.format( "Scope-%d", Integer.valueOf( getIndex() + 1 ) );
+  }
+
+  /**
+   * Crafts a default name for use when a group summary has no label set.
+   * 
+   * @return a group summary name, never <code>null</code>.
+   */
+  private String getDefaultGroupSummaryName()
+  {
+    return String.format( "Summary-%d", Integer.valueOf( getIndex() + 1 ) );
   }
 }

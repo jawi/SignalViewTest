@@ -42,24 +42,6 @@ public class SignalDiagramModel
   // INNER TYPES
 
   /**
-   * Defines a measurer for channel elements.
-   */
-  public static interface ChannelElementMeasurer
-  {
-    public static final ChannelElementMeasurer STRICT_MEASURER = new StrictChannelElementMeasurer();
-    public static final ChannelElementMeasurer LOOSE_MEASURER = new LooseChannelElementMeasurer();
-
-    /**
-     * @param aYpos
-     * @param aHeight
-     * @param aMinY
-     * @param aMaxY
-     * @return
-     */
-    boolean channelElementFits( int aYpos, int aHeight, int aMinY, int aMaxY );
-  }
-
-  /**
    * Denotes where to draw the signal, at the top, center or bottom of the
    * channel.
    */
@@ -69,17 +51,35 @@ public class SignalDiagramModel
   }
 
   /**
+   * Defines a measurer for channel elements.
+   */
+  public static interface SignalElementMeasurer
+  {
+    public static final SignalElementMeasurer STRICT_MEASURER = new StrictChannelElementMeasurer();
+    public static final SignalElementMeasurer LOOSE_MEASURER = new LooseChannelElementMeasurer();
+
+    /**
+     * @param aYpos
+     * @param aHeight
+     * @param aMinY
+     * @param aMaxY
+     * @return
+     */
+    boolean signalElementFits( int aYpos, int aHeight, int aMinY, int aMaxY );
+  }
+
+  /**
    * Provides a loose channel element measurer, which selects channel elements
    * that completely fit within the boundaries, and also channel elements that
    * partly fit within the boundaries.
    */
-  private static class LooseChannelElementMeasurer implements ChannelElementMeasurer
+  private static class LooseChannelElementMeasurer implements SignalElementMeasurer
   {
     /**
      * {@inheritDoc}
      */
     @Override
-    public boolean channelElementFits( final int aYpos, final int aHeight, final int aMinY, final int aMaxY )
+    public boolean signalElementFits( final int aYpos, final int aHeight, final int aMinY, final int aMaxY )
     {
       final int y1 = aYpos;
       final int y2 = y1 + aHeight;
@@ -91,13 +91,13 @@ public class SignalDiagramModel
    * Provides a strict channel element measurer, which only selects channel
    * elements that completely fit within the boundaries.
    */
-  private static class StrictChannelElementMeasurer implements ChannelElementMeasurer
+  private static class StrictChannelElementMeasurer implements SignalElementMeasurer
   {
     /**
      * {@inheritDoc}
      */
     @Override
-    public boolean channelElementFits( final int aYpos, final int aHeight, final int aMinY, final int aMaxY )
+    public boolean signalElementFits( final int aYpos, final int aHeight, final int aMinY, final int aMaxY )
     {
       return ( aYpos >= aMinY ) && ( aYpos <= aMaxY );
     }
@@ -123,7 +123,7 @@ public class SignalDiagramModel
   private int signalHeight;
   private int channelHeight;
   private int scopeHeight;
-  private int dataValueRowHeight;
+  private int groupSummaryHeight;
   private int mode;
   private SignalAlignment signalAlignment;
 
@@ -158,7 +158,7 @@ public class SignalDiagramModel
 
     this.signalHeight = 20;
     this.channelHeight = 40;
-    this.dataValueRowHeight = 24;
+    this.groupSummaryHeight = 24;
     this.scopeHeight = 96;
 
     this.signalAlignment = SignalAlignment.CENTER;
@@ -311,26 +311,6 @@ public class SignalDiagramModel
   }
 
   /**
-   * Finds a channel based on a given screen coordinate.
-   * 
-   * @param aPoint
-   *          the coordinate to find the channel for, cannot be
-   *          <code>null</code>.
-   * @return the channel if found, or <code>null</code> if no channel was found.
-   */
-  public Channel findChannel( final Point aPoint )
-  {
-    final int virtualChannelIdx = ( aPoint.y / this.channelHeight );
-    if ( ( virtualChannelIdx < 0 ) || ( virtualChannelIdx > ( this.sampleWidth - 1 ) ) )
-    {
-      // Trivial reject: invalid virtual channel...
-      return null;
-    }
-
-    return this.channelGroupManager.getChannelByVirtualIndex( virtualChannelIdx );
-  }
-
-  /**
    * Finds a cursor based on a given screen coordinate.
    * 
    * @param aPoint
@@ -353,6 +333,25 @@ public class SignalDiagramModel
     }
 
     return null;
+  }
+
+  /**
+   * Finds a channel based on a given screen coordinate.
+   * 
+   * @param aPoint
+   *          the coordinate to find the channel for, cannot be
+   *          <code>null</code>.
+   * @return the channel if found, or <code>null</code> if no channel was found.
+   */
+  public SignalElement findSignalElement( final Point aPoint )
+  {
+    final SignalElement[] channelElements = getSignalElements( aPoint.y, aPoint.y + 1,
+        SignalElementMeasurer.LOOSE_MEASURER );
+    if ( channelElements.length == 0 )
+    {
+      return null;
+    }
+    return channelElements[0];
   }
 
   /**
@@ -410,9 +409,9 @@ public class SignalDiagramModel
         height += getChannelHeight() * cg.getChannelCount();
       }
       // Always keep these heights into account...
-      if ( cg.isShowDataValues() )
+      if ( cg.isShowGroupSummary() )
       {
-        height += getDataValueRowHeight();
+        height += getGroupSummaryHeight();
       }
       if ( cg.isShowAnalogSignal() )
       {
@@ -444,73 +443,6 @@ public class SignalDiagramModel
   public double getCaptureLength()
   {
     return getAbsoluteLength() / ( double )getSampleRate();
-  }
-
-  /**
-   * Returns all channels the given range of all visible channel groups.
-   * 
-   * @param aY
-   *          the screen Y-coordinate;
-   * @param aHeight
-   *          the screen height.
-   * @return an array of channels, never <code>null</code>.
-   */
-  public ChannelElement[] getChannelElements( final int aY, final int aHeight, final ChannelElementMeasurer aMeasurer )
-  {
-    final List<ChannelElement> elements = new ArrayList<ChannelElement>();
-
-    final int channelHeight = getChannelHeight();
-    final int dataValueRowHeight = getDataValueRowHeight();
-    final int scopeHeight = getScopeHeight();
-
-    final int yMin = aY;
-    final int yMax = aHeight + aY;
-
-    int yPos = 0;
-    for ( ChannelGroup cg : getChannelGroupManager().getChannelGroups() )
-    {
-      if ( !cg.isVisible() )
-      {
-        continue;
-      }
-      if ( yPos > yMax )
-      {
-        // Optimization: no need to continue after the requested end position...
-        break;
-      }
-
-      if ( cg.isShowDigitalSignals() )
-      {
-        for ( Channel channel : cg.getChannels() )
-        {
-          // Does this individual channel fit?
-          if ( aMeasurer.channelElementFits( yPos, channelHeight, yMin, yMax ) )
-          {
-            elements.add( ChannelElement.createDigitalSignalElement( channel, yPos, channelHeight ) );
-          }
-          yPos += channelHeight;
-        }
-      }
-      // Always keep these heights into account...
-      if ( cg.isShowDataValues() )
-      {
-        if ( aMeasurer.channelElementFits( yPos, dataValueRowHeight, yMin, yMax ) )
-        {
-          elements.add( ChannelElement.createDataValueElement( cg, yPos, dataValueRowHeight ) );
-        }
-        yPos += dataValueRowHeight;
-      }
-      if ( cg.isShowAnalogSignal() )
-      {
-        if ( aMeasurer.channelElementFits( yPos, scopeHeight, yMin, yMax ) )
-        {
-          elements.add( ChannelElement.createAnalogScopeElement( cg, yPos, scopeHeight ) );
-        }
-        yPos += scopeHeight;
-      }
-    }
-
-    return elements.toArray( new ChannelElement[elements.size()] );
   }
 
   /**
@@ -548,19 +480,7 @@ public class SignalDiagramModel
    */
   public String getCursorLabel( final int aCursorIdx )
   {
-    if ( ( aCursorIdx < 0 ) || ( aCursorIdx > this.cursors.length ) )
-    {
-      throw new IllegalArgumentException( "Invalid cursor index!" );
-    }
-    return this.cursors[aCursorIdx].getLabel();
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public int getDataValueRowHeight()
-  {
-    return this.dataValueRowHeight;
+    return getCursor( aCursorIdx ).getLabel();
   }
 
   /**
@@ -578,6 +498,14 @@ public class SignalDiagramModel
     double start = visibleRect.x / this.zoomFactor;
     double end = ( visibleRect.x + visibleRect.width ) / this.zoomFactor;
     return ( end - start ) / getSampleRate();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public int getGroupSummaryHeight()
+  {
+    return this.groupSummaryHeight;
   }
 
   /**
@@ -669,6 +597,83 @@ public class SignalDiagramModel
   }
 
   /**
+   * Returns all signal elements the given range of all visible channel groups.
+   * 
+   * @param aY
+   *          the screen Y-coordinate;
+   * @param aHeight
+   *          the screen height;
+   * @param aMeasurer
+   *          the measurer to use to determine whether or not a signal element
+   *          fits in the given dimensions.
+   * @return an array of channels, never <code>null</code>.
+   */
+  public SignalElement[] getSignalElements( final int aY, final int aHeight, final SignalElementMeasurer aMeasurer )
+  {
+    final List<SignalElement> elements = new ArrayList<SignalElement>();
+
+    final int channelHeight = getChannelHeight();
+    final int groupSummaryHeight = getGroupSummaryHeight();
+    final int scopeHeight = getScopeHeight();
+    final int signalGroupHeight = 20; // XXX
+
+    final int yMin = aY;
+    final int yMax = aHeight + aY;
+
+    int yPos = 0;
+    for ( ChannelGroup cg : getChannelGroupManager().getChannelGroups() )
+    {
+      if ( !cg.isVisible() )
+      {
+        continue;
+      }
+      if ( yPos > yMax )
+      {
+        // Optimization: no need to continue after the requested end position...
+        break;
+      }
+
+      if ( aMeasurer.signalElementFits( yPos, signalGroupHeight, yMin, yMax ) )
+      {
+        elements.add( SignalElement.createSignalGroupElement( cg, yPos, signalGroupHeight ) );
+      }
+      yPos += signalGroupHeight;
+
+      if ( cg.isShowDigitalSignals() )
+      {
+        for ( Channel channel : cg.getChannels() )
+        {
+          // Does this individual channel fit?
+          if ( aMeasurer.signalElementFits( yPos, channelHeight, yMin, yMax ) )
+          {
+            elements.add( SignalElement.createDigitalSignalElement( channel, yPos, channelHeight ) );
+          }
+          yPos += channelHeight;
+        }
+      }
+      // Always keep these heights into account...
+      if ( cg.isShowGroupSummary() )
+      {
+        if ( aMeasurer.signalElementFits( yPos, groupSummaryHeight, yMin, yMax ) )
+        {
+          elements.add( SignalElement.createGroupSummaryElement( cg, yPos, groupSummaryHeight ) );
+        }
+        yPos += groupSummaryHeight;
+      }
+      if ( cg.isShowAnalogSignal() )
+      {
+        if ( aMeasurer.signalElementFits( yPos, scopeHeight, yMin, yMax ) )
+        {
+          elements.add( SignalElement.createAnalogScopeElement( cg, yPos, scopeHeight ) );
+        }
+        yPos += scopeHeight;
+      }
+    }
+
+    return elements.toArray( new SignalElement[elements.size()] );
+  }
+
+  /**
    * @return
    */
   public int getSignalHeight()
@@ -694,13 +699,14 @@ public class SignalDiagramModel
     final double refTime = ( ( SignalHoverInfo.TIMESTAMP_FACTOR * aPoint.x ) / this.zoomFactor )
         / ( SignalHoverInfo.TIMESTAMP_FACTOR * this.sampleRate );
 
-    final Channel channel = findChannel( aPoint );
-    if ( channel == null )
+    final SignalElement signalElement = findSignalElement( aPoint );
+    if ( ( signalElement == null ) || !signalElement.isDigitalSignal() )
     {
-      // Trivial reject: invalid virtual channel...
+      // Trivial reject: no digital signal, or not above any channel...
       return null;
     }
 
+    final Channel channel = signalElement.getChannel();
     final int realChannelIdx = channel.getIndex();
     final String channelLabel = channel.getLabel();
 
@@ -774,7 +780,7 @@ public class SignalDiagramModel
     final Rectangle rect = new Rectangle();
     rect.x = ( int )( getZoomFactor() * ts );
     rect.width = ( int )( getZoomFactor() * ( te - ts ) );
-    rect.y = ( channel.getVirtualIndex() * this.channelHeight ) + getSignalOffset();
+    rect.y = signalElement.getYposition() + getSignalOffset();
     rect.height = this.signalHeight;
 
     // The position where the "other" signal transition should be...
@@ -904,18 +910,18 @@ public class SignalDiagramModel
   public int getVerticalBlockIncrement( final Dimension aViewDimensions, final Rectangle aVisibleRect,
       final int aDirection )
   {
-    final ChannelElementMeasurer strictMeasurer = ChannelElementMeasurer.STRICT_MEASURER;
-    ChannelElement[] channelElements = getChannelElements( aVisibleRect.y, aVisibleRect.height, strictMeasurer );
+    final SignalElementMeasurer strictMeasurer = SignalElementMeasurer.STRICT_MEASURER;
+    SignalElement[] signalElements = getSignalElements( aVisibleRect.y, aVisibleRect.height, strictMeasurer );
 
     int inc = 0;
-    if ( channelElements.length > 0 )
+    if ( signalElements.length > 0 )
     {
-      int yPos = channelElements[0].getYposition();
+      int yPos = signalElements[0].getYposition();
 
       if ( aDirection > 0 )
       {
         // Scroll down...
-        int height = channelElements[0].getHeight();
+        int height = signalElements[0].getHeight();
         inc = ( height - ( aVisibleRect.y - yPos ) );
         if ( inc <= 0 )
         {
@@ -936,20 +942,20 @@ public class SignalDiagramModel
           {
             // Row > 0, and completely visible; take the full height of the
             // row prior to the top row...
-            channelElements = getChannelElements( 0, aVisibleRect.y - 1, strictMeasurer );
-            if ( channelElements.length > 0 )
+            signalElements = getSignalElements( 0, aVisibleRect.y - 1, strictMeasurer );
+            if ( signalElements.length > 0 )
             {
-              inc = channelElements[channelElements.length - 1].getHeight();
+              inc = signalElements[signalElements.length - 1].getHeight();
             }
           }
         }
         else
         {
-          channelElements = getChannelElements( 0, aVisibleRect.y - 1, strictMeasurer );
-          if ( channelElements.length > 0 )
+          signalElements = getSignalElements( 0, aVisibleRect.y - 1, strictMeasurer );
+          if ( signalElements.length > 0 )
           {
             // Make sure the first element is completely shown...
-            inc = aVisibleRect.y - channelElements[channelElements.length - 1].getYposition();
+            inc = aVisibleRect.y - signalElements[signalElements.length - 1].getYposition();
           }
         }
       }
@@ -1288,7 +1294,7 @@ public class SignalDiagramModel
    */
   public void setDataValueRowHeight( final int aHeight )
   {
-    this.dataValueRowHeight = aHeight;
+    this.groupSummaryHeight = aHeight;
   }
 
   /**

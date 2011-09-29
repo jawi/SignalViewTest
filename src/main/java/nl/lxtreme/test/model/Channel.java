@@ -150,12 +150,17 @@ public class Channel implements Comparable<Channel>
   }
 
   /**
-   * Returns the (user defined) label for this channel.
+   * Returns the (user defined) label for this channel. If no label is set for
+   * this channel, this method will return a default name.
    * 
    * @return a label, can be <code>null</code>.
    */
   public String getLabel()
   {
+    if ( ( this.label == null ) || this.label.trim().isEmpty() )
+    {
+      return getDefaultName();
+    }
     return this.label;
   }
 
@@ -308,5 +313,15 @@ public class Channel implements Comparable<Channel>
       throw new IllegalStateException( "Channel already belongs to a group!" );
     }
     this.group = aGroup;
+  }
+
+  /**
+   * Crafts a default channel name for use when a channel has no label set.
+   * 
+   * @return a channel name, never <code>null</code>.
+   */
+  private String getDefaultName()
+  {
+    return String.format( "%s-%d", this.group.getName(), Integer.valueOf( getIndex() + 1 ) );
   }
 }

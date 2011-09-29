@@ -31,8 +31,6 @@ import javax.swing.plaf.*;
 import nl.lxtreme.test.model.Cursor;
 import nl.lxtreme.test.view.*;
 import nl.lxtreme.test.view.model.*;
-import nl.lxtreme.test.view.renderer.*;
-import nl.lxtreme.test.view.renderer.Renderer;
 
 
 /**
@@ -42,16 +40,18 @@ public class TimeLineUI extends ComponentUI
 {
   // CONSTANTS
 
+  private static final int PADDING_TOP = 2;
+  private static final int PADDING_LEFT = 3;
+
+  private static final int PADDING_WIDTH = 2 * PADDING_LEFT;
+  private static final int PADDING_HEIGHT = 2 * PADDING_TOP;
+
   /** The horizontal padding for all texts. */
   private static final int TEXT_PADDING_X = 2;
   /** The vertical padding (in px) of the timeline view. */
   private static final int VERTICAL_PADDING = 1;
   /** The (fixed) Y position of the cursors. */
-  private static final int CURSOR_Y_POS = 4;
-
-  // VARIABLES
-
-  private final Renderer cursorRenderer = new CursorFlagRenderer();
+  private static final int CURSOR_Y_POS = 12;
 
   // METHODS
 
@@ -177,7 +177,7 @@ public class TimeLineUI extends ComponentUI
       // Draw the cursor "flags"...
       if ( model.isCursorMode() )
       {
-        paintCursorFlags( model, canvas );
+        paintCursorFlags( model, canvas, aComponent );
       }
     }
     finally
@@ -193,7 +193,7 @@ public class TimeLineUI extends ComponentUI
    * @param aCanvas
    *          the canvas to paint the cursor (flags) on;
    */
-  private void paintCursorFlags( final TimeLineViewModel aModel, final Graphics2D aCanvas )
+  private void paintCursorFlags( final TimeLineViewModel aModel, final Graphics2D aCanvas, final JComponent aComponent )
   {
     for ( int i = 0; i < Cursor.MAX_CURSORS; i++ )
     {
@@ -206,13 +206,33 @@ public class TimeLineUI extends ComponentUI
         continue;
       }
 
-      aCanvas.setColor( aModel.getCursorTextColor( i ) );
-      aCanvas.setBackground( aModel.getCursorColor( i ) );
       aCanvas.setFont( aModel.getCursorFlagFont() );
 
-      this.cursorRenderer.setContext( aModel.getCursorFlagText( i ) );
+      final String flagText = aModel.getCursorFlagText( i );
 
-      this.cursorRenderer.render( aCanvas, x, y );
+      final FontMetrics fm = aCanvas.getFontMetrics();
+      final int flagWidth = fm.stringWidth( flagText ) + PADDING_WIDTH;
+      final int flagHeight = fm.getHeight() + PADDING_HEIGHT;
+
+      final int centerX = ( int )( flagWidth / 2.0 );
+      final int x1 = x - centerX;
+      final int x2 = x + centerX;
+
+      int[] poly_x = new int[] { x1, x2, x2, x + 4, x, x - 4, x1 };
+      int[] poly_y = new int[] { y, y, y + flagHeight, y + flagHeight, aComponent.getHeight(), y + flagHeight,
+          y + flagHeight };
+
+      aCanvas.setColor( Color.BLACK ); // XXX
+      aCanvas.fillPolygon( poly_x, poly_y, poly_x.length );
+
+      aCanvas.setColor( aModel.getCursorColor( i ) );
+      aCanvas.drawPolygon( poly_x, poly_y, poly_x.length );
+
+      final int textXpos = x1 + PADDING_LEFT;
+      final int textYpos = y + fm.getLeading() + fm.getAscent() + PADDING_TOP;
+
+      aCanvas.setColor( aModel.getCursorTextColor( i ) );
+      aCanvas.drawString( flagText, textXpos, textYpos );
     }
   }
 }

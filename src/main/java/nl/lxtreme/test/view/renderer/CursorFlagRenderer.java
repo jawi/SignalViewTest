@@ -109,13 +109,25 @@ public class CursorFlagRenderer extends BaseRenderer
     result.width = flagWidth + 2;
     result.height = clip.height + clip.y;
 
-    aCanvas.setColor( flagColor );
-    aCanvas.fillRect( result.x, result.y, result.width, flagHeight - 1 );
+    final int centerX = ( int )result.getCenterX();
+    int[] poly_x = new int[] { result.x, result.x + flagWidth, result.x + flagWidth, centerX + 4, centerX, centerX - 4,
+        result.x };
+    int[] poly_y = new int[] { result.y, result.y, result.y + flagHeight, result.y + flagHeight, clip.height,
+        result.y + flagHeight, result.y + flagHeight };
 
-    drawCursorLine( aCanvas, clip, result );
+    aCanvas.setColor( Color.BLACK ); // XXX
+    aCanvas.fillPolygon( poly_x, poly_y, poly_x.length );
+
+    aCanvas.setColor( flagColor );
+    aCanvas.drawPolygon( poly_x, poly_y, poly_x.length );
 
     final int textXpos = result.x + PADDING_LEFT;
     final int textYpos = result.y + fm.getLeading() + fm.getAscent() + PADDING_TOP;
+
+    aCanvas.setColor( textColor );
+    aCanvas.drawString( this.cursorFlagText, textXpos, textYpos );
+
+    // drawCursorLine( aCanvas, clip, result );
 
     if ( this.snapCursorPoint != null )
     {
@@ -123,9 +135,6 @@ public class CursorFlagRenderer extends BaseRenderer
       // enlarge the affected area with the snap cursor point...
       result.grow( 4, 4 );
     }
-
-    aCanvas.setColor( textColor );
-    aCanvas.drawString( this.cursorFlagText, textXpos, textYpos );
 
     return result;
   }

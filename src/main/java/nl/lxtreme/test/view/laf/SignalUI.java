@@ -25,7 +25,6 @@ import java.awt.*;
 import javax.swing.*;
 import javax.swing.plaf.*;
 
-import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.model.Cursor;
 import nl.lxtreme.test.view.*;
 import nl.lxtreme.test.view.model.*;
@@ -48,7 +47,6 @@ public class SignalUI extends ComponentUI
 
   // VARIABLES
 
-  private final Renderer cursorRenderer = new CursorFlagRenderer();
   private final Renderer arrowRenderer = new ArrowRenderer();
 
   private volatile boolean listening = true;
@@ -101,22 +99,6 @@ public class SignalUI extends ComponentUI
   }
 
   /**
-   * Returns the Y-position where the cursor (+ flag) should be drawn.
-   * 
-   * @return a Y-position, in the coordinate space of this component.
-   */
-  private static int getYposition( final JComponent aComponent )
-  {
-    int result = 0;
-    if ( SwingUtilities.getAncestorOfClass( JViewport.class, aComponent ) != null )
-    {
-      // negative in order to ensure the flag itself is hidden
-      result = -40;
-    }
-    return result;
-  }
-
-  /**
    * Returns the current value of measurementRect.
    * 
    * @return the measurementRect
@@ -163,198 +145,44 @@ public class SignalUI extends ComponentUI
     final SignalView view = ( SignalView )aComponent;
     final SignalViewModel model = view.getModel();
 
-    Graphics2D canvas = ( Graphics2D )aGraphics.create();
-
     try
     {
-      final Rectangle clip = canvas.getClipBounds();
+      Graphics2D canvas = ( Graphics2D )aGraphics.create();
 
-      final ChannelElement[] channelElements = model.getChannelElements( clip.y, clip.height );
-      if ( channelElements.length == 0 )
+      try
       {
-        return; // XXX
+        final Rectangle clip = canvas.getClipBounds();
+
+        final SignalElement[] signalElements = model.getSignalElements( clip.y, clip.height );
+        if ( signalElements.length > 0 )
+        {
+          paintSignals( canvas, model, signalElements );
+        }
+      }
+      finally
+      {
+        canvas.dispose();
+        canvas = null;
       }
 
-      // Tell Swing how we would like to render ourselves...
-      canvas.setRenderingHints( createSignalRenderingHints() );
-
-      canvas.setBackground( model.getBackgroundColor() );
-      canvas.clearRect( clip.x, clip.y, clip.width, clip.height );
-
-      final int[] values = model.getDataValues();
-      final long[] timestamps = model.getTimestamps();
-
-      final int startIdx = model.getStartIndex( clip );
-      final int endIdx = model.getEndIndex( clip, values.length );
-
-      final int signalHeight = model.getSignalHeight();
-      final int channelHeight = model.getChannelHeight();
-      final int dataValueRowHeight = model.getDataValuesRowHeight();
-      final int scopeHeight = model.getScopeHeight();
-      // Where is the signal to be drawn?
-      final int signalOffset = model.getSignalOffset();
-      final double zoomFactor = model.getZoomFactor();
-
-      // Start drawing at the correct position in the clipped region...
-      canvas.translate( 0, channelElements[0].getYposition() + signalOffset );
-
-      final int sampleIncr = ( int )Math.max( 1.0, ( 1.0 / zoomFactor ) );
-      System.out.printf( "Sample incr = %d px\n", sampleIncr );
-
-      for ( ChannelElement channelElement : channelElements )
-      {
-        canvas.setColor( Color.YELLOW ); // XXX
-
-        if ( channelElement.isDigitalChannel() )
-        {
-          final Channel channel = channelElement.getChannel();
-          if ( !channel.isEnabled() )
-          {
-            // Forced zero'd channel is *very* easy to draw...
-            canvas.setColor( channel.getColor() );
-            canvas.translate( 0, signalHeight );
-            canvas.drawLine( clip.x, 0, clip.x + clip.width, 0 );
-          }
-          else
-          {
-            // "Normal" data set; draw as accurate as possible...
-            canvas.setColor( channel.getColor() );
-
-            final int mask = channel.getMask();
-
-            // Make sure we always start with time 0...
-            long timestamp = timestamps[startIdx];
-            int prevSampleValue = ( values[startIdx] & mask );
-
-            int xValue = ( int )( zoomFactor * timestamp );
-            int yValue = ( prevSampleValue == 0 ? signalHeight : 0 );
-
-            x[0] = xValue;
-            y[0] = yValue;
-            int p = 1;
-
-            for ( int sampleIdx = startIdx + 1; sampleIdx < endIdx; sampleIdx++ )
-            {
-              timestamp = timestamps[sampleIdx];
-              int sampleValue = ( values[sampleIdx] & mask );
-
-              xValue = ( int )( zoomFactor * timestamp );
-
-              if ( prevSampleValue != sampleValue )
-              {
-                x[p] = xValue;
-                y[p] = ( prevSampleValue == 0 ? signalHeight : 0 );
-                p++;
-              }
-
-              x[p] = xValue;
-              y[p] = ( sampleValue == 0 ? signalHeight : 0 );
-              p++;
-
-              prevSampleValue = sampleValue;
-            }
-
-            canvas.drawPolyline( x, y, p );
-          }
-
-          // Advance to the next channel...
-          canvas.translate( 0, channelHeight );
-        }
-
-        // remove the signal offset...
-        canvas.translate( 0, -signalOffset );
-
-        if ( channelElement.isDataValues() )
-        {
-          int mask = channelElement.getMask();
-
-          int prevSampleValue = values[startIdx] & mask;
-          int prevX = ( int )( zoomFactor * timestamps[startIdx] );
-
-          for ( int sampleIdx = startIdx + 1; sampleIdx < endIdx; sampleIdx += sampleIncr )
-          {
-            int sampleValue = ( values[sampleIdx] & mask );
-
-            if ( sampleValue != prevSampleValue )
-            {
-              int x = ( int )( zoomFactor * timestamps[sampleIdx] );
-
-              String text = String.format( "%x", Integer.valueOf( prevSampleValue ) );
-              FontMetrics fm = canvas.getFontMetrics();
-
-              int textWidth = fm.stringWidth( text ) + ( 2 * PADDING_X );
-              int cellWidth = x - prevX;
-              if ( textWidth < cellWidth )
-              {
-                int textXpos = prevX + ( int )( ( cellWidth - textWidth ) / 2.0 );
-                int textYpos = fm.getHeight();
-
-                canvas.drawString( text, textXpos, textYpos );
-              }
-
-              // draw a small line...
-              canvas.drawLine( x, PADDING_Y, x, dataValueRowHeight - PADDING_Y );
-
-              prevX = x;
-            }
-
-            prevSampleValue = sampleValue;
-          }
-
-          canvas.translate( 0, dataValueRowHeight );
-        }
-
-        if ( channelElement.isAnalogSignal() )
-        {
-          int mask = channelElement.getMask();
-          final int trailingZeros = Integer.numberOfTrailingZeros( mask );
-          final int onesCount = Integer.SIZE - Integer.numberOfLeadingZeros( mask ) - trailingZeros;
-          final int maxValue = ( int )( 1L << onesCount );
-          double scaleFactor = scopeHeight / ( maxValue + 1.0 );
-
-          // Make sure we always start with time 0...
-          int p = 0;
-          for ( int sampleIdx = startIdx + sampleIncr; sampleIdx < endIdx; sampleIdx += sampleIncr )
-          {
-            long timestamp = timestamps[sampleIdx - sampleIncr];
-            int sampleValue = 0;
-            for ( int i = sampleIdx - sampleIncr; i < sampleIdx; i++ )
-            {
-              sampleValue += ( ( values[sampleIdx] & mask ) >> trailingZeros );
-            }
-            sampleValue = maxValue - ( sampleValue / sampleIncr );
-
-            x[p] = ( int )( zoomFactor * timestamp );
-            y[p] = ( int )( scaleFactor * sampleValue );
-            p++;
-          }
-
-          canvas.drawPolyline( x, y, p );
-
-          canvas.translate( 0, scopeHeight );
-        }
-
-        // remove the signal offset...
-        canvas.translate( 0, signalOffset );
-      }
+      // Use the *original* graphics object, as the one defined above is
+      // translated to some unknown coordinate system...
+      canvas = ( Graphics2D )aGraphics;
 
       // Draw the cursor "flags"...
       if ( model.isCursorMode() )
       {
-        paintCursorFlags( model, view, canvas, clip );
+        paintCursorFlags( canvas, model, view );
       }
 
       // Draw the measurement stuff...
-      if ( model.isMeasurementMode() && ( this.signalHoverInfo != null ) )
+      if ( model.isMeasurementMode() && SignalHoverInfo.isDefined( this.signalHoverInfo ) )
       {
-        renderMeasurementInfo( model, canvas, this.signalHoverInfo );
+        paintMeasurementArrow( canvas, model, this.signalHoverInfo );
       }
     }
     finally
     {
-      canvas.dispose();
-      canvas = null;
-
       this.listening = true;
     }
   }
@@ -367,9 +195,10 @@ public class SignalUI extends ComponentUI
    * @param aClip
    *          the clip boundaries.
    */
-  private void paintCursorFlags( final SignalViewModel aModel, final JComponent aView, final Graphics2D aCanvas,
-      final Rectangle aClip )
+  private void paintCursorFlags( final Graphics2D aCanvas, final SignalViewModel aModel, final JComponent aView )
   {
+    final Rectangle clip = aCanvas.getClipBounds();
+
     // Tell Swing how we would like to render ourselves...
     aCanvas.setRenderingHints( createCursorRenderingHints() );
 
@@ -377,38 +206,35 @@ public class SignalUI extends ComponentUI
     for ( int i = 0; i < Cursor.MAX_CURSORS; i++ )
     {
       int cursorXpos = aModel.getCursorScreenCoordinate( i );
-      int cursorYpos = getYposition( aView );
 
-      if ( ( cursorXpos < 0 ) || !aClip.contains( cursorXpos, viewYpos ) )
+      if ( ( cursorXpos < 0 ) || !clip.contains( cursorXpos, viewYpos ) )
       {
         // Trivial reject: don't paint undefined cursors, or cursors outside the
         // clip boundaries...
         continue;
       }
 
-      aCanvas.setColor( aModel.getCursorTextColor( i ) );
-      aCanvas.setBackground( aModel.getCursorColor( i ) );
-      aCanvas.setFont( aModel.getCursorFlagFont() );
+      aCanvas.setColor( aModel.getCursorColor( i ) );
 
-      this.cursorRenderer.setContext( aModel.getCursorFlagText( i ) );
-
-      this.cursorRenderer.render( aCanvas, cursorXpos, cursorYpos );
+      aCanvas.drawLine( cursorXpos, clip.y, cursorXpos, clip.y + clip.height );
     }
   }
 
   /**
-   * @param aModel
+   * Renders the measurement information arrows.
+   * 
    * @param aCanvas
+   *          the canvas to paint the measurement arrows on, cannot be
+   *          <code>null</code>;
+   * @param aModel
+   *          the model to use, cannot be <code>null</code>;
    * @param aSignalHover
+   *          the signal hover information, cannot be <code>null</code> or
+   *          empty.
    */
-  private void renderMeasurementInfo( final SignalViewModel aModel, final Graphics2D aCanvas,
+  private void paintMeasurementArrow( final Graphics2D aCanvas, final SignalViewModel aModel,
       final SignalHoverInfo aSignalHover )
   {
-    if ( aSignalHover.isEmpty() )
-    {
-      return;
-    }
-
     Rectangle signalHoverRect = aSignalHover.getRectangle();
     int x = signalHoverRect.x;
     int y = ( int )signalHoverRect.getCenterY();
@@ -422,5 +248,183 @@ public class SignalUI extends ComponentUI
 
     this.arrowRenderer.setContext( Integer.valueOf( w ), Integer.valueOf( middlePos ) );
     this.arrowRenderer.render( aCanvas, x, y );
+  }
+
+  /**
+   * Paints the individual signal channels, group bytes and analogue scope
+   * signals.
+   * 
+   * @param aCanvas
+   *          the canvas to paint on, cannot be <code>null</code>;
+   * @param aModel
+   *          the model to use, cannot be <code>null</code>;
+   * @param aSignalElements
+   *          the signal elements to draw, cannot be <code>null</code> or empty!
+   */
+  private void paintSignals( final Graphics2D aCanvas, final SignalViewModel aModel,
+      final SignalElement[] aSignalElements )
+  {
+    final Rectangle clip = aCanvas.getClipBounds();
+
+    // Tell Swing how we would like to render ourselves...
+    aCanvas.setRenderingHints( createSignalRenderingHints() );
+
+    aCanvas.setBackground( aModel.getBackgroundColor() );
+    aCanvas.clearRect( clip.x, clip.y, clip.width, clip.height );
+
+    final int[] values = aModel.getDataValues();
+    final long[] timestamps = aModel.getTimestamps();
+
+    final int startIdx = aModel.getStartIndex( clip );
+    final int endIdx = aModel.getEndIndex( clip, values.length );
+
+    final int signalHeight = aModel.getSignalHeight();
+    // Where is the signal to be drawn?
+    final int signalOffset = aModel.getSignalOffset();
+    final double zoomFactor = aModel.getZoomFactor();
+
+    // Start drawing at the correct position in the clipped region...
+    aCanvas.translate( 0, aSignalElements[0].getYposition() + signalOffset );
+
+    final int sampleIncr = ( int )Math.max( 1.0, ( 1.0 / zoomFactor ) );
+    // System.out.printf( "Sample incr = %d px\n", sampleIncr ); // XXX
+
+    for ( SignalElement signalElement : aSignalElements )
+    {
+      aCanvas.setColor( signalElement.getColor() );
+
+      if ( signalElement.isSignalGroup() )
+      {
+        // Draw nothing...
+        aCanvas.translate( 0, signalElement.getHeight() );
+      }
+
+      if ( signalElement.isDigitalSignal() )
+      {
+        if ( !signalElement.isEnabled() )
+        {
+          // Forced zero'd channel is *very* easy to draw...
+          aCanvas.drawLine( clip.x, signalHeight, clip.x + clip.width, signalHeight );
+        }
+        else
+        {
+          // "Normal" data set; draw as accurate as possible...
+          final int mask = signalElement.getMask();
+
+          // Make sure we always start with time 0...
+          long timestamp = timestamps[startIdx];
+          int prevSampleValue = ( values[startIdx] & mask );
+
+          int xValue = ( int )( zoomFactor * timestamp );
+          int yValue = ( prevSampleValue == 0 ? signalHeight : 0 );
+
+          x[0] = xValue;
+          y[0] = yValue;
+          int p = 1;
+
+          for ( int sampleIdx = startIdx + 1; sampleIdx < endIdx; sampleIdx++ )
+          {
+            timestamp = timestamps[sampleIdx];
+            int sampleValue = ( values[sampleIdx] & mask );
+
+            xValue = ( int )( zoomFactor * timestamp );
+
+            if ( prevSampleValue != sampleValue )
+            {
+              x[p] = xValue;
+              y[p] = ( prevSampleValue == 0 ? signalHeight : 0 );
+              p++;
+            }
+
+            x[p] = xValue;
+            y[p] = ( sampleValue == 0 ? signalHeight : 0 );
+            p++;
+
+            prevSampleValue = sampleValue;
+          }
+
+          aCanvas.drawPolyline( x, y, p );
+        }
+
+        // Advance to the next channel...
+        aCanvas.translate( 0, signalElement.getHeight() );
+      }
+
+      // remove the signal offset...
+      aCanvas.translate( 0, -signalOffset );
+
+      if ( signalElement.isGroupSummary() )
+      {
+        int mask = signalElement.getMask();
+
+        int prevSampleValue = values[startIdx] & mask;
+        int prevX = ( int )( zoomFactor * timestamps[startIdx] );
+
+        for ( int sampleIdx = startIdx + 1; sampleIdx < endIdx; sampleIdx += sampleIncr )
+        {
+          int sampleValue = ( values[sampleIdx] & mask );
+
+          if ( sampleValue != prevSampleValue )
+          {
+            int x = ( int )( zoomFactor * timestamps[sampleIdx] );
+
+            String text = String.format( "%x", Integer.valueOf( prevSampleValue ) );
+            FontMetrics fm = aCanvas.getFontMetrics();
+
+            int textWidth = fm.stringWidth( text ) + ( 2 * PADDING_X );
+            int cellWidth = x - prevX;
+            if ( textWidth < cellWidth )
+            {
+              int textXpos = prevX + ( int )( ( cellWidth - textWidth ) / 2.0 );
+              int textYpos = fm.getHeight();
+
+              aCanvas.drawString( text, textXpos, textYpos );
+            }
+
+            // draw a small line...
+            aCanvas.drawLine( x, PADDING_Y, x, signalElement.getHeight() - PADDING_Y );
+
+            prevX = x;
+          }
+
+          prevSampleValue = sampleValue;
+        }
+
+        aCanvas.translate( 0, signalElement.getHeight() );
+      }
+
+      if ( signalElement.isAnalogSignal() )
+      {
+        int mask = signalElement.getMask();
+        final int trailingZeros = Integer.numberOfTrailingZeros( mask );
+        final int onesCount = Integer.SIZE - Integer.numberOfLeadingZeros( mask ) - trailingZeros;
+        final int maxValue = ( int )( 1L << onesCount );
+        double scaleFactor = signalElement.getHeight() / ( maxValue + 1.0 );
+
+        // Make sure we always start with time 0...
+        int p = 0;
+        for ( int sampleIdx = startIdx + sampleIncr; sampleIdx < endIdx; sampleIdx += sampleIncr )
+        {
+          long timestamp = timestamps[sampleIdx - sampleIncr];
+          int sampleValue = 0;
+          for ( int i = sampleIdx - sampleIncr; i < sampleIdx; i++ )
+          {
+            sampleValue += ( ( values[sampleIdx] & mask ) >> trailingZeros );
+          }
+          sampleValue = maxValue - ( sampleValue / sampleIncr );
+
+          x[p] = ( int )( zoomFactor * timestamp );
+          y[p] = ( int )( scaleFactor * sampleValue );
+          p++;
+        }
+
+        aCanvas.drawPolyline( x, y, p );
+
+        aCanvas.translate( 0, signalElement.getHeight() );
+      }
+
+      // remove the signal offset...
+      aCanvas.translate( 0, signalOffset );
+    }
   }
 }

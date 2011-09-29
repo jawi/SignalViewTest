@@ -52,6 +52,24 @@ public final class SwingUtils
   }
 
   /**
+   * Tries to find the current focused window.
+   * 
+   * @return the current focused window, or <code>null</code> if no such window
+   *         could be found.
+   */
+  public static final Window getCurrentWindow()
+  {
+    Window owner;
+    final KeyboardFocusManager kbdFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+    owner = kbdFocusManager.getFocusedWindow();
+    if ( owner == null )
+    {
+      owner = kbdFocusManager.getActiveWindow();
+    }
+    return owner;
+  }
+
+  /**
    * Returns the deepest visible descendent Component of <code>parent</code>
    * that contains the location <code>x</code>, <code>y</code>. If
    * <code>parent</code> does not contain the specified location, then
@@ -89,6 +107,53 @@ public final class SwingUtils
   public static JComponent getDeepestComponentAt( final MouseEvent aEvent )
   {
     return getDeepestComponentAt( aEvent.getComponent(), aEvent.getX(), aEvent.getY() );
+  }
+
+  /**
+   * Tries to find the owning window for the AWT-event's source.
+   * 
+   * @param aEvent
+   *          the AWT event to find the owning window for, may be
+   *          <code>null</code>.
+   * @return the owning window, or <code>null</code> if no such window could be
+   *         found, or a <code>null</code> event was given.
+   */
+  public static final Window getOwningWindow( final AWTEvent aEvent )
+  {
+    Window owner = null;
+    if ( aEvent != null )
+    {
+      final Object source = aEvent.getSource();
+      if ( source instanceof Component )
+      {
+        owner = getOwningWindow( ( Component )source );
+      }
+    }
+    return owner;
+  }
+
+  /**
+   * Tries to find the owning window for the given component.
+   * 
+   * @param aComponent
+   *          the AWT event to find the owning window for, may be
+   *          <code>null</code>.
+   * @return the owning window, or <code>null</code> if no such window could be
+   *         found, or a <code>null</code> component was given.
+   */
+  public static final Window getOwningWindow( final Component aComponent )
+  {
+    if ( aComponent == null )
+    {
+      return null;
+    }
+
+    Window owner = SwingUtilities.getWindowAncestor( aComponent );
+    if ( owner == null )
+    {
+      owner = getCurrentWindow();
+    }
+    return owner;
   }
 
   /**

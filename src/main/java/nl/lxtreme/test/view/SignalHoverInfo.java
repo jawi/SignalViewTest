@@ -113,6 +113,20 @@ public class SignalHoverInfo
   // METHODS
 
   /**
+   * Returns whether or not the given {@link SignalHoverInfo} is defined, that
+   * is, whether it is non-<code>null</code> and not empty.
+   * 
+   * @param aHoverInfo
+   *          the signal hover info to test, may be <code>null</code>.
+   * @return <code>true</code> if the given signal hover information is defined,
+   *         <code>false</code> otherwise.
+   */
+  public static boolean isDefined( final SignalHoverInfo aHoverInfo )
+  {
+    return ( aHoverInfo != null ) && !aHoverInfo.isEmpty();
+  }
+
+  /**
    * {@inheritDoc}
    */
   @Override

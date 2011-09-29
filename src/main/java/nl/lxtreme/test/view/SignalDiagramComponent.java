@@ -21,14 +21,12 @@ package nl.lxtreme.test.view;
 
 
 import java.awt.*;
-import java.awt.Cursor;
 import java.awt.event.*;
 import java.util.logging.*;
 
 import javax.swing.*;
 
 import nl.lxtreme.test.*;
-import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.view.action.*;
 import nl.lxtreme.test.view.model.*;
 
@@ -383,28 +381,37 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     /**
      * Creates the context-sensitive popup menu for channel labels.
      * 
-     * @param aPoint
+     * @param aRelativePoint
      *          the current mouse location to show the popup menu, cannot be
      *          <code>null</code>.
+     * @param aLocationOnScreen
+     *          the location on screen, cannot be <code>null</code>.
      * @return a popup menu, can be <code>null</code> if the given mouse point
      *         is not above a channel.
      */
-    private JPopupMenu createChannelLabelPopup( final Point aPoint )
+    private JPopupMenu createChannelLabelPopup( final Point aRelativePoint, final Point aLocationOnScreen )
     {
-      JPopupMenu result = null;
-
-      Channel channel = findChannel( aPoint );
-      if ( channel != null )
+      final SignalElement signalElement = findSignalElement( aRelativePoint );
+      if ( signalElement == null )
       {
-        result = new JPopupMenu();
+        return null;
+      }
 
-        JMenuItem mi;
+      JPopupMenu result = new JPopupMenu();
+      JMenuItem mi;
 
-        mi = new JMenuItem( new EditChannelLabelAction( channel ) );
-        result.add( mi );
-        result.addSeparator();
+      mi = new JMenuItem( new EditSignalElementLabelAction( this.controller, signalElement, aLocationOnScreen ) );
+      result.add( mi );
 
-        mi = new JCheckBoxMenuItem( new SetChannelVisibilityAction( channel ) );
+      result.addSeparator();
+
+      mi = new JCheckBoxMenuItem( new SetSignalElementVisibilityAction( this.controller, signalElement ) );
+      result.add( mi );
+
+      if ( signalElement.isSignalGroup() )
+      {
+        // TODO add visibility actions for summary/analog signal/...
+        mi = new JCheckBoxMenuItem( new SetSignalElementVisibilityAction( this.controller, signalElement ) );
         result.add( mi );
       }
 
@@ -416,10 +423,12 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
      * 
      * @param aPoint
      *          the current mouse location to show the cursor, cannot be
-     *          <code>null</code>.
+     *          <code>null</code>;
+     * @param aLocationOnScreen
+     *          the location on screen, cannot be <code>null</code>.
      * @return a popup menu, never <code>null</code>.
      */
-    private JPopupMenu createCursorPopup( final Point aPoint )
+    private JPopupMenu createCursorPopup( final Point aPoint, final Point aLocationOnScreen )
     {
       final JPopupMenu contextMenu = new JPopupMenu();
 
@@ -452,19 +461,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     }
 
     /**
-     * Finds the channel under the given point.
-     * 
-     * @param aPoint
-     *          the coordinate of the potential channel, cannot be
-     *          <code>null</code>.
-     * @return the channel index, or -1 if not found.
-     */
-    private Channel findChannel( final Point aPoint )
-    {
-      return getModel().findChannel( aPoint );
-    }
-
-    /**
      * Finds the cursor under the given point.
      * 
      * @param aPoint
@@ -475,6 +471,19 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     private nl.lxtreme.test.model.Cursor findCursor( final Point aPoint )
     {
       return getModel().findCursor( aPoint );
+    }
+
+    /**
+     * Finds the channel under the given point.
+     * 
+     * @param aPoint
+     *          the coordinate of the potential channel, cannot be
+     *          <code>null</code>.
+     * @return the channel index, or -1 if not found.
+     */
+    private SignalElement findSignalElement( final Point aPoint )
+    {
+      return getModel().findSignalElement( aPoint );
     }
 
     /**
@@ -543,11 +552,11 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
         JPopupMenu contextMenu = null;
         if ( isCursorTrigger( view ) )
         {
-          contextMenu = createCursorPopup( point );
+          contextMenu = createCursorPopup( point, aEvent.getLocationOnScreen() );
         }
         else if ( isChannelLabelTrigger( view ) )
         {
-          contextMenu = createChannelLabelPopup( point );
+          contextMenu = createChannelLabelPopup( point, aEvent.getLocationOnScreen() );
         }
 
         if ( contextMenu != null )
@@ -1073,7 +1082,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     // the channel label component calculates its own 'optimal' width, but
     // doesn't know squat about the correct height...
     final Dimension minimumSize = channelLabels.getMinimumSize();
-    channelLabels.setMinimumSize( new Dimension( minimumSize.width, height ) );
     channelLabels.setPreferredSize( new Dimension( minimumSize.width, height ) );
     channelLabels.revalidate();
 

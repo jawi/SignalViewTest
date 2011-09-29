@@ -30,13 +30,16 @@ public class ChannelLabelRenderer extends BaseRenderer
 {
   // CONSTANTS
 
-  private static final int PADDING_RIGHT = 6;
+  public static final int PADDING_Y = 1;
+  public static final int PADDING_X = 6;
+
   private static final float INDEX_RELATIVE_FONT_SIZE = 0.75f;
 
   // VARIABLES
 
   private int width;
-  private String channelIndex;
+  private int height;
+  private String channelAnnotation;
   private String channelLabel;
 
   // METHODS
@@ -45,48 +48,89 @@ public class ChannelLabelRenderer extends BaseRenderer
    * {@inheritDoc}
    */
   @Override
-  public void setContext(final Object... aParameters)
+  public void setContext( final Object... aParameters )
   {
-    if ((aParameters == null) || (aParameters.length < 3))
+    if ( ( aParameters == null ) || ( aParameters.length < 3 ) )
     {
-      throw new IllegalArgumentException("Expected two Integer & one String parameter!");
+      throw new IllegalArgumentException( "Expected at least two Integer & one String parameters!" );
     }
-    int index = ((Integer) aParameters[0]).intValue();
-    this.width = ((Integer) aParameters[1]).intValue();
-    this.channelLabel = (String) aParameters[2];
-    this.channelIndex = Integer.toString(index);
+    this.width = ( ( Integer )aParameters[0] ).intValue();
+    this.height = ( ( Integer )aParameters[1] ).intValue();
+    this.channelLabel = ( String )aParameters[2];
+    if ( aParameters.length > 3 )
+    {
+      this.channelAnnotation = ( String )aParameters[3];
+    }
+    else
+    {
+      this.channelAnnotation = "";
+    }
 
-    if ((this.channelLabel == null) || this.channelLabel.trim().isEmpty())
+    // Cleanup...
+    if ( this.channelAnnotation == null )
     {
-      this.channelLabel = this.channelIndex;
+      // No channel annotation given; use an empty string to internally denote
+      // this...
+      this.channelAnnotation = "";
     }
+    if ( this.channelLabel == null )
+    {
+      // Use the annotation, if one is given, otherwise, use an empty string...
+      this.channelLabel = this.channelAnnotation;
+    }
+
+    this.channelAnnotation = this.channelAnnotation.trim();
+    this.channelLabel = this.channelLabel.trim();
   }
 
   /**
    * {@inheritDoc}
    */
   @Override
-  protected Rectangle render(final Graphics2D aCanvas)
+  protected Rectangle render( final Graphics2D aCanvas )
   {
     Font labelFont = aCanvas.getFont();
     FontMetrics labelFm = aCanvas.getFontMetrics();
 
     // Derive the index font from the label font...
-    Font indexFont = labelFont.deriveFont(Font.PLAIN, labelFont.getSize() * INDEX_RELATIVE_FONT_SIZE);
-    FontMetrics indexFm = aCanvas.getFontMetrics(indexFont);
+    Font annoFont = labelFont.deriveFont( Font.PLAIN, labelFont.getSize() * INDEX_RELATIVE_FONT_SIZE );
+    FontMetrics annoFm = aCanvas.getFontMetrics( annoFont );
 
-    final int labelYpos = (labelFm.getAscent() + labelFm.getLeading());
-    final int labelXpos = (this.width - labelFm.stringWidth(this.channelLabel) - PADDING_RIGHT);
+    final double middle = ( this.height / 2.0 );
 
-    aCanvas.drawString(this.channelLabel, labelXpos, labelYpos);
+    if ( !this.channelLabel.isEmpty() )
+    {
+      final int labelXpos = ( this.width - labelFm.stringWidth( this.channelLabel ) - PADDING_X );
+      final int labelYpos;
+      if ( this.channelAnnotation.isEmpty() )
+      {
+        labelYpos = ( int )Math.round( middle + ( labelFm.getMaxAscent() / 2.0 ) ) - PADDING_Y;
+      }
+      else
+      {
+        labelYpos = ( int )( middle + annoFm.getLeading() );
+      }
 
-    final int indexYpos = (labelFm.getHeight() + indexFm.getAscent() + indexFm.getLeading());
-    final int indexXpos = (this.width - indexFm.stringWidth(this.channelIndex) - PADDING_RIGHT);
+      aCanvas.drawString( this.channelLabel, labelXpos, labelYpos );
+    }
 
-    aCanvas.setFont(indexFont);
-    aCanvas.drawString(this.channelIndex, indexXpos, indexYpos);
+    if ( !this.channelAnnotation.isEmpty() )
+    {
+      final int annoXpos = ( this.width - annoFm.stringWidth( this.channelAnnotation ) - PADDING_X );
+      final int annoYpos;
+      if ( this.channelLabel.isEmpty() )
+      {
+        annoYpos = ( int )Math.round( middle + ( annoFm.getAscent() / 2.0 ) ) - PADDING_Y;
+      }
+      else
+      {
+        annoYpos = ( int )( middle + annoFm.getAscent() + annoFm.getDescent() );
+      }
+
+      aCanvas.setFont( annoFont );
+      aCanvas.drawString( this.channelAnnotation, annoXpos, annoYpos );
+    }
 
     return null;
   }
-
 }

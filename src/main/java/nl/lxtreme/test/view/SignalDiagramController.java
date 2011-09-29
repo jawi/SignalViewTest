@@ -155,6 +155,19 @@ public final class SignalDiagramController
   }
 
   /**
+   * Recalculates the dimensions of the various components and repaints the
+   * entire component.
+   * <p>
+   * SLOW METHOD: USE WITH CARE!
+   * </p>
+   */
+  public void recalculateDimensions()
+  {
+    this.signalDiagram.recalculateDimensions();
+    this.signalDiagram.repaint( 25L );
+  }
+
+  /**
    * Removes the cursor denoted by the given index. If the cursor with the given
    * index is <em>undefined</em> this method does nothing (not even call event
    * listeners!).

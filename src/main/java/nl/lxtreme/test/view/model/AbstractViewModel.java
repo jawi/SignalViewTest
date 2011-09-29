@@ -60,11 +60,11 @@ abstract class AbstractViewModel
    *          the screen height.
    * @return an array of channels, never <code>null</code>.
    */
-  public ChannelElement[] getChannelElements( final int aY, final int aHeight )
+  public SignalElement[] getSignalElements( final int aY, final int aHeight )
   {
     // Return all channel elements within the given boundaries, even if they do
     // not completely fit...
-    return getSignalDiagramModel().getChannelElements( aY, aHeight, ChannelElementMeasurer.LOOSE_MEASURER );
+    return getSignalDiagramModel().getSignalElements( aY, aHeight, SignalElementMeasurer.LOOSE_MEASURER );
   }
 
   /**
@@ -175,9 +175,9 @@ abstract class AbstractViewModel
   /**
    * @return
    */
-  public int getDataValuesRowHeight()
+  public int getGroupSummaryHeight()
   {
-    return getSignalDiagramModel().getDataValueRowHeight();
+    return getSignalDiagramModel().getGroupSummaryHeight();
   }
 
   /**
