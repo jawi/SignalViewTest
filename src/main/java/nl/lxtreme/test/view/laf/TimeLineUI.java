@@ -24,20 +24,184 @@ import static java.awt.RenderingHints.*;
 import static nl.lxtreme.test.Utils.*;
 
 import java.awt.*;
+import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.plaf.*;
 
 import nl.lxtreme.test.model.Cursor;
 import nl.lxtreme.test.view.*;
+import nl.lxtreme.test.view.model.AbstractViewModel.LabelStyle;
 import nl.lxtreme.test.view.model.*;
 
 
 /**
- * 
+ * Represents the UI-implementation of the timeline.
  */
 public class TimeLineUI extends ComponentUI
 {
+  // INNER TYPES
+
+  /**
+   * Helper class for the placement of cursor labels.
+   */
+  private static class CursorLabel implements Comparable<CursorLabel>
+  {
+    // CONSTANTS
+
+    private static final LabelPlacement[] PLACEMENTS = { LabelPlacement.LABEL_TIME_RIGHT,
+        LabelPlacement.LABEL_TIME_LEFT, LabelPlacement.LABEL_ONLY_LEFT, LabelPlacement.TIME_ONLY_LEFT,
+        LabelPlacement.INDEX_ONLY_LEFT, LabelPlacement.INDEX_ONLY_RIGHT, LabelPlacement.TIME_ONLY_RIGHT,
+        LabelPlacement.LABEL_ONLY_RIGHT };
+
+    // VARIABLES
+
+    final int index;
+    final Rectangle boundaries;
+    String text;
+
+    private int altStyleIdx;
+
+    // CONSTRUCTORS
+
+    /**
+     * Creates a new TimeLineUI.CursorLabel instance.
+     */
+    public CursorLabel( final int aIndex, final String aText, final Rectangle aBoundaries )
+    {
+      this.index = aIndex;
+      this.text = aText;
+      this.boundaries = aBoundaries;
+      this.altStyleIdx = 0;
+    }
+
+    // METHODS
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int compareTo( final CursorLabel aLabel )
+    {
+      int result = this.boundaries.x - aLabel.boundaries.x;
+      if ( result == 0 )
+      {
+        result = this.boundaries.width - aLabel.boundaries.width;
+      }
+      if ( result == 0 )
+      {
+        result = this.boundaries.y - aLabel.boundaries.y;
+      }
+      return result;
+    }
+
+    /**
+     * @return
+     */
+    public boolean hasMoreStyles()
+    {
+      return ( this.altStyleIdx < PLACEMENTS.length );
+    }
+
+    /**
+     * Returns whether or not this cursor label intersects with the given cursor
+     * label.
+     * 
+     * @param aLabel
+     *          the cursor label to test against, cannot be <code>null</code>.
+     * @return <code>true</code> if this cursor label intersects the given
+     *         cursor label, <code>false</code> otherwise.
+     */
+    public boolean intersects( final CursorLabel aLabel )
+    {
+      return this.boundaries.intersects( aLabel.boundaries );
+    }
+
+    /**
+     * Returns to the default label placement style.
+     */
+    public void resetStyle( final TimeLineViewModel aModel, final FontMetrics aFM )
+    {
+      this.altStyleIdx = 0;
+      recalculateBoundaries( aModel, aFM );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String toString()
+    {
+      return "CursorLabel [index=" + this.index + ", boundaries=" + this.boundaries + ", text=" + this.text
+          + ", altStyleIdx=" + this.altStyleIdx + "]";
+    }
+
+    /**
+     * Recalculates the boundaries for this label.
+     */
+    public void useNextStyle( final TimeLineViewModel aModel, final FontMetrics aFM )
+    {
+      if ( this.altStyleIdx++ < ( PLACEMENTS.length - 1 ) )
+      {
+        recalculateBoundaries( aModel, aFM );
+      }
+    }
+
+    /**
+     * @param aModel
+     * @param aFM
+     */
+    private void recalculateBoundaries( final TimeLineViewModel aModel, final FontMetrics aFM )
+    {
+      final LabelPlacement labelPlacement = PLACEMENTS[this.altStyleIdx];
+
+      // Modify the label style of the previous label...
+      String flagText = aModel.getCursorFlagText( this.index, labelPlacement.style );
+
+      this.text = flagText;
+      this.boundaries.width = aFM.stringWidth( flagText ) + PADDING_WIDTH;
+      this.boundaries.x = aModel.getCursorScreenCoordinate( this.index );
+      if ( labelPlacement.mirrored )
+      {
+        this.boundaries.x = Math.max( 0, this.boundaries.x - this.boundaries.width );
+      }
+    }
+  }
+
+  /**
+   * Provides an enumeration on how labels are to be placed on screen.
+   */
+  private static enum LabelPlacement
+  {
+    INDEX_ONLY_RIGHT( LabelStyle.INDEX_ONLY, false /* mirrored */), //
+    INDEX_ONLY_LEFT( LabelStyle.INDEX_ONLY, true /* mirrored */), //
+    TIME_ONLY_RIGHT( LabelStyle.TIME_ONLY, false /* mirrored */), //
+    TIME_ONLY_LEFT( LabelStyle.TIME_ONLY, true /* mirrored */), //
+    LABEL_ONLY_RIGHT( LabelStyle.LABEL_ONLY, false /* mirrored */), //
+    LABEL_ONLY_LEFT( LabelStyle.LABEL_ONLY, true /* mirrored */), //
+    INDEX_LABEL_RIGHT( LabelStyle.INDEX_LABEL, false /* mirrored */), //
+    INDEX_LABEL_LEFT( LabelStyle.INDEX_LABEL, true /* mirrored */), //
+    LABEL_TIME_RIGHT( LabelStyle.LABEL_TIME, false /* mirrored */), //
+    LABEL_TIME_LEFT( LabelStyle.LABEL_TIME, true /* mirrored */);
+
+    // VARIABLES
+
+    final LabelStyle style;
+    final boolean mirrored;
+
+    // CONSTRUCTORS
+
+    /**
+     * Creates a new LabelPlacement instance.
+     */
+    private LabelPlacement( final LabelStyle aStyle, final boolean aMirrored )
+    {
+      this.style = aStyle;
+      this.mirrored = aMirrored;
+    }
+  }
+
   // CONSTANTS
 
   private static final int PADDING_TOP = 2;
@@ -195,44 +359,109 @@ public class TimeLineUI extends ComponentUI
    */
   private void paintCursorFlags( final TimeLineViewModel aModel, final Graphics2D aCanvas, final JComponent aComponent )
   {
+    final LinkedList<CursorLabel> labels = new LinkedList<CursorLabel>();
+
+    final Rectangle clip = aCanvas.getClipBounds();
+
+    // Phase 0: preparation...
+    aCanvas.setFont( aModel.getCursorFlagFont() );
+
+    final FontMetrics fm = aCanvas.getFontMetrics();
+    final int yOffset = fm.getLeading() + fm.getAscent() + PADDING_TOP;
+
+    // Phase 1: determine the boundaries of each defined cursor that should be
+    // shown in the current clip boundaries...
     for ( int i = 0; i < Cursor.MAX_CURSORS; i++ )
     {
-      int x = aModel.getCursorScreenCoordinate( i );
-      int y = CURSOR_Y_POS;
+      // TODO persist the cursor labels between paints so we can perform smart
+      // redraws...
+      final Rectangle boundaries = new Rectangle();
 
-      if ( x < 0 )
+      final String flagText = aModel.getCursorFlagText( i, LabelStyle.LABEL_TIME );
+
+      boundaries.x = aModel.getCursorScreenCoordinate( i );
+      boundaries.y = CURSOR_Y_POS;
+      boundaries.height = fm.getHeight() + PADDING_HEIGHT;
+      boundaries.width = fm.stringWidth( flagText ) + PADDING_WIDTH;
+
+      if ( ( boundaries.x < 0 ) || !clip.intersects( boundaries ) )
       {
         // Trivial reject: don't paint undefined cursors...
         continue;
       }
 
-      aCanvas.setFont( aModel.getCursorFlagFont() );
+      labels.add( new CursorLabel( i, flagText, boundaries ) );
+    }
 
-      final String flagText = aModel.getCursorFlagText( i );
+    // Phase 2: sort the labels so they are ordered from left to right on
+    // screen...
+    Collections.sort( labels );
 
-      final FontMetrics fm = aCanvas.getFontMetrics();
-      final int flagWidth = fm.stringWidth( flagText ) + PADDING_WIDTH;
-      final int flagHeight = fm.getHeight() + PADDING_HEIGHT;
+    // Phase 3: try to optimize the overlapping labels...
+    placeLabels( aModel, labels, fm );
 
-      final int centerX = ( int )( flagWidth / 2.0 );
-      final int x1 = x - centerX;
-      final int x2 = x + centerX;
-
-      int[] poly_x = new int[] { x1, x2, x2, x + 4, x, x - 4, x1 };
-      int[] poly_y = new int[] { y, y, y + flagHeight, y + flagHeight, aComponent.getHeight(), y + flagHeight,
-          y + flagHeight };
+    // Phase 4: draw the labels...
+    for ( CursorLabel label : labels )
+    {
+      final Rectangle boundaries = label.boundaries;
 
       aCanvas.setColor( Color.BLACK ); // XXX
-      aCanvas.fillPolygon( poly_x, poly_y, poly_x.length );
+      aCanvas.fillRect( boundaries.x, boundaries.y, boundaries.width, boundaries.height );
 
-      aCanvas.setColor( aModel.getCursorColor( i ) );
-      aCanvas.drawPolygon( poly_x, poly_y, poly_x.length );
+      aCanvas.setColor( aModel.getCursorColor( label.index ) );
+      aCanvas.drawRect( boundaries.x, boundaries.y, boundaries.width, boundaries.height );
 
-      final int textXpos = x1 + PADDING_LEFT;
-      final int textYpos = y + fm.getLeading() + fm.getAscent() + PADDING_TOP;
+      final int textXpos = boundaries.x + PADDING_LEFT;
+      final int textYpos = boundaries.y + yOffset;
 
-      aCanvas.setColor( aModel.getCursorTextColor( i ) );
-      aCanvas.drawString( flagText, textXpos, textYpos );
+      aCanvas.setColor( aModel.getCursorTextColor( label.index ) );
+      aCanvas.drawString( label.text, textXpos, textYpos );
+    }
+  }
+
+  /**
+   * Tries to place all labels in such way that they do not overlap.
+   * <p>
+   * This method performs a best effort in the sense that it tries to shorten
+   * labels if needed. The used algorithm does not always succeed in finding the
+   * optimal solution, hence overlap still may occur.
+   * </p>
+   * 
+   * @param aModel
+   *          the model to use;
+   * @param aLabels
+   *          the labels to optimize;
+   * @param aFM
+   *          the font metrics to use.
+   */
+  private void placeLabels( final TimeLineViewModel aModel, final List<CursorLabel> aLabels, final FontMetrics aFM )
+  {
+    // The labels are sorted from left to right (regarding screen coordinates),
+    // place them in reverse order to minimize the overlap...
+    for ( int li = aLabels.size() - 1; li > 0; li-- )
+    {
+      final CursorLabel previousLabel = aLabels.get( li - 1 );
+      final CursorLabel currentLabel = aLabels.get( li );
+
+      while ( previousLabel.intersects( currentLabel ) && currentLabel.hasMoreStyles() )
+      {
+        do
+        {
+          // Modify the label style of the previous label...
+          previousLabel.useNextStyle( aModel, aFM );
+        }
+        while ( previousLabel.intersects( currentLabel ) && previousLabel.hasMoreStyles() );
+
+        if ( previousLabel.intersects( currentLabel ) )
+        {
+          // Ok; still overlapping labels, use an alternative style for the
+          // current label and try again...
+          previousLabel.resetStyle( aModel, aFM );
+
+          // Try next style in the next loop...
+          currentLabel.useNextStyle( aModel, aFM );
+        }
+      }
     }
   }
 }

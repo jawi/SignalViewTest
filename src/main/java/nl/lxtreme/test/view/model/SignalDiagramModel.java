@@ -476,14 +476,6 @@ public class SignalDiagramModel
   }
 
   /**
-   * {@inheritDoc}
-   */
-  public String getCursorLabel( final int aCursorIdx )
-  {
-    return getCursor( aCursorIdx ).getLabel();
-  }
-
-  /**
    * Returns the time interval displayed by the current view.
    * 
    * @return a time interval, in seconds.

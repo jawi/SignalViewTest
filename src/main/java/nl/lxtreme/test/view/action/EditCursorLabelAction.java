@@ -105,6 +105,7 @@ public class EditCursorLabelAction extends AbstractAction
         {
           EditCursorDialog.this.dialogResult = true;
           setVisible( false );
+          dispose();
         }
       } );
 
@@ -116,6 +117,7 @@ public class EditCursorLabelAction extends AbstractAction
         {
           EditCursorDialog.this.dialogResult = false;
           setVisible( false );
+          dispose();
         }
       } );
 
@@ -147,7 +149,7 @@ public class EditCursorLabelAction extends AbstractAction
   // VARIABLES
 
   private final SignalDiagramController controller;
-  private final int cursorIdx;
+  private final nl.lxtreme.test.model.Cursor cursor;
 
   // CONSTRUCTORS
 
@@ -163,7 +165,7 @@ public class EditCursorLabelAction extends AbstractAction
   {
     super( "Edit label" );
     this.controller = aController;
-    this.cursorIdx = aCursor.getIndex();
+    this.cursor = aCursor;
   }
 
   // METHODS
@@ -174,12 +176,24 @@ public class EditCursorLabelAction extends AbstractAction
   @Override
   public void actionPerformed( final ActionEvent aEvent )
   {
-    final SignalDiagramModel model = this.controller.getSignalDiagramModel();
+    final int cursorIndex = this.cursor.getIndex();
 
-    final EditCursorDialog dialog = new EditCursorDialog( this.cursorIdx, model.getCursorLabel( this.cursorIdx ) );
+    final EditCursorDialog dialog = new EditCursorDialog( cursorIndex, this.cursor.getLabel() );
     if ( dialog.showDialog() )
     {
-      model.setCursorLabel( this.cursorIdx, dialog.getLabel() );
+      setCursorLabel( dialog.getLabel() );
     }
+  }
+
+  /**
+   * Sets the cursor label to the one given.
+   * 
+   * @param aNewLabel
+   *          the new cursor label to set.
+   */
+  private void setCursorLabel( final String aNewLabel )
+  {
+    final SignalDiagramModel model = this.controller.getSignalDiagramModel();
+    model.setCursorLabel( this.cursor.getIndex(), aNewLabel );
   }
 }

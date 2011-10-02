@@ -21,17 +21,29 @@ package nl.lxtreme.test.view.model;
 
 
 import java.awt.*;
+
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.view.*;
-import nl.lxtreme.test.view.model.SignalDiagramModel.*;
+import nl.lxtreme.test.view.model.SignalDiagramModel.SignalElementMeasurer;
 
 
 /**
  * Provides a common base class for the view models.
  */
-abstract class AbstractViewModel
+public abstract class AbstractViewModel
 {
+  // INNER TYPES
+
+  /**
+   * Denotes how to represent a cursor label. Used for automatic placement of
+   * cursor labels.
+   */
+  public static enum LabelStyle
+  {
+    INDEX_ONLY, TIME_ONLY, LABEL_ONLY, INDEX_LABEL, LABEL_TIME;
+  }
+
   // VARIABLES
 
   protected final SignalDiagramController controller;
@@ -50,22 +62,6 @@ abstract class AbstractViewModel
   }
 
   // METHODS
-
-  /**
-   * Returns all channels the given range of all visible channel groups.
-   * 
-   * @param aY
-   *          the screen Y-coordinate;
-   * @param aHeight
-   *          the screen height.
-   * @return an array of channels, never <code>null</code>.
-   */
-  public SignalElement[] getSignalElements( final int aY, final int aHeight )
-  {
-    // Return all channel elements within the given boundaries, even if they do
-    // not completely fit...
-    return getSignalDiagramModel().getSignalElements( aY, aHeight, SignalElementMeasurer.LOOSE_MEASURER );
-  }
 
   /**
    * @return
@@ -100,45 +96,19 @@ abstract class AbstractViewModel
    * Returns the cursor flag text for a cursor with the given index.
    * 
    * @param aCursorIndex
-   *          the index of the cursor to retrieve the flag text for.
+   *          the index of the cursor to retrieve the flag text for;
+   * @param aStyle
+   *          the style of the cursor flag text, cannot be <code>null</code>.
    * @return a cursor flag text, never <code>null</code>.
    */
-  public String getCursorFlagText( final int aCursorIndex )
+  public String getCursorFlagText( final int aCursorIndex, final LabelStyle aStyle )
   {
     final nl.lxtreme.test.model.Cursor cursor = getSignalDiagramModel().getCursor( aCursorIndex );
     if ( !cursor.isDefined() )
     {
       return "";
     }
-    return getCursorFlagText( aCursorIndex, cursor.getTimestamp() );
-  }
-
-  /**
-   * Returns the cursor flag text for the cursor with the given index.
-   * 
-   * @param aCursorIdx
-   *          the index of the cursor, >= 0 && < 10;
-   * @param aCursorTimestamp
-   *          the timestamp of the cursor.
-   * @return a cursor flag text, or an empty string if the cursor with the given
-   *         index is undefined.
-   */
-  public String getCursorFlagText( final int aCursorIdx, final long aCursorTimestamp )
-  {
-    final SignalDiagramModel model = getSignalDiagramModel();
-
-    final nl.lxtreme.test.model.Cursor cursor = model.getCursor( aCursorIdx );
-
-    final double sampleRate = model.getSampleRate();
-    final String cursorTime = Utils.displayTime( aCursorTimestamp / sampleRate );
-
-    String label = cursor.getLabel();
-    if ( !cursor.hasLabel() )
-    {
-      label = Integer.toString( aCursorIdx + 1 );
-    }
-
-    return String.format( "%s: %s", label, cursorTime );
+    return getCursorFlagText( aCursorIndex, cursor.getTimestamp(), aStyle );
   }
 
   /**
@@ -194,6 +164,22 @@ abstract class AbstractViewModel
   public int getScopeHeight()
   {
     return getSignalDiagramModel().getScopeHeight();
+  }
+
+  /**
+   * Returns all channels the given range of all visible channel groups.
+   * 
+   * @param aY
+   *          the screen Y-coordinate;
+   * @param aHeight
+   *          the screen height.
+   * @return an array of channels, never <code>null</code>.
+   */
+  public SignalElement[] getSignalElements( final int aY, final int aHeight )
+  {
+    // Return all channel elements within the given boundaries, even if they do
+    // not completely fit...
+    return getSignalDiagramModel().getSignalElements( aY, aHeight, SignalElementMeasurer.LOOSE_MEASURER );
   }
 
   /**
@@ -283,5 +269,46 @@ abstract class AbstractViewModel
   {
     final SignalDiagramModel model = this.controller.getSignalDiagram().getModel();
     return model.locationToTimestamp( aPoint );
+  }
+
+  /**
+   * Returns the cursor flag text for the cursor with the given index.
+   * 
+   * @param aCursorIdx
+   *          the index of the cursor, >= 0 && < 10;
+   * @param aCursorTimestamp
+   *          the timestamp of the cursor;
+   * @param aStyle
+   *          the style of the cursor flag text, cannot be <code>null</code>.
+   * @return a cursor flag text, or an empty string if the cursor with the given
+   *         index is undefined.
+   */
+  private String getCursorFlagText( final int aCursorIdx, final long aCursorTimestamp, final LabelStyle aStyle )
+  {
+    final SignalDiagramModel model = getSignalDiagramModel();
+    final double sampleRate = model.getSampleRate();
+
+    final nl.lxtreme.test.model.Cursor cursor = model.getCursor( aCursorIdx );
+
+    String label = cursor.getLabel();
+    if ( !cursor.hasLabel() )
+    {
+      label = Integer.toString( aCursorIdx + 1 );
+    }
+
+    switch ( aStyle )
+    {
+      case LABEL_TIME:
+        return label.concat( ": " ).concat( Utils.displayTime( aCursorTimestamp / sampleRate ) );
+      case INDEX_LABEL:
+        return String.format( "%d: %s", aCursorIdx + 1, label );
+      case TIME_ONLY:
+        return Utils.displayTime( aCursorTimestamp / sampleRate );
+      case LABEL_ONLY:
+        return label;
+      case INDEX_ONLY:
+      default:
+        return String.format( "%d", aCursorIdx + 1 );
+    }
   }
 }

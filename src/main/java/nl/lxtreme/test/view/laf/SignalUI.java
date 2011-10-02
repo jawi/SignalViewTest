@@ -172,7 +172,7 @@ public class SignalUI extends ComponentUI
       // Draw the cursor "flags"...
       if ( model.isCursorMode() )
       {
-        paintCursorFlags( canvas, model, view );
+        paintCursors( canvas, model );
       }
 
       // Draw the measurement stuff...
@@ -188,26 +188,25 @@ public class SignalUI extends ComponentUI
   }
 
   /**
-   * Paints the cursors on this time line.
+   * Paints the cursors over the signals.
    * 
    * @param aCanvas
-   *          the canvas to paint the cursor (flags) on;
-   * @param aClip
-   *          the clip boundaries.
+   *          the canvas to paint the cursor on;
+   * @param aModel
+   *          the model to use;
    */
-  private void paintCursorFlags( final Graphics2D aCanvas, final SignalViewModel aModel, final JComponent aView )
+  private void paintCursors( final Graphics2D aCanvas, final SignalViewModel aModel )
   {
     final Rectangle clip = aCanvas.getClipBounds();
 
     // Tell Swing how we would like to render ourselves...
     aCanvas.setRenderingHints( createCursorRenderingHints() );
 
-    final int viewYpos = aView.getVisibleRect().y;
     for ( int i = 0; i < Cursor.MAX_CURSORS; i++ )
     {
       int cursorXpos = aModel.getCursorScreenCoordinate( i );
 
-      if ( ( cursorXpos < 0 ) || !clip.contains( cursorXpos, viewYpos ) )
+      if ( ( cursorXpos < 0 ) || !clip.contains( cursorXpos, clip.y ) )
       {
         // Trivial reject: don't paint undefined cursors, or cursors outside the
         // clip boundaries...

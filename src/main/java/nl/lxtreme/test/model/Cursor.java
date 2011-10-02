@@ -93,8 +93,11 @@ public class Cursor implements Comparable<Cursor>, Cloneable
   {
     Cursor[] cursors = new Cursor[MAX_CURSORS];
     cursors[0] = new Cursor( 0, 100 );
+    cursors[0].setLabel( "AAA" );
     cursors[1] = new Cursor( 1, 200 );
-    cursors[2] = new Cursor( 2 );
+    cursors[1].setLabel( "BBB" );
+    cursors[2] = new Cursor( 2, 125 );
+    cursors[2].setLabel( "CCC" );
     cursors[3] = new Cursor( 3 );
     cursors[4] = new Cursor( 4 );
     cursors[5] = new Cursor( 5 );
