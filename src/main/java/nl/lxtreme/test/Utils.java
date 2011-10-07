@@ -331,7 +331,7 @@ public final class Utils
     }
     sb.append( aFont.getSize() ).append( "pt " );
     sb.append( '"' ).append( aFont.getFontName() ).append( "\", " );
-    sb.append('"').append( aFont.getPSName() ).append( "\";" );
+    sb.append( '"' ).append( aFont.getPSName() ).append( "\";" );
     return sb.toString();
   }
 

@@ -22,6 +22,8 @@ package nl.lxtreme.test.model;
 
 import java.awt.*;
 
+import nl.lxtreme.test.*;
+
 
 /**
  * Denotes a cursor with a timestamp, label and index.
@@ -57,7 +59,7 @@ public class Cursor implements Comparable<Cursor>, Cloneable
     }
 
     this.index = aIndex;
-    this.color = Color.BLUE;
+    this.color = Utils.parseColor( "7bf9dd" ).brighter();
   }
 
   /**
@@ -72,14 +74,9 @@ public class Cursor implements Comparable<Cursor>, Cloneable
    */
   public Cursor( final int aIndex, final long aTimestamp )
   {
-    if ( ( aIndex < 0 ) || ( aIndex >= MAX_CURSORS ) )
-    {
-      throw new IllegalArgumentException( "Invalid cursor index!" );
-    }
+    this( aIndex );
 
-    this.index = aIndex;
     this.timestamp = Long.valueOf( aTimestamp );
-    this.color = Color.BLUE;
   }
 
   // METHODS

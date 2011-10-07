@@ -396,6 +396,8 @@ public class SignalDiagramModel
    */
   public int getAbsoluteScreenHeight()
   {
+    final int signalGroupHeight = 20; // XXX
+
     int height = 0;
     for ( ChannelGroup cg : getChannelGroupManager().getChannelGroups() )
     {
@@ -403,6 +405,8 @@ public class SignalDiagramModel
       {
         continue;
       }
+
+      height += signalGroupHeight;
 
       if ( cg.isShowDigitalSignals() )
       {

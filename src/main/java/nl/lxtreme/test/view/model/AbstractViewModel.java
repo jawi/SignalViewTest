@@ -139,7 +139,7 @@ public abstract class AbstractViewModel
    */
   public Color getCursorTextColor( final int aCursorIndex )
   {
-    return Utils.getContrastColor( getCursorColor( aCursorIndex ) );
+    return ( getCursorColor( aCursorIndex ) );
   }
 
   /**
@@ -289,11 +289,12 @@ public abstract class AbstractViewModel
     final double sampleRate = model.getSampleRate();
 
     final nl.lxtreme.test.model.Cursor cursor = model.getCursor( aCursorIdx );
+    Integer index = Integer.valueOf( aCursorIdx + 1 );
 
     String label = cursor.getLabel();
     if ( !cursor.hasLabel() )
     {
-      label = Integer.toString( aCursorIdx + 1 );
+      label = index.toString();
     }
 
     switch ( aStyle )
@@ -301,14 +302,14 @@ public abstract class AbstractViewModel
       case LABEL_TIME:
         return label.concat( ": " ).concat( Utils.displayTime( aCursorTimestamp / sampleRate ) );
       case INDEX_LABEL:
-        return String.format( "%d: %s", aCursorIdx + 1, label );
+        return String.format( "%d: %s", index, label );
       case TIME_ONLY:
         return Utils.displayTime( aCursorTimestamp / sampleRate );
       case LABEL_ONLY:
         return label;
       case INDEX_ONLY:
       default:
-        return String.format( "%d", aCursorIdx + 1 );
+        return String.format( "%d", index );
     }
   }
 }

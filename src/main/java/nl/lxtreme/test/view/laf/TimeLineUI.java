@@ -214,8 +214,6 @@ public class TimeLineUI extends ComponentUI
   private static final int TEXT_PADDING_X = 2;
   /** The vertical padding (in px) of the timeline view. */
   private static final int VERTICAL_PADDING = 1;
-  /** The (fixed) Y position of the cursors. */
-  private static final int CURSOR_Y_POS = 12;
 
   // METHODS
 
@@ -379,10 +377,10 @@ public class TimeLineUI extends ComponentUI
 
       final String flagText = aModel.getCursorFlagText( i, LabelStyle.LABEL_TIME );
 
-      boundaries.x = aModel.getCursorScreenCoordinate( i );
-      boundaries.y = CURSOR_Y_POS;
       boundaries.height = fm.getHeight() + PADDING_HEIGHT;
       boundaries.width = fm.stringWidth( flagText ) + PADDING_WIDTH;
+      boundaries.x = aModel.getCursorScreenCoordinate( i );
+      boundaries.y = aComponent.getHeight() - boundaries.height - PADDING_TOP;
 
       if ( ( boundaries.x < 0 ) || !clip.intersects( boundaries ) )
       {
@@ -404,11 +402,13 @@ public class TimeLineUI extends ComponentUI
     for ( CursorLabel label : labels )
     {
       final Rectangle boundaries = label.boundaries;
+      final Color cursorColor = aModel.getCursorColor( label.index );
 
-      aCanvas.setColor( Color.BLACK ); // XXX
-      aCanvas.fillRect( boundaries.x, boundaries.y, boundaries.width, boundaries.height );
+      // aCanvas.setColor( cursorColor );
+      // aCanvas.fillRect( boundaries.x, boundaries.y, boundaries.width,
+      // boundaries.height );
 
-      aCanvas.setColor( aModel.getCursorColor( label.index ) );
+      aCanvas.setColor( cursorColor );
       aCanvas.drawRect( boundaries.x, boundaries.y, boundaries.width, boundaries.height );
 
       final int textXpos = boundaries.x + PADDING_LEFT;
