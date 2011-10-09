@@ -122,6 +122,7 @@ public class SignalDiagramModel
 
   private int signalHeight;
   private int channelHeight;
+  private int signalGroupHeight;
   private int scopeHeight;
   private int groupSummaryHeight;
   private int mode;
@@ -157,6 +158,7 @@ public class SignalDiagramModel
     this.propertyChangeSupport = new PropertyChangeSupport( this );
 
     this.signalHeight = 20;
+    this.signalGroupHeight = 20;
     this.channelHeight = 40;
     this.groupSummaryHeight = 24;
     this.scopeHeight = 96;
@@ -396,8 +398,6 @@ public class SignalDiagramModel
    */
   public int getAbsoluteScreenHeight()
   {
-    final int signalGroupHeight = 20; // XXX
-
     int height = 0;
     for ( ChannelGroup cg : getChannelGroupManager().getChannelGroups() )
     {
@@ -406,7 +406,7 @@ public class SignalDiagramModel
         continue;
       }
 
-      height += signalGroupHeight;
+      height += getSignalGroupHeight();
 
       if ( cg.isShowDigitalSignals() )
       {
@@ -611,7 +611,7 @@ public class SignalDiagramModel
     final int channelHeight = getChannelHeight();
     final int groupSummaryHeight = getGroupSummaryHeight();
     final int scopeHeight = getScopeHeight();
-    final int signalGroupHeight = 20; // XXX
+    final int signalGroupHeight = getSignalGroupHeight();
 
     final int yMin = aY;
     final int yMax = aHeight + aY;
@@ -667,6 +667,16 @@ public class SignalDiagramModel
     }
 
     return elements.toArray( new SignalElement[elements.size()] );
+  }
+
+  /**
+   * Returns the signal group height.
+   * 
+   * @return the signal group height, in pixels.
+   */
+  public int getSignalGroupHeight()
+  {
+    return this.signalGroupHeight;
   }
 
   /**
@@ -1338,6 +1348,17 @@ public class SignalDiagramModel
   public void setSignalAlignment( final SignalAlignment aSignalAlignment )
   {
     this.signalAlignment = aSignalAlignment;
+  }
+
+  /**
+   * Sets signalGroupHeight to the given value.
+   * 
+   * @param aSignalGroupHeight
+   *          the signalGroupHeight to set.
+   */
+  public void setSignalGroupHeight( final int aSignalGroupHeight )
+  {
+    this.signalGroupHeight = aSignalGroupHeight;
   }
 
   /**

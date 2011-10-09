@@ -183,6 +183,16 @@ public abstract class AbstractViewModel
   }
 
   /**
+   * Returns the signal group height.
+   * 
+   * @return the signal group height, in pixels.
+   */
+  public int getSignalGroupHeight()
+  {
+    return getSignalDiagramModel().getSignalHeight();
+  }
+
+  /**
    * @return
    */
   public int getSignalHeight()
