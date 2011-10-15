@@ -21,6 +21,7 @@
 package nl.lxtreme.test.model;
 
 
+import java.awt.*;
 import java.util.*;
 
 
@@ -82,6 +83,8 @@ public class ChannelGroup
   private String summaryLabel;
   /** The label used for the analog signal. */
   private String analogSignalLabel;
+  /** The color used as default for this channel group. */
+  private Color color;
   private boolean visible;
   private int viewOptions;
 
@@ -113,6 +116,8 @@ public class ChannelGroup
     // By default only the digital signals are shown...
     this.viewOptions = ChannelElementType.DIGITAL_SIGNAL.mask | ChannelElementType.GROUP_SUMMARY.mask
         | ChannelElementType.ANALOG_SIGNAL.mask;
+    // By default pick a color...
+    this.color = Channel.DEFAULT_COLORS[aIndex % Channel.DEFAULT_COLORS.length];
 
     this.channels = new ArrayList<Channel>();
   }
@@ -281,6 +286,16 @@ public class ChannelGroup
   }
 
   /**
+   * Returns the color of this channel group.
+   * 
+   * @return the color used by this channel group.
+   */
+  public Color getColor()
+  {
+    return this.color;
+  }
+
+  /**
    * Returns the label used for the group summary of this channel group.
    * 
    * @return the label for the group summary, can be <code>null</code>.
@@ -444,6 +459,17 @@ public class ChannelGroup
   public void setAnalogSignalLabel( final String aSignalLabel )
   {
     this.analogSignalLabel = aSignalLabel;
+  }
+
+  /**
+   * Sets the color of this channel group.
+   * 
+   * @param aColor
+   *          the color to set, cannot be <code>null</code>.
+   */
+  public void setColor( final Color aColor )
+  {
+    this.color = aColor;
   }
 
   /**

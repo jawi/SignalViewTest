@@ -359,6 +359,9 @@ public class SignalUI extends ComponentUI
         int prevSampleValue = values[startIdx] & mask;
         int prevX = ( int )( zoomFactor * timestamps[startIdx] );
 
+        FontMetrics fm = aCanvas.getFontMetrics();
+        int textYpos = ( int )( ( signalElement.getHeight() + fm.getLeading() + fm.getMaxAscent() ) / 2.0 ) - 2;
+
         for ( int sampleIdx = startIdx + 1; sampleIdx < endIdx; sampleIdx += sampleIncr )
         {
           int sampleValue = ( values[sampleIdx] & mask );
@@ -368,14 +371,12 @@ public class SignalUI extends ComponentUI
             int x = ( int )( zoomFactor * timestamps[sampleIdx] );
 
             String text = String.format( "%x", Integer.valueOf( prevSampleValue ) );
-            FontMetrics fm = aCanvas.getFontMetrics();
 
             int textWidth = fm.stringWidth( text ) + ( 2 * PADDING_X );
             int cellWidth = x - prevX;
             if ( textWidth < cellWidth )
             {
               int textXpos = prevX + ( int )( ( cellWidth - textWidth ) / 2.0 );
-              int textYpos = fm.getHeight();
 
               aCanvas.drawString( text, textXpos, textYpos );
             }

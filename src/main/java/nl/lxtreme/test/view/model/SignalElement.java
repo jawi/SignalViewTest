@@ -217,7 +217,7 @@ public class SignalElement
     }
     else
     {
-      return Color.CYAN; // XXX
+      return this.channelGroup.getColor();
     }
   }
 
@@ -382,7 +382,7 @@ public class SignalElement
     }
     else
     {
-      // XXX
+      this.channelGroup.setColor( aColor );
     }
   }
 

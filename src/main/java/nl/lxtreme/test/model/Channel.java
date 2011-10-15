@@ -35,7 +35,7 @@ public class Channel implements Comparable<Channel>
 
   public static final int MAX_CHANNELS = 32;
 
-  private static final Color[] DEFAULT_COLORS = { //
+  static final Color[] DEFAULT_COLORS = { //
   Utils.parseColor( "7bf9dd" ), //
       Utils.parseColor( "7bf9dd" ), //
       Utils.parseColor( "7bf9dd" ), //
@@ -136,7 +136,11 @@ public class Channel implements Comparable<Channel>
    */
   public Color getColor()
   {
-    return this.color;
+    if ( this.color != null )
+    {
+      return this.color;
+    }
+    return this.group.getColor();
   }
 
   /**

@@ -37,7 +37,7 @@ public final class LafDefaults
   // SIGNAL VIEW
 
   /** Measurement arrow color. */
-  public static final Color DEFAULT_ARROW_COLOR = Color.YELLOW;
+  public static final Color DEFAULT_ARROW_COLOR = Color.WHITE;
 
   // GLASS PANE
 
