@@ -31,7 +31,7 @@ public class ChannelLabelRenderer extends BaseRenderer
   // CONSTANTS
 
   public static final int PADDING_Y = 1;
-  public static final int PADDING_X = 6;
+  public static final int PADDING_X = 15;
 
   private static final float INDEX_RELATIVE_FONT_SIZE = 0.75f;
 

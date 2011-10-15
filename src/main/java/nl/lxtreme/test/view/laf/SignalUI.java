@@ -90,8 +90,8 @@ public class SignalUI extends ComponentUI
   private static RenderingHints createSignalRenderingHints()
   {
     RenderingHints hints = new RenderingHints( RenderingHints.KEY_INTERPOLATION,
-        RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR );
-    hints.put( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF );
+        RenderingHints.VALUE_INTERPOLATION_BILINEAR );
+    hints.put( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
     hints.put( RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED );
     hints.put( RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_SPEED );
     hints.put( RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED );
@@ -381,7 +381,7 @@ public class SignalUI extends ComponentUI
             }
 
             // draw a small line...
-            aCanvas.drawLine( x, PADDING_Y, x, signalElement.getHeight() - PADDING_Y );
+            aCanvas.drawLine( x, PADDING_Y, x, signalElement.getHeight() - ( 2 * PADDING_Y ) );
 
             prevX = x;
           }
@@ -398,7 +398,7 @@ public class SignalUI extends ComponentUI
         final int trailingZeros = Integer.numberOfTrailingZeros( mask );
         final int onesCount = Integer.SIZE - Integer.numberOfLeadingZeros( mask ) - trailingZeros;
         final int maxValue = ( int )( 1L << onesCount );
-        double scaleFactor = signalElement.getHeight() / ( maxValue + 1.0 );
+        double scaleFactor = ( signalElement.getHeight() - ( 2 * PADDING_Y ) ) / ( maxValue + 1.0 );
 
         // Make sure we always start with time 0...
         int p = 0;
@@ -413,7 +413,7 @@ public class SignalUI extends ComponentUI
           sampleValue = maxValue - ( sampleValue / sampleIncr );
 
           x[p] = ( int )( zoomFactor * timestamp );
-          y[p] = ( int )( scaleFactor * sampleValue );
+          y[p] = PADDING_Y + ( int )( scaleFactor * sampleValue );
           p++;
         }
 

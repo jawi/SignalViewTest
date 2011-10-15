@@ -217,7 +217,7 @@ public class SignalElement
     }
     else
     {
-      return Color.YELLOW; // XXX
+      return Color.CYAN; // XXX
     }
   }
 

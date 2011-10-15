@@ -160,7 +160,7 @@ public class SignalDiagramModel
     this.signalHeight = 20;
     this.signalGroupHeight = 20;
     this.channelHeight = 40;
-    this.groupSummaryHeight = 24;
+    this.groupSummaryHeight = 30;
     this.scopeHeight = 96;
 
     this.signalAlignment = SignalAlignment.CENTER;

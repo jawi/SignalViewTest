@@ -45,6 +45,8 @@ public class ChannelLabelsUI extends ComponentUI
   private static final int PADDING_Y = 2;
   private static final int PADDING_X = 4;
 
+  private static final int GUTTER_X = 15;
+
   // VARIABLES
 
   private final Renderer renderer = new ChannelLabelRenderer();
@@ -114,7 +116,7 @@ public class ChannelLabelsUI extends ComponentUI
       canvas.setBackground( model.getBackgroundColor() );
       canvas.clearRect( clip.x, clip.y, clip.width, clip.height );
 
-      final int compWidth = view.getWidth();
+      final int compWidth = view.getWidth() - GUTTER_X;
 
       // Start drawing at the correct position in the clipped region...
       canvas.translate( 0, signalElements[0].getYposition() );
@@ -150,6 +152,127 @@ public class ChannelLabelsUI extends ComponentUI
   }
 
   /**
+   * Paints the label for the analog scope.
+   * 
+   * @param aCanvas
+   *          the canvas to paint on, cannot be <code>null</code>;
+   * @param aModel
+   *          the model to use, cannot be <code>null</code>;
+   * @param aSignalElement
+   *          the signal element to paint the analog signal for, cannot be
+   *          <code>null</code>;
+   * @param aWidth
+   *          the width in pixels.
+   */
+  final void paintAnalogScope( final Graphics2D aCanvas, final ChannelLabelsViewModel aModel,
+      final SignalElement aSignalElement, final int aWidth )
+  {
+    final int height = aSignalElement.getHeight();
+
+    paintElementBackground( aCanvas, aModel, aSignalElement, height, aWidth );
+
+    aCanvas.setFont( aModel.getLabelFont() );
+    aCanvas.setColor( aModel.getLabelForegroundColor() );
+
+    this.renderer.setContext( Integer.valueOf( aWidth ), Integer.valueOf( height ), aSignalElement.getLabel() );
+    this.renderer.render( aCanvas, 0, 0 );
+
+    aCanvas.translate( 0, height );
+  }
+
+  /**
+   * @param aCanvas
+   *          the canvas to paint on, cannot be <code>null</code>;
+   * @param aModel
+   *          the model to use, cannot be <code>null</code>;
+   * @param aSignalElement
+   *          the signal element to paint the digital signal for, cannot be
+   *          <code>null</code>;
+   * @param aWidth
+   *          the width of the component, in pixels.
+   */
+  final void paintDigitalSignal( final Graphics2D aCanvas, final ChannelLabelsViewModel aModel,
+      final SignalElement aSignalElement, final int aWidth )
+  {
+    final int paddingHeight = 2 * PADDING_Y;
+
+    final int height = aSignalElement.getHeight() - paddingHeight;
+    final Channel channel = aSignalElement.getChannel();
+
+    paintElementBackground( aCanvas, aModel, aSignalElement, height, aWidth );
+
+    aCanvas.setFont( aModel.getLabelFont() );
+    aCanvas.setColor( aModel.getLabelForegroundColor() );
+
+    this.renderer.setContext( Integer.valueOf( aWidth ), Integer.valueOf( height ), channel.getLabel() );
+    this.renderer.render( aCanvas, 0, 0 );
+
+    // Advance to the next channel...
+    aCanvas.translate( 0, aSignalElement.getHeight() );
+  }
+
+  /**
+   * Paints the group summary.
+   * 
+   * @param aCanvas
+   *          the canvas to paint on, cannot be <code>null</code>;
+   * @param aModel
+   *          the model to use, cannot be <code>null</code>;
+   * @param aSignalElement
+   *          the signal element to paint the group summary for, cannot be
+   *          <code>null</code>;
+   * @param aWidth
+   *          the width of the component, in pixels.
+   */
+  final void paintGroupSummary( final Graphics2D aCanvas, final ChannelLabelsViewModel aModel,
+      final SignalElement aSignalElement, final int aWidth )
+  {
+    final int paddingHeight = 2 * PADDING_Y;
+
+    final int height = aSignalElement.getHeight() - paddingHeight;
+
+    paintElementBackground( aCanvas, aModel, aSignalElement, height, aWidth );
+
+    aCanvas.setFont( aModel.getLabelFont() );
+    aCanvas.setColor( aModel.getLabelForegroundColor() );
+
+    this.renderer.setContext( Integer.valueOf( aWidth ), Integer.valueOf( height ), aSignalElement.getLabel() );
+    this.renderer.render( aCanvas, 0, 0 );
+
+    aCanvas.translate( 0, aSignalElement.getHeight() );
+  }
+
+  /**
+   * Paints the signal group.
+   * 
+   * @param aCanvas
+   *          the canvas to paint on, cannot be <code>null</code>;
+   * @param aModel
+   *          the model to use, cannot be <code>null</code>;
+   * @param aSignalElement
+   *          the signal element to paint the signal group for, cannot be
+   *          <code>null</code>;
+   * @param aWidth
+   *          the width of the component, in pixels.
+   */
+  final void paintSignalGroup( final Graphics2D aCanvas, final ChannelLabelsViewModel aModel,
+      final SignalElement aSignalElement, final int aWidth )
+  {
+    final int height = aSignalElement.getHeight();
+
+    // paintElementBackground( aCanvas, aModel, height );
+
+    // aCanvas.setFont( aModel.getLabelFont() );
+    // aCanvas.setColor( aModel.getLabelForegroundColor() );
+    //
+    // this.renderer.setContext( Integer.valueOf( aWidth ), Integer.valueOf(
+    // height ), aSignalElement.getLabel() );
+    // this.renderer.render( aCanvas, -30, 0 ); // XXX
+
+    aCanvas.translate( 0, height );
+  }
+
+  /**
    * Determines the size of the view.
    * 
    * @param aView
@@ -182,71 +305,12 @@ public class ChannelLabelsUI extends ComponentUI
     }
 
     // And always ensure we've got at least a minimal width...
-    minWidth = Math.max( minWidth + 2 * ( PADDING_X + ChannelLabelRenderer.PADDING_X ), model.getMinimalWidth() );
+    minWidth = Math.max( minWidth + ( 2 * ( PADDING_X + ChannelLabelRenderer.PADDING_X ) ), model.getMinimalWidth() );
 
     // Overwrite the preferred width with the one calculated...
     result.width = minWidth;
 
     return result;
-  }
-
-  /**
-   * Paints the label for the analog scope.
-   * 
-   * @param aCanvas
-   *          the canvas to paint on, cannot be <code>null</code>;
-   * @param aModel
-   *          the model to use, cannot be <code>null</code>;
-   * @param aSignalElement
-   *          the signal element to paint the analog signal for, cannot be
-   *          <code>null</code>;
-   * @param aWidth
-   *          the width in pixels.
-   */
-  private void paintAnalogScope( final Graphics2D aCanvas, final ChannelLabelsViewModel aModel,
-      final SignalElement aSignalElement, final int aWidth )
-  {
-    final int height = aSignalElement.getHeight();
-
-    paintElementBackground( aCanvas, aModel, height );
-
-    aCanvas.setFont( aModel.getLabelFont() );
-    aCanvas.setColor( aModel.getLabelForegroundColor() );
-
-    this.renderer.setContext( Integer.valueOf( aWidth ), Integer.valueOf( height ), aSignalElement.getLabel() );
-    this.renderer.render( aCanvas, 0, 0 );
-
-    aCanvas.translate( 0, height );
-  }
-
-  /**
-   * @param aCanvas
-   *          the canvas to paint on, cannot be <code>null</code>;
-   * @param aModel
-   *          the model to use, cannot be <code>null</code>;
-   * @param aSignalElement
-   *          the signal element to paint the digital signal for, cannot be
-   *          <code>null</code>;
-   * @param aWidth
-   *          the width of the component, in pixels.
-   */
-  private void paintDigitalSignal( final Graphics2D aCanvas, final ChannelLabelsViewModel aModel,
-      final SignalElement aSignalElement, final int aWidth )
-  {
-    final int height = aSignalElement.getHeight();
-    final Channel channel = aSignalElement.getChannel();
-
-    paintElementBackground( aCanvas, aModel, height );
-
-    aCanvas.setFont( aModel.getLabelFont() );
-    aCanvas.setColor( aModel.getLabelForegroundColor() );
-
-    this.renderer.setContext( Integer.valueOf( aWidth ), Integer.valueOf( height ), channel.getLabel(),
-        Integer.toString( channel.getIndex() ) );
-    this.renderer.render( aCanvas, 0, 0 );
-
-    // Advance to the next channel...
-    aCanvas.translate( 0, height );
   }
 
   /**
@@ -259,75 +323,27 @@ public class ChannelLabelsUI extends ComponentUI
    * @param aHeight
    *          the height of the view, in pixels.
    */
-  private void paintElementBackground( final Graphics2D aCanvas, final ChannelLabelsViewModel aModel, final int aHeight )
+  private void paintElementBackground( final Graphics2D aCanvas, final ChannelLabelsViewModel aModel,
+      final SignalElement aSignalElement, final int aHeight, final int aWidth )
   {
-    final Rectangle clip = aCanvas.getClipBounds();
-
-    final int x = clip.x - ARC_WIDTH;
+    final int x = -ARC_WIDTH;
     final int y = PADDING_Y;
-    final int width = clip.width + ( ARC_WIDTH - PADDING_X );
+    final int width = aWidth + ( ARC_WIDTH - PADDING_X );
     final int height = aHeight - y;
 
-    aCanvas.setColor( aModel.getLabelBackgroundColor() );
+    final Color labelBackgroundColor = aModel.getLabelBackgroundColor();
+    final Color newBrighterColor = labelBackgroundColor.brighter();
+
+    final GradientPaint paint = new GradientPaint( x, y - 5, newBrighterColor, x, aHeight + 10, labelBackgroundColor );
+    final Paint oldPaint = aCanvas.getPaint();
+
+    aCanvas.setPaint( paint );
 
     aCanvas.fillRoundRect( x, y, width, height, ARC_WIDTH, ARC_WIDTH );
-  }
 
-  /**
-   * Paints the group summary.
-   * 
-   * @param aCanvas
-   *          the canvas to paint on, cannot be <code>null</code>;
-   * @param aModel
-   *          the model to use, cannot be <code>null</code>;
-   * @param aSignalElement
-   *          the signal element to paint the group summary for, cannot be
-   *          <code>null</code>;
-   * @param aWidth
-   *          the width of the component, in pixels.
-   */
-  private void paintGroupSummary( final Graphics2D aCanvas, final ChannelLabelsViewModel aModel,
-      final SignalElement aSignalElement, final int aWidth )
-  {
-    final int height = aSignalElement.getHeight();
+    aCanvas.setPaint( oldPaint );
+    aCanvas.setColor( aSignalElement.getColor() );
 
-    paintElementBackground( aCanvas, aModel, height );
-
-    aCanvas.setFont( aModel.getLabelFont() );
-    aCanvas.setColor( aModel.getLabelForegroundColor() );
-
-    this.renderer.setContext( Integer.valueOf( aWidth ), Integer.valueOf( height ), aSignalElement.getLabel() );
-    this.renderer.render( aCanvas, 0, 0 );
-
-    aCanvas.translate( 0, height );
-  }
-
-  /**
-   * Paints the signal group.
-   * 
-   * @param aCanvas
-   *          the canvas to paint on, cannot be <code>null</code>;
-   * @param aModel
-   *          the model to use, cannot be <code>null</code>;
-   * @param aSignalElement
-   *          the signal element to paint the signal group for, cannot be
-   *          <code>null</code>;
-   * @param aWidth
-   *          the width of the component, in pixels.
-   */
-  private void paintSignalGroup( final Graphics2D aCanvas, final ChannelLabelsViewModel aModel,
-      final SignalElement aSignalElement, final int aWidth )
-  {
-    final int height = aSignalElement.getHeight();
-
-    // paintElementBackground( aCanvas, aModel, height );
-
-    aCanvas.setFont( aModel.getLabelFont() );
-    aCanvas.setColor( aModel.getLabelForegroundColor() );
-
-    this.renderer.setContext( Integer.valueOf( aWidth ), Integer.valueOf( height ), aSignalElement.getLabel() );
-    this.renderer.render( aCanvas, -30, 0 ); // XXX
-
-    aCanvas.translate( 0, height );
+    aCanvas.drawRoundRect( x, y, width, height, ARC_WIDTH, ARC_WIDTH );
   }
 }
