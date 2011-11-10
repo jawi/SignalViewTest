@@ -21,9 +21,11 @@ package nl.lxtreme.test.view.model;
 
 
 import java.awt.*;
+import java.util.*;
 
 import javax.swing.*;
 
+import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.view.*;
 import nl.lxtreme.test.view.laf.*;
 
@@ -53,6 +55,23 @@ public class SignalViewModel extends AbstractViewModel
   }
 
   // METHODS
+
+  /**
+   * @return
+   */
+  public Annotation<?>[] getAnnotationsFor( final int aChannel )
+  {
+    final Annotation<?>[] annotations = this.controller.getSignalDiagramModel().getAnnotations();
+    final ArrayList<Annotation<?>> result = new ArrayList<Annotation<?>>();
+    for ( Annotation<?> annotation : annotations )
+    {
+      if ( annotation.getChannel() == aChannel )
+      {
+        result.add( annotation );
+      }
+    }
+    return result.toArray( new Annotation<?>[result.size()] );
+  }
 
   /**
    * Returns the background color for the signal view.

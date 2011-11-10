@@ -131,6 +131,7 @@ public class SignalDiagramModel
   private int[] values;
   private long[] timestamps;
   private Cursor[] cursors;
+  private Annotation<?>[] annotations;
   private int sampleRate;
   private int sampleWidth;
 
@@ -439,6 +440,14 @@ public class SignalDiagramModel
       return Integer.MAX_VALUE;
     }
     return ( int )result;
+  }
+
+  /**
+   * @return
+   */
+  public Annotation<?>[] getAnnotations()
+  {
+    return this.annotations;
   }
 
   /**
@@ -1284,6 +1293,20 @@ public class SignalDiagramModel
 
     this.sampleRate = aDataModel.getSampleRate();
     this.sampleWidth = aDataModel.getWidth();
+
+    // XXX test
+    this.annotations = new Annotation<?>[20];
+    int channel = 0;
+    int idx = 10;
+    for ( int i = 0; i < this.annotations.length; i++ )
+    {
+      if ( ( i != 0 ) && ( ( i % 4 ) == 0 ) )
+      {
+        channel++;
+      }
+      this.annotations[i] = new SimpleAnnotation( channel, "Annotation " + i, idx, idx + 10 );
+      idx += 20;
+    }
 
     final IDataModelChangeListener[] listeners = this.eventListeners.getListeners( IDataModelChangeListener.class );
     for ( IDataModelChangeListener listener : listeners )
