@@ -278,11 +278,13 @@ public class SignalUI extends ComponentUI
               aCanvas.setComposite( AlphaComposite.SrcOver.derive( 0.875f ) );
               aCanvas.setStroke( SOLID_THICK );
 
+              // Fade out the signal itself...
               aCanvas.setColor( aModel.getBackgroundColor() );
               aCanvas.fillRect( x1, y1 + 1, annotationWidth, y2 - 1 );
 
               aCanvas.setComposite( oldComposite );
 
+              // Draw the thick white boundaries...
               aCanvas.setColor( Color.WHITE );
               aCanvas.drawLine( x1, y1 + 2, x1, y2 - 2 );
               aCanvas.drawLine( x2, y1 + 2, x2, y2 - 2 );
