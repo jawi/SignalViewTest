@@ -142,6 +142,8 @@ public class SignalDiagramModel
   private final EventListenerList eventListeners;
   private final PropertyChangeSupport propertyChangeSupport;
 
+  private boolean alternativeAnnotationRendering;
+
   // CONSTRUCTORS
 
   /**
@@ -1017,6 +1019,16 @@ public class SignalDiagramModel
   }
 
   /**
+   * XXX temporary method to switch between rendering styles.
+   * 
+   * @return
+   */
+  public boolean isRenderAnnotationsAlternatively()
+  {
+    return this.alternativeAnnotationRendering;
+  }
+
+  /**
    * @return the snapCursor
    */
   public boolean isSnapCursor()
@@ -1303,6 +1315,7 @@ public class SignalDiagramModel
       if ( ( i != 0 ) && ( ( i % 4 ) == 0 ) )
       {
         channel++;
+        idx = 10 + ( channel * 5 );
       }
       this.annotations[i] = new SimpleAnnotation( channel, "Annotation " + i, idx, idx + 10 );
       idx += 20;
@@ -1352,6 +1365,17 @@ public class SignalDiagramModel
         listener.disableMeasurementMode();
       }
     }
+  }
+
+  /**
+   * XXX Sets alternativeAnnotationRendering to the given value.
+   * 
+   * @param aAlternativeAnnotationRendering
+   *          the alternativeAnnotationRendering to set.
+   */
+  public void setRenderAnnotationsAlternatively( final boolean aAlternativeAnnotationRendering )
+  {
+    this.alternativeAnnotationRendering = aAlternativeAnnotationRendering;
   }
 
   /**

@@ -155,4 +155,38 @@ public class SignalViewModel extends AbstractViewModel
   {
     return this.controller.getSignalDiagramModel().getTimestamps();
   }
+
+  /**
+   * XXX temporary method to switch between annotation rendering styles.
+   * 
+   * @return
+   */
+  public boolean isRenderAnnotationsAlternatively()
+  {
+    return this.controller.getSignalDiagramModel().isRenderAnnotationsAlternatively();
+  }
+
+  /**
+   * Returns whether or not the analog scope signal itself is rendered in
+   * anti-aliased mode.
+   * 
+   * @return <code>true</code> if anti-aliasing should be applied to the scope
+   *         rendering, <code>false</code> otherwise.
+   */
+  public boolean isRenderGroupSummaryAntiAliased()
+  {
+    return false; // XXX
+  }
+
+  /**
+   * Returns whether or not the analog scope signal itself is rendered in
+   * anti-aliased mode.
+   * 
+   * @return <code>true</code> if anti-aliasing should be applied to the scope
+   *         rendering, <code>false</code> otherwise.
+   */
+  public boolean isRenderScopeSignalAntiAliased()
+  {
+    return false; // XXX
+  }
 }

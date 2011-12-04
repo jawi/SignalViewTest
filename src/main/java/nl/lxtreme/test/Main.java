@@ -28,6 +28,7 @@ import javax.swing.*;
 
 import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.view.*;
+import nl.lxtreme.test.view.action.*;
 
 import org.noos.xing.mydoggy.*;
 import org.noos.xing.mydoggy.plaf.*;
@@ -394,6 +395,8 @@ public class Main
       }
     }
 
+    this.controller = new SignalDiagramController();
+
     final Dimension dims = new Dimension( 800, 600 );
 
     this.mainFrame = new JFrame( "OLS Signal View Component - v2" );
@@ -418,6 +421,12 @@ public class Main
       }
     } );
     fileMenu.add( fileExitItem );
+
+    final JMenu annotationMenu = new JMenu( "Annotations" );
+    this.menuBar.add( annotationMenu );
+
+    final JMenuItem switchRenderStyle = new JCheckBoxMenuItem( new SwitchAnnotationRenderingAction( this.controller ) );
+    annotationMenu.add( switchRenderStyle );
 
     final JMenu diagramMenu = new JMenu( "Diagram" );
     this.menuBar.add( diagramMenu );
@@ -464,8 +473,6 @@ public class Main
     // final SampleDataModel model = new SampleDataModel( 256 * 1024, new
     // AlternatingDataWithSpacesProvider() );
     final SampleDataModel model = new SampleDataModel( 512 * 1024, new CounterDataProvider() );
-
-    this.controller = new SignalDiagramController();
 
     this.signalDiagram = SignalDiagramComponent.create( this.controller );
     this.signalDetails = SignalDetailsView.create( this.controller );

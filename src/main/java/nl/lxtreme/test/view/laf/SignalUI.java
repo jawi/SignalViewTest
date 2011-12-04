@@ -46,8 +46,6 @@ public class SignalUI extends ComponentUI
   private static final int PADDING_X = 2;
   private static final int PADDING_Y = 2;
 
-  private static final Stroke SOLID_THICK = new BasicStroke( 2.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0.9f );
-
   // VARIABLES
 
   private final Renderer arrowRenderer = new ArrowRenderer();
@@ -190,7 +188,7 @@ public class SignalUI extends ComponentUI
         paintMeasurementArrow( canvas, model, this.signalHoverInfo );
       }
 
-      // XXX
+      // Draw the annotations...
       paintAnnotations( canvas, model, signalElements );
     }
     finally
@@ -209,19 +207,31 @@ public class SignalUI extends ComponentUI
   {
     final Rectangle clip = aCanvas.getClipBounds();
 
-    final int[] values = aModel.getDataValues(); // TODO simplify
     final long[] timestamps = aModel.getTimestamps();
 
     final int startIdx = aModel.getStartIndex( clip );
-    final int endIdx = aModel.getEndIndex( clip, values.length );
+    final int endIdx = aModel.getEndIndex( clip, timestamps.length );
 
     final int signalHeight = aModel.getSignalHeight();
-    // Where is the signal to be drawn?
     final int signalOffset = aModel.getSignalOffset();
     final double zoomFactor = aModel.getZoomFactor();
 
     // Start drawing at the correct position in the clipped region...
     aCanvas.translate( 0, aSignalElements[0].getYposition() + signalOffset );
+
+    // Some drawing primitives we're going to re-use over and over...
+    final float strokeWidth = ( float )( 3.0f / Math.max( 1.0f, ( 1.0f / zoomFactor ) ) );
+    final BasicStroke stroke;
+    if ( aModel.isRenderAnnotationsAlternatively() )
+    {
+      stroke = new BasicStroke( strokeWidth, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_ROUND, 0.9f );
+    }
+    else
+    {
+      stroke = new BasicStroke( strokeWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0.9f );
+    }
+
+    final AlphaComposite alphaComposite = AlphaComposite.SrcOver.derive( 0.875f );
 
     for ( SignalElement signalElement : aSignalElements )
     {
@@ -266,6 +276,7 @@ public class SignalUI extends ComponentUI
               int x2 = ( int )( timestamps[annEndIdx] * zoomFactor );
               int y1 = 0;
               int y2 = signalHeight;
+              int midY = signalHeight / 2;
 
               final String data = ann.getAnnotation() != null ? ann.getAnnotation() : "";
 
@@ -274,23 +285,40 @@ public class SignalUI extends ComponentUI
               final int textXoffset = ( int )( ( annotationWidth - textWidth ) / 2.0 );
 
               final Composite oldComposite = aCanvas.getComposite();
+              final Stroke oldStroke = aCanvas.getStroke();
 
-              aCanvas.setComposite( AlphaComposite.SrcOver.derive( 0.875f ) );
-              aCanvas.setStroke( SOLID_THICK );
+              aCanvas.setComposite( alphaComposite );
 
               // Fade out the signal itself...
               aCanvas.setColor( aModel.getBackgroundColor() );
-              aCanvas.fillRect( x1, y1 + 1, annotationWidth, y2 - 1 );
+              if ( aModel.isRenderAnnotationsAlternatively() )
+              {
+                aCanvas.fillRect( x1, y1 + 0, annotationWidth, y2 + 1 );
+              }
+              else
+              {
+                aCanvas.fillRect( x1, y1 + 1, annotationWidth, y2 - 1 );
+              }
 
               aCanvas.setComposite( oldComposite );
 
               // Draw the thick white boundaries...
               aCanvas.setColor( Color.WHITE );
+              aCanvas.setStroke( stroke );
               aCanvas.drawLine( x1, y1 + 2, x1, y2 - 2 );
               aCanvas.drawLine( x2, y1 + 2, x2, y2 - 2 );
 
+              aCanvas.setStroke( oldStroke );
+
               if ( textXoffset > 0 )
               {
+                int x3 = ( x1 + textXoffset );
+                if ( aModel.isRenderAnnotationsAlternatively() && ( ( x3 - 4 ) > 0 ) )
+                {
+                  aCanvas.drawLine( x1, midY, x3 - 4, midY );
+                  aCanvas.drawLine( x3 + textWidth + 4, midY, x2, midY );
+                }
+
                 aCanvas.drawString( data, x1 + textXoffset, y1 + fontHeight );
               }
             }
@@ -417,7 +445,6 @@ public class SignalUI extends ComponentUI
     aCanvas.translate( 0, aSignalElements[0].getYposition() + signalOffset );
 
     final int sampleIncr = ( int )Math.max( 1.0, ( 1.0 / zoomFactor ) );
-    System.out.printf( "Sample incr = %d px\n", Integer.valueOf( sampleIncr ) ); // XXX
 
     for ( SignalElement signalElement : aSignalElements )
     {
@@ -489,7 +516,7 @@ public class SignalUI extends ComponentUI
       if ( signalElement.isGroupSummary() )
       {
         // Tell Swing how we would like to render ourselves...
-        aCanvas.setRenderingHints( createSignalRenderingHints( false /* aUseAA */) ); // XXX
+        aCanvas.setRenderingHints( createSignalRenderingHints( aModel.isRenderGroupSummaryAntiAliased() ) );
 
         int mask = signalElement.getMask();
 
@@ -533,7 +560,7 @@ public class SignalUI extends ComponentUI
       if ( signalElement.isAnalogSignal() )
       {
         // Tell Swing how we would like to render ourselves...
-        aCanvas.setRenderingHints( createSignalRenderingHints( false /* aUseAA */) ); // XXX
+        aCanvas.setRenderingHints( createSignalRenderingHints( aModel.isRenderScopeSignalAntiAliased() ) );
 
         int mask = signalElement.getMask();
         final int trailingZeros = Integer.numberOfTrailingZeros( mask );
