@@ -22,7 +22,7 @@ package nl.lxtreme.test.view;
 
 import javax.swing.*;
 
-import nl.lxtreme.test.dnd.*;
+import nl.lxtreme.test.view.dnd.*;
 
 
 /**

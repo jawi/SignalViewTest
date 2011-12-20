@@ -17,7 +17,7 @@
  *
  * Copyright (C) 2010-2011 - J.W. Janssen, <http://www.lxtreme.nl>
  */
-package nl.lxtreme.test.dnd;
+package nl.lxtreme.test.view.dnd;
 
 
 import java.util.concurrent.atomic.*;

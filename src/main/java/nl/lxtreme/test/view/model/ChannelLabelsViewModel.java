@@ -30,7 +30,7 @@ import nl.lxtreme.test.view.laf.*;
 
 
 /**
- * 
+ * Provides a model for the {@link ChannelLabelsView}.
  */
 public class ChannelLabelsViewModel extends AbstractViewModel
 {
@@ -66,25 +66,21 @@ public class ChannelLabelsViewModel extends AbstractViewModel
    * 
    * @param aMovedChannel
    *          the channel that is moved;
-   * @param aInsertRow
-   *          the row to which the channel is about to be moved.
+   * @param aInsertChannel
+   *          the channel that the moved channel is inserted before.
    * @return <code>true</code> if the move is accepted, <code>false</code> if
    *         the move is declined.
    */
-  public boolean acceptChannel( final Channel aMovedChannel, final Point aInsertPoint )
+  public boolean acceptChannel( final Channel aMovedChannel, final Channel aInsertChannel )
   {
     boolean result = false;
 
-    Channel insertChannel = findChannel( aInsertPoint );
-    if ( ( aMovedChannel != null ) && ( insertChannel != null ) )
+    if ( ( aMovedChannel != null ) && ( aInsertChannel != null ) )
     {
       // result = insertChannel.getChannelGroup() ==
       // aMovedChannel.getChannelGroup();
       result = true;
     }
-
-    System.out.println( "acceptChannel result == " + result + "; for " + aMovedChannel.getVirtualIndex() + " => "
-        + insertChannel.getVirtualIndex() );
 
     return result;
   }
@@ -100,7 +96,7 @@ public class ChannelLabelsViewModel extends AbstractViewModel
    */
   public Channel findChannel( final Point aCoordinate )
   {
-    SignalElement signalElement = getSignalDiagramModel().findSignalElement( aCoordinate );
+    SignalElement signalElement = findSignalElement( aCoordinate );
     if ( ( signalElement != null ) && signalElement.isDigitalSignal() )
     {
       return signalElement.getChannel();
@@ -120,7 +116,7 @@ public class ChannelLabelsViewModel extends AbstractViewModel
    */
   public int findChannelVirtualOffset( final Point aCoordinate )
   {
-    SignalElement signalElement = getSignalDiagramModel().findSignalElement( aCoordinate );
+    SignalElement signalElement = findSignalElement( aCoordinate );
     if ( signalElement != null )
     {
       return signalElement.getYposition();
@@ -217,18 +213,29 @@ public class ChannelLabelsViewModel extends AbstractViewModel
    * Moves a given channel row to another position.
    * 
    * @param aMovedChannel
-   *          the channel that is to be moved;
-   * @param aNewLocation
-   *          the new location the moved row is moved to.
+   *          the channel that is moved, cannot be <code>null</code>;
+   * @param aInsertChannel
+   *          the channel that the moved channel is inserted before, cannot be
+   *          <code>null</code>.
    */
-  public void moveChannelRows( final Channel aMovedChannel, final Point aNewLocation )
+  public void moveChannelRows( final Channel aMovedChannel, final Channel aInsertChannel )
   {
     final ChannelGroupManager channelGroupManager = getChannelGroupManager();
 
-    final Channel insertLocation = findChannel( aNewLocation );
-    if ( insertLocation != null )
-    {
-      channelGroupManager.moveChannel( aMovedChannel, insertLocation );
-    }
+    channelGroupManager.moveChannel( aMovedChannel, aInsertChannel );
+  }
+
+  /**
+   * Finds the signal element located at the given X,Y-coordinate.
+   * 
+   * @param aCoordinate
+   *          the coordinate to find the signal element for, cannot be
+   *          <code>null</code>.
+   * @return the signal element at the given X,Y-coordinate, or
+   *         <code>null</code> if no such signal element could be found.
+   */
+  private SignalElement findSignalElement( final Point aCoordinate )
+  {
+    return getSignalDiagramModel().findSignalElement( aCoordinate );
   }
 }

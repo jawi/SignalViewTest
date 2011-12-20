@@ -17,30 +17,38 @@
  *
  * Copyright (C) 2010-2011 - J.W. Janssen, <http://www.lxtreme.nl>
  */
-package nl.lxtreme.test.dnd;
+package nl.lxtreme.test.view.dnd;
 
 
+import java.awt.*;
 import java.awt.datatransfer.*;
-import java.io.*;
 
 import nl.lxtreme.test.model.*;
 
 
 /**
+ * Denotes a transferable channel, used to move channels around.
+ * 
  * @author jajans
  */
-public class ChannelRowTransferable implements Transferable
+public class ChannelTransferable implements Transferable
 {
   // CONSTANTS
 
-  public static final DataFlavor FLAVOR;
+  public static final DataFlavor CHANNEL_FLAVOR;
+  public static final DataFlavor LOCATION_FLAVOR;
 
   static
   {
     try
     {
-      FLAVOR = new DataFlavor( "application/vnd.ols.x-channel;class=" + ChannelRowTransferable.class.getCanonicalName()
+      final String clazz = ChannelTransferable.class.getCanonicalName();
+
+      CHANNEL_FLAVOR = new DataFlavor( "application/vnd.ols.x-channel;class=" + clazz
           + ";humanPresentableName=OLS%20Channel" );
+
+      LOCATION_FLAVOR = new DataFlavor( "application/vnd.ols.x-location;class=" + clazz
+          + ";humanPresentableName=OLS%20Channel%20Location" );
     }
     catch ( final ClassNotFoundException exception )
     {
@@ -50,16 +58,24 @@ public class ChannelRowTransferable implements Transferable
 
   // VARIABLES
 
-  private final Channel row;
+  private final Channel channel;
+  private final Point location;
 
   // CONSTRUCTORS
 
   /**
-   * @param aRow
+   * Creates a new {@link ChannelTransferable} instance.
+   * 
+   * @param aChannel
+   *          the channel to transfer, cannot be <code>null</code>;
+   * @param aLocation
+   *          the location of the transferred chanenl, cannot be
+   *          <code>null</code>.
    */
-  public ChannelRowTransferable( final Channel aRow )
+  public ChannelTransferable( final Channel aChannel, final Point aLocation )
   {
-    this.row = aRow;
+    this.channel = aChannel;
+    this.location = aLocation;
   }
 
   // METHODS
@@ -68,11 +84,15 @@ public class ChannelRowTransferable implements Transferable
    * {@inheritDoc}
    */
   @Override
-  public Object getTransferData( final DataFlavor aFlavor ) throws UnsupportedFlavorException, IOException
+  public Object getTransferData( final DataFlavor aFlavor ) throws UnsupportedFlavorException
   {
-    if ( aFlavor.equals( FLAVOR ) )
+    if ( CHANNEL_FLAVOR.equals( aFlavor ) )
     {
-      return this.row;
+      return this.channel;
+    }
+    else if ( LOCATION_FLAVOR.equals( aFlavor ) )
+    {
+      return this.location;
     }
 
     throw new UnsupportedFlavorException( aFlavor );
@@ -84,7 +104,7 @@ public class ChannelRowTransferable implements Transferable
   @Override
   public DataFlavor[] getTransferDataFlavors()
   {
-    return new DataFlavor[] { FLAVOR };
+    return new DataFlavor[] { CHANNEL_FLAVOR, LOCATION_FLAVOR };
   }
 
   /**
@@ -93,6 +113,7 @@ public class ChannelRowTransferable implements Transferable
   @Override
   public boolean isDataFlavorSupported( final DataFlavor aFlavor )
   {
-    return aFlavor.isMimeTypeEqual( FLAVOR.getMimeType() );
+    return aFlavor.isMimeTypeEqual( CHANNEL_FLAVOR.getMimeType() )
+        || aFlavor.isMimeTypeEqual( LOCATION_FLAVOR.getMimeType() );
   }
 }

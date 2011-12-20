@@ -24,8 +24,8 @@ import java.awt.*;
 import java.beans.*;
 
 import nl.lxtreme.test.*;
-import nl.lxtreme.test.dnd.*;
 import nl.lxtreme.test.model.*;
+import nl.lxtreme.test.view.dnd.*;
 import nl.lxtreme.test.view.model.*;
 
 
