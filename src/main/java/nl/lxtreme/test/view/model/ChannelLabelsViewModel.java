@@ -59,38 +59,58 @@ public class ChannelLabelsViewModel extends AbstractViewModel
   // METHODS
 
   /**
-   * Determines the channel row corresponding to the given X,Y-coordinate.
+   * Determines whether or not the move given channel index can be accepted.
    * <p>
-   * This method returns the <em>virtual</em> channel row, not the actual
-   * channel row.
+   * Channels can only be moved within a single group.
    * </p>
    * 
-   * @param aCoordinate
-   *          the coordinate to return the channel row for, cannot be
-   *          <code>null</code>.
-   * @return a channel row index (>= 0), or -1 if the point is nowhere near a
-   *         channel row.
+   * @param aMovedChannel
+   *          the channel that is moved;
+   * @param aInsertRow
+   *          the row to which the channel is about to be moved.
+   * @return <code>true</code> if the move is accepted, <code>false</code> if
+   *         the move is declined.
    */
-  public int findChannelRow( final Point aCoordinate )
+  public boolean acceptChannel( final Channel aMovedChannel, final Point aInsertPoint )
   {
-    final int dataWidth = getSampleWidth();
-    final int channelHeight = getChannelHeight();
+    boolean result = false;
 
-    final int row = ( int )( aCoordinate.y / ( double )channelHeight );
-    if ( ( row < 0 ) || ( row >= dataWidth ) )
+    Channel insertChannel = findChannel( aInsertPoint );
+    if ( ( aMovedChannel != null ) && ( insertChannel != null ) )
     {
-      return -1;
+      // result = insertChannel.getChannelGroup() ==
+      // aMovedChannel.getChannelGroup();
+      result = true;
     }
 
-    return row;
+    System.out.println( "acceptChannel result == " + result + "; for " + aMovedChannel.getVirtualIndex() + " => "
+        + insertChannel.getVirtualIndex() );
+
+    return result;
   }
 
   /**
-   * Determines the channel row corresponding to the given X,Y-coordinate.
-   * <p>
-   * This method returns the <em>virtual</em> channel row, not the actual
-   * channel row.
-   * </p>
+   * Finds the channel that lies underneat the given coordinate.
+   * 
+   * @param aCoordinate
+   *          the X,Y-coordinate to find the channel for, cannot be
+   *          <code>null</code>.
+   * @return the channel underneat the given X,Y-coordinate, or
+   *         <code>null</code> if no channel is found.
+   */
+  public Channel findChannel( final Point aCoordinate )
+  {
+    SignalElement signalElement = getSignalDiagramModel().findSignalElement( aCoordinate );
+    if ( ( signalElement != null ) && signalElement.isDigitalSignal() )
+    {
+      return signalElement.getChannel();
+    }
+    return null;
+  }
+
+  /**
+   * Determines the virtual channel row corresponding to the given
+   * X,Y-coordinate.
    * 
    * @param aCoordinate
    *          the coordinate to return the channel row for, cannot be
@@ -98,21 +118,20 @@ public class ChannelLabelsViewModel extends AbstractViewModel
    * @return a channel row index (>= 0), or -1 if the point is nowhere near a
    *         channel row.
    */
-  public int findVirtualChannelRow( final Point aCoordinate )
+  public int findChannelVirtualOffset( final Point aCoordinate )
   {
-    final int row = findChannelRow( aCoordinate );
-    if ( row < 0 )
+    SignalElement signalElement = getSignalDiagramModel().findSignalElement( aCoordinate );
+    if ( signalElement != null )
     {
-      return -1;
+      return signalElement.getYposition();
     }
-
-    // return toVirtualRow( row );
-    System.out.println( "TODO IMPLEMENT ME!" ); // XXX
     return -1;
   }
 
   /**
-   * @return
+   * Returns all available channels.
+   * 
+   * @return an array of channels, never <code>null</code>.
    */
   public final Channel[] getAllChannels()
   {
@@ -197,15 +216,19 @@ public class ChannelLabelsViewModel extends AbstractViewModel
   /**
    * Moves a given channel row to another position.
    * 
-   * @param aMovedRow
-   *          the virtual (screen) row index that is to be moved;
-   * @param aInsertRow
-   *          the virtual (screen) row index that the moved row is moved to.
+   * @param aMovedChannel
+   *          the channel that is to be moved;
+   * @param aNewLocation
+   *          the new location the moved row is moved to.
    */
-  public void moveChannelRows( final int aMovedRow, final int aInsertRow )
+  public void moveChannelRows( final Channel aMovedChannel, final Point aNewLocation )
   {
-    // Update the screen model...
-    // getSignalDiagramModel().moveRows( aMovedRow, aInsertRow );
-    System.out.println( "NOT IMPLEMENTED YET!!!" );
+    final ChannelGroupManager channelGroupManager = getChannelGroupManager();
+
+    final Channel insertLocation = findChannel( aNewLocation );
+    if ( insertLocation != null )
+    {
+      channelGroupManager.moveChannel( aMovedChannel, insertLocation );
+    }
   }
 }

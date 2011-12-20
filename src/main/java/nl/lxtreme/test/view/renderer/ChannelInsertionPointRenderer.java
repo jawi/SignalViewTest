@@ -62,9 +62,13 @@ public class ChannelInsertionPointRenderer extends BaseRenderer
     final FontMetrics fm = aCanvas.getFontMetrics();
 
     int yPos = fm.getLeading() + fm.getAscent();
-    int labelWidth = fm.stringWidth( this.channelLabel );
+    int labelWidth = 0;
+    if ( ( this.channelLabel != null ) && !this.channelLabel.trim().isEmpty() )
+    {
+      labelWidth = fm.stringWidth( this.channelLabel );
 
-    aCanvas.drawString( this.channelLabel, CHANNEL_ROW_MARKER_WIDTH - labelWidth, yPos );
+      aCanvas.drawString( this.channelLabel, CHANNEL_ROW_MARKER_WIDTH - labelWidth, yPos );
+    }
 
     aCanvas.setStroke( INDICATOR_STROKE );
 

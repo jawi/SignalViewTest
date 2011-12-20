@@ -23,6 +23,7 @@ package nl.lxtreme.test.model;
 
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 
 /**
@@ -73,7 +74,7 @@ public class ChannelGroup
 
   // VARIABLES
 
-  private final Collection<Channel> channels;
+  private final List<Channel> channels;
 
   private int index;
   private int mask;
@@ -214,14 +215,12 @@ public class ChannelGroup
    */
   public Channel getChannel( final int aIndex )
   {
-    for ( Channel channel : this.channels )
+    if ( ( aIndex < 0 ) || ( aIndex >= this.channels.size() ) )
     {
-      if ( channel.getIndex() == aIndex )
-      {
-        return channel;
-      }
+      // Invalid channel index...
+      return null;
     }
-    return null;
+    return this.channels.get( aIndex );
   }
 
   /**
@@ -237,26 +236,6 @@ public class ChannelGroup
     for ( Channel channel : this.channels )
     {
       if ( channel.getIndex() == aIndex )
-      {
-        return channel;
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Returns the channel with the given virtual index.
-   * 
-   * @param aIndex
-   *          the virtual channel index to return the channel for.
-   * @return a channel with the given virtual index, or <code>null</code> if no
-   *         such channel exists.
-   */
-  public Channel getChannelByVirtualIndex( final int aIndex )
-  {
-    for ( Channel channel : this.channels )
-    {
-      if ( channel.getVirtualIndex() == aIndex )
       {
         return channel;
       }
@@ -423,6 +402,31 @@ public class ChannelGroup
   public boolean isVisible()
   {
     return this.visible;
+  }
+
+  /**
+   * Moves a given channel to a new index in this channel group.
+   * 
+   * @param aChannel
+   *          the channel to move, cannot be <code>null</code>;
+   * @param aNewIndex
+   *          the new index of the channel, >= 0.
+   */
+  public void moveChannel( final Channel aChannel, final int aNewIndex )
+  {
+    // Make sure we've disconnected the channel from its former channel group...
+    final ChannelGroup oldChannelGroup = aChannel.getChannelGroup();
+    if ( oldChannelGroup != null )
+    {
+      oldChannelGroup.removeChannel( aChannel );
+    }
+
+    this.channels.add( aNewIndex, aChannel );
+    // Make sure the channel links back to this channel group...
+    aChannel.setChannelGroup( this );
+
+    // Update our local mask...
+    this.mask |= aChannel.getMask();
   }
 
   /**

@@ -217,6 +217,28 @@ public final class ChannelGroupManager implements IDataModelChangeListener
    * @return the channel with the given index, or <code>null</code> if no such
    *         channel was found.
    */
+  public Channel getChannel( final int aIndex )
+  {
+    Channel result = null;
+    Iterator<ChannelGroup> channelGroupIter = this.channelGroups.iterator();
+
+    while ( channelGroupIter.hasNext() && ( result == null ) )
+    {
+      ChannelGroup cg = channelGroupIter.next();
+      result = cg.getChannel( aIndex );
+    }
+
+    return result;
+  }
+
+  /**
+   * Returns the channel with a given index.
+   * 
+   * @param aIndex
+   *          the index of the channel to return.
+   * @return the channel with the given index, or <code>null</code> if no such
+   *         channel was found.
+   */
   public Channel getChannelByIndex( final int aIndex )
   {
     Channel result = null;
@@ -226,28 +248,6 @@ public final class ChannelGroupManager implements IDataModelChangeListener
     {
       ChannelGroup cg = channelGroupIter.next();
       result = cg.getChannelByIndex( aIndex );
-    }
-
-    return result;
-  }
-
-  /**
-   * Returns the channel with a given virtual index.
-   * 
-   * @param aVirtualIndex
-   *          the virtual index of the channel to return.
-   * @return the channel with the given virtual index, or <code>null</code> if
-   *         no such channel was found.
-   */
-  public Channel getChannelByVirtualIndex( final int aVirtualIndex )
-  {
-    Channel result = null;
-    Iterator<ChannelGroup> channelGroupIter = this.channelGroups.iterator();
-
-    while ( channelGroupIter.hasNext() && ( result == null ) )
-    {
-      ChannelGroup cg = channelGroupIter.next();
-      result = cg.getChannelByVirtualIndex( aVirtualIndex );
     }
 
     return result;
@@ -327,6 +327,23 @@ public final class ChannelGroupManager implements IDataModelChangeListener
     }
 
     return count;
+  }
+
+  /**
+   * Moves a channel with a given index to a new index.
+   * 
+   * @param aMovedChannel
+   *          the channel to move;
+   * @param aInsertIndex
+   *          the insertion index of the channel to move.
+   */
+  public void moveChannel( final Channel aMovedChannel, final Channel aInsertChannel )
+  {
+    if ( ( aMovedChannel != null ) && ( aInsertChannel != null ) )
+    {
+      final ChannelGroup cg = aInsertChannel.getChannelGroup();
+      cg.moveChannel( aMovedChannel, aInsertChannel.getVirtualIndex() );
+    }
   }
 
   /**

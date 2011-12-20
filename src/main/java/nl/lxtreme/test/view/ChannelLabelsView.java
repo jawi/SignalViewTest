@@ -31,6 +31,7 @@ import javax.swing.*;
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.dnd.*;
 import nl.lxtreme.test.dnd.DragAndDropTargetController.DragAndDropHandler;
+import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.view.laf.*;
 import nl.lxtreme.test.view.model.*;
 import nl.lxtreme.test.view.renderer.*;
@@ -74,10 +75,12 @@ public class ChannelLabelsView extends AbstractViewLayer
     private static Point createChannelDropPoint( final Point aPoint, final ChannelLabelsView aView,
         final Component aTargetComponent )
     {
-      final int row = aView.getModel().findChannelRow( aPoint );
+      final ChannelLabelsViewModel model = aView.getModel();
 
-      final int channelHeight = aView.getModel().getChannelHeight();
-      final Point dropPoint = new Point( 0, ( row + 1 ) * channelHeight );
+      final int offset = model.findChannelVirtualOffset( aPoint );
+      final int channelHeight = model.getChannelHeight();
+
+      final Point dropPoint = new Point( 0, offset + channelHeight );
 
       SwingUtilities.convertPointToScreen( dropPoint, aView );
       SwingUtilities.convertPointFromScreen( dropPoint, aTargetComponent );
@@ -147,8 +150,8 @@ public class ChannelLabelsView extends AbstractViewLayer
       final ChannelLabelsView sourceComponent = ( ChannelLabelsView )aEvent.getComponent();
       final ChannelLabelsViewModel model = sourceComponent.getModel();
 
-      final int channelRow = model.findVirtualChannelRow( coordinate );
-      if ( channelRow < 0 )
+      final Channel channel = model.findChannel( coordinate );
+      if ( channel == null )
       {
         DragAndDropLock.releaseLock( this );
         return;
@@ -159,7 +162,7 @@ public class ChannelLabelsView extends AbstractViewLayer
       final Point dropPoint = createChannelDropPoint( coordinate, sourceComponent, glassPane );
 
       final ChannelInsertionPointRenderer renderer = new ChannelInsertionPointRenderer();
-      // renderer.setContext( model.getChannelLabel( channelRow ) ); XXX
+      renderer.setContext( channel.getLabel() );
 
       glassPane.setDropPoint( dropPoint, renderer );
       glassPane.setVisible( true );
@@ -174,7 +177,7 @@ public class ChannelLabelsView extends AbstractViewLayer
       // problem for this component, as the dragged cursor will be drawn on the
       // glasspane, not by the DnD routines of Java...
       aEvent.startDrag( DragSource.DefaultMoveDrop, this.stubImage, new Point( 0, 0 ), new ChannelRowTransferable(
-          channelRow ), null /* dsl */);
+          channel ), null /* dsl */);
     }
 
     /**
@@ -234,29 +237,24 @@ public class ChannelLabelsView extends AbstractViewLayer
     @Override
     public boolean acceptDrop( final SignalDiagramController aController, final DropTargetDropEvent aEvent )
     {
+      boolean accepted = false;
+
       try
       {
         final Transferable transferable = aEvent.getTransferable();
 
-        Integer realRowValue = ( Integer )transferable.getTransferData( ChannelRowTransferable.FLAVOR );
-        if ( realRowValue != null )
+        Channel movedChannel = ( Channel )transferable.getTransferData( ChannelRowTransferable.FLAVOR );
+        if ( movedChannel != null )
         {
-          final int oldRealRow = realRowValue.intValue();
-
           final ChannelLabelsViewModel model = getModel();
-          final int newRealRow = model.findVirtualChannelRow( aEvent.getLocation() );
 
-          if ( ( oldRealRow >= 0 ) && ( newRealRow >= 0 ) )
+          if ( accepted = model.acceptChannel( movedChannel, aEvent.getLocation() ) )
           {
-            aEvent.acceptDrop( DnDConstants.ACTION_MOVE );
-
             // Move the channel rows...
-            model.moveChannelRows( oldRealRow, newRealRow );
+            model.moveChannelRows( movedChannel, aEvent.getLocation() );
 
             // Update the screen accordingly...
-            repaintAffectedAreas( aController, oldRealRow, newRealRow );
-
-            return true;
+            repaintAffectedAreas( aController, 0, 32 );
           }
         }
       }
@@ -265,7 +263,18 @@ public class ChannelLabelsView extends AbstractViewLayer
         LOG.log( Level.WARNING, "Getting transfer data failed!", exception );
       }
 
-      return false;
+      // Update the administration of the event whether or not we've accepted
+      // or rejected the drop...
+      if ( accepted )
+      {
+        aEvent.acceptDrop( DnDConstants.ACTION_MOVE );
+      }
+      else
+      {
+        aEvent.rejectDrop();
+      }
+
+      return accepted;
     }
 
     /**
@@ -292,35 +301,39 @@ public class ChannelLabelsView extends AbstractViewLayer
       final JScrollPane scrollPane = SwingUtils.getAncestorOfClass( JScrollPane.class, aController.getSignalDiagram() );
       if ( scrollPane != null )
       {
-        final int signalOffset = getModel().getSignalOffset();
-        final int channelHeight = getModel().getChannelHeight();
-
-        final int oldRowY = ( ( aOldRow * channelHeight ) + signalOffset ) - 3;
-        final int newRowY = ( ( aNewRow * channelHeight ) + signalOffset ) - 3;
-        final int rowHeight = channelHeight + 6;
-
-        // Update the signal display's view port; only the affected regions...
-        final JViewport viewport = scrollPane.getViewport();
-
-        Rectangle rect = viewport.getVisibleRect();
-        // ...old region...
-        rect.y = oldRowY;
-        rect.height = rowHeight;
-        viewport.repaint( rect );
-        // ...new region...
-        rect.y = newRowY;
-        viewport.repaint( rect );
-
-        final JViewport channelLabelsView = scrollPane.getRowHeader();
-
-        rect = channelLabelsView.getVisibleRect();
-        // ...old region...
-        rect.y = oldRowY;
-        rect.height = rowHeight;
-        channelLabelsView.repaint( rect );
-        // ...new region...
-        rect.y = newRowY;
-        channelLabelsView.repaint( rect );
+        scrollPane.repaint( 25L ); // XXX
+        // final int signalOffset = getModel().getSignalOffset();
+        // final int channelHeight = getModel().getChannelHeight();
+        //
+        // final int oldRowY = ( ( aOldRow * channelHeight ) + signalOffset ) -
+        // 3;
+        // final int newRowY = ( ( aNewRow * channelHeight ) + signalOffset ) -
+        // 3;
+        // final int rowHeight = channelHeight + 6;
+        //
+        // // Update the signal display's view port; only the affected
+        // regions...
+        // final JViewport viewport = scrollPane.getViewport();
+        //
+        // Rectangle rect = viewport.getVisibleRect();
+        // // ...old region...
+        // rect.y = oldRowY;
+        // rect.height = rowHeight;
+        // viewport.repaint( rect );
+        // // ...new region...
+        // rect.y = newRowY;
+        // viewport.repaint( rect );
+        //
+        // final JViewport channelLabelsView = scrollPane.getRowHeader();
+        //
+        // rect = channelLabelsView.getVisibleRect();
+        // // ...old region...
+        // rect.y = oldRowY;
+        // rect.height = rowHeight;
+        // channelLabelsView.repaint( rect );
+        // // ...new region...
+        // rect.y = newRowY;
+        // channelLabelsView.repaint( rect );
       }
     }
   }

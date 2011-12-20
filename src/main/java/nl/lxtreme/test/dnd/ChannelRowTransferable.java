@@ -23,6 +23,8 @@ package nl.lxtreme.test.dnd;
 import java.awt.datatransfer.*;
 import java.io.*;
 
+import nl.lxtreme.test.model.*;
+
 
 /**
  * @author jajans
@@ -37,8 +39,8 @@ public class ChannelRowTransferable implements Transferable
   {
     try
     {
-      FLAVOR = new DataFlavor( "application/vnd.ols.x-channel-row;class="
-          + ChannelRowTransferable.class.getCanonicalName() + ";humanPresentableName=OLS%20Channel%20Row" );
+      FLAVOR = new DataFlavor( "application/vnd.ols.x-channel;class=" + ChannelRowTransferable.class.getCanonicalName()
+          + ";humanPresentableName=OLS%20Channel" );
     }
     catch ( final ClassNotFoundException exception )
     {
@@ -48,16 +50,16 @@ public class ChannelRowTransferable implements Transferable
 
   // VARIABLES
 
-  private final Integer row;
+  private final Channel row;
 
   // CONSTRUCTORS
 
   /**
    * @param aRow
    */
-  public ChannelRowTransferable( final int aRow )
+  public ChannelRowTransferable( final Channel aRow )
   {
-    this.row = Integer.valueOf( aRow );
+    this.row = aRow;
   }
 
   // METHODS
