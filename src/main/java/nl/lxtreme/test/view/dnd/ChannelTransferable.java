@@ -20,7 +20,6 @@
 package nl.lxtreme.test.view.dnd;
 
 
-import java.awt.*;
 import java.awt.datatransfer.*;
 
 import nl.lxtreme.test.model.*;
@@ -36,7 +35,6 @@ public class ChannelTransferable implements Transferable
   // CONSTANTS
 
   public static final DataFlavor CHANNEL_FLAVOR;
-  public static final DataFlavor LOCATION_FLAVOR;
 
   static
   {
@@ -46,9 +44,6 @@ public class ChannelTransferable implements Transferable
 
       CHANNEL_FLAVOR = new DataFlavor( "application/vnd.ols.x-channel;class=" + clazz
           + ";humanPresentableName=OLS%20Channel" );
-
-      LOCATION_FLAVOR = new DataFlavor( "application/vnd.ols.x-location;class=" + clazz
-          + ";humanPresentableName=OLS%20Channel%20Location" );
     }
     catch ( final ClassNotFoundException exception )
     {
@@ -59,7 +54,6 @@ public class ChannelTransferable implements Transferable
   // VARIABLES
 
   private final Channel channel;
-  private final Point location;
 
   // CONSTRUCTORS
 
@@ -67,15 +61,11 @@ public class ChannelTransferable implements Transferable
    * Creates a new {@link ChannelTransferable} instance.
    * 
    * @param aChannel
-   *          the channel to transfer, cannot be <code>null</code>;
-   * @param aLocation
-   *          the location of the transferred chanenl, cannot be
-   *          <code>null</code>.
+   *          the channel to transfer, cannot be <code>null</code>.
    */
-  public ChannelTransferable( final Channel aChannel, final Point aLocation )
+  public ChannelTransferable( final Channel aChannel )
   {
     this.channel = aChannel;
-    this.location = aLocation;
   }
 
   // METHODS
@@ -90,10 +80,6 @@ public class ChannelTransferable implements Transferable
     {
       return this.channel;
     }
-    else if ( LOCATION_FLAVOR.equals( aFlavor ) )
-    {
-      return this.location;
-    }
 
     throw new UnsupportedFlavorException( aFlavor );
   }
@@ -104,7 +90,7 @@ public class ChannelTransferable implements Transferable
   @Override
   public DataFlavor[] getTransferDataFlavors()
   {
-    return new DataFlavor[] { CHANNEL_FLAVOR, LOCATION_FLAVOR };
+    return new DataFlavor[] { CHANNEL_FLAVOR };
   }
 
   /**
@@ -113,7 +99,6 @@ public class ChannelTransferable implements Transferable
   @Override
   public boolean isDataFlavorSupported( final DataFlavor aFlavor )
   {
-    return aFlavor.isMimeTypeEqual( CHANNEL_FLAVOR.getMimeType() )
-        || aFlavor.isMimeTypeEqual( LOCATION_FLAVOR.getMimeType() );
+    return aFlavor.isMimeTypeEqual( CHANNEL_FLAVOR.getMimeType() );
   }
 }

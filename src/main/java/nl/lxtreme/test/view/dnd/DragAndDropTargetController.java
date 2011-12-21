@@ -54,6 +54,13 @@ public final class DragAndDropTargetController extends DropTargetAdapter
     boolean acceptDrop( SignalDiagramController aController, DropTargetDropEvent aEvent );
 
     /**
+     * Returns the action-mask this drop handler supports.
+     * 
+     * @return a action mask, > 0.
+     */
+    int getDropAction();
+
+    /**
      * Returns the data flavor supported by this handler.
      * 
      * @return a supported data flavor, never <code>null</code>.
@@ -111,11 +118,22 @@ public final class DragAndDropTargetController extends DropTargetAdapter
       for ( int i = flavors.length - 1; !result && ( i >= 0 ); i-- )
       {
         final DragAndDropHandler handler = getHandler( flavors[i] );
-        if ( handler != null )
+        if ( ( handler != null ) && ( ( aEvent.getSourceActions() & handler.getDropAction() ) != 0 ) )
         {
           result = handler.acceptDrop( this.ctlr, aEvent );
+
+          if ( result )
+          {
+            aEvent.acceptDrop( handler.getDropAction() );
+          }
         }
       }
+    }
+
+    if ( !result )
+    {
+      // None of the handlers accepted the drop; so we reject it totally...
+      aEvent.rejectDrop();
     }
 
     // Acknowledge that we've successfully dropped the item...

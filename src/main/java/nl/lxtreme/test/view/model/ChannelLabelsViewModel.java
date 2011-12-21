@@ -119,7 +119,7 @@ public class ChannelLabelsViewModel extends AbstractViewModel
     SignalElement signalElement = findSignalElement( aCoordinate );
     if ( signalElement != null )
     {
-      return signalElement.getYposition();
+      return signalElement.getYposition() + signalElement.getHeight();
     }
     return -1;
   }
