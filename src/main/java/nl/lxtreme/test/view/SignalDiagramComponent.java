@@ -29,6 +29,7 @@ import javax.swing.*;
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.view.action.*;
 import nl.lxtreme.test.view.model.*;
+import static nl.lxtreme.test.SwingUtils.*;
 
 
 /**
@@ -121,10 +122,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
         {
           keyReleased( event );
         }
-        else if ( id == KeyEvent.KEY_TYPED )
-        {
-          keyTyped( event );
-        }
       }
       else if ( aEvent instanceof ComponentEvent )
       {
@@ -158,7 +155,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
           public void actionPerformed( final ActionEvent aInnerEvent )
           {
             final Component component = aEvent.getComponent();
-            component.setCursor( Cursor.getPredefinedCursor( Cursor.WAIT_CURSOR ) );
+            component.setCursor( CURSOR_WAIT );
 
             try
             {
@@ -173,7 +170,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
             }
             finally
             {
-              component.setCursor( Cursor.getDefaultCursor() );
+              component.setCursor( null );
 
               TransparentAWTListener.this.resizeTimeout.stop();
               TransparentAWTListener.this.resizeTimeout = null;
@@ -198,7 +195,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     protected void componentShown( final ComponentEvent aEvent )
     {
       final Component component = aEvent.getComponent();
-      component.setCursor( Cursor.getPredefinedCursor( Cursor.WAIT_CURSOR ) );
+      component.setCursor( CURSOR_WAIT );
 
       try
       {
@@ -223,9 +220,11 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     protected void keyPressed( final KeyEvent aEvent )
     {
       Component comp = this.controller.getSignalDiagram();
-      if ( aEvent.isControlDown() )
+      if ( isEdgeWarpTriggerModifier( aEvent ) )
       {
         comp.setCursor( CURSOR_MOVE_TIMESTAMP );
+        // Consume this event...
+        aEvent.consume();
       }
     }
 
@@ -234,41 +233,8 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
      */
     protected void keyReleased( final KeyEvent aEvent )
     {
-      if ( aEvent.getID() != KeyEvent.KEY_RELEASED )
-      {
-        return;
-      }
-
       Component comp = this.controller.getSignalDiagram();
-      comp.setCursor( DEFAULT );
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void keyTyped( final KeyEvent aEvent )
-    {
-      if ( aEvent.getID() != KeyEvent.KEY_TYPED )
-      {
-        return;
-      }
-
-      if ( ( '+' == aEvent.getKeyChar() ) || ( '=' == aEvent.getKeyChar() ) )
-      {
-        zoomIn();
-      }
-      else if ( ( '-' == aEvent.getKeyChar() ) || ( '_' == aEvent.getKeyChar() ) )
-      {
-        zoomOut();
-      }
-      else if ( '0' == aEvent.getKeyChar() )
-      {
-        zoomAll();
-      }
-      else if ( '1' == aEvent.getKeyChar() )
-      {
-        zoomOriginal();
-      }
+      comp.setCursor( null );
     }
 
     /**
@@ -276,7 +242,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
      */
     protected void mouseClicked( final MouseEvent aEvent )
     {
-      if ( aEvent.isControlDown() )
+      if ( isEdgeWarpTrigger( aEvent ) )
       {
         final JComponent view = getDeepestComponentAt( aEvent );
         final Point point = SwingUtilities.convertPoint( aEvent.getComponent(), aEvent.getPoint(), view );
@@ -289,6 +255,8 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
           scrollToTimestamp( channel, timestamp );
         }
+
+        aEvent.consume();
       }
     }
 
@@ -313,8 +281,6 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     {
       final JComponent view = getDeepestComponentAt( aEvent );
 
-      view.setCursor( DEFAULT );
-
       final SignalDiagramModel model = getModel();
       if ( model.isCursorMode() || model.isMeasurementMode() )
       {
@@ -326,12 +292,12 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
 
           model.fireMeasurementEvent( signalHover );
 
-          view.setCursor( signalHover == null ? DEFAULT : CURSOR_HOVER );
+          view.setCursor( signalHover != null ? CURSOR_HOVER : null );
         }
 
-        if ( model.isCursorMode() && ( findCursor( point ) != null ) )
+        if ( model.isCursorMode() )
         {
-          view.setCursor( CURSOR_MOVE_CURSOR );
+          view.setCursor( ( findCursor( point ) != null ) ? CURSOR_MOVE_CURSOR : null );
         }
       }
     }
@@ -370,7 +336,7 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       }
       final Point point = SwingUtilities.convertPoint( aEvent.getComponent(), aEvent.getPoint(), view );
 
-      view.setCursor( DEFAULT );
+      view.setCursor( null );
 
       if ( !handlePopupTrigger( view, point, aEvent ) )
       {
@@ -542,47 +508,133 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     }
 
     /**
+     * Determines whether or not the given mouse event is actually a popup
+     * trigger.
+     * 
+     * @param aView
+     *          the view to show to popup for, can be <code>null</code>;
+     * @param aPoint
+     *          the <em>corrected</em> mouse position, where the popup is to be
+     *          shown, cannot be <code>null</code>;
      * @param aEvent
+     *          the mouse event that could be a popup trigger, cannot be
+     *          <code>null</code>.
      */
-    private boolean handlePopupTrigger( final JComponent view, final Point point, final MouseEvent aEvent )
+    private boolean handlePopupTrigger( final JComponent aView, final Point aPoint, final MouseEvent aEvent )
     {
-      final boolean popupTrigger = aEvent.isPopupTrigger();
+      final boolean popupTrigger = isPopupTrigger( aEvent );
       if ( popupTrigger )
       {
         JPopupMenu contextMenu = null;
-        if ( isCursorTrigger( view ) )
+        if ( isCursorPopupTrigger( aView ) )
         {
-          contextMenu = createCursorPopup( point, aEvent.getLocationOnScreen() );
+          contextMenu = createCursorPopup( aPoint, aEvent.getLocationOnScreen() );
         }
-        else if ( isChannelLabelTrigger( view ) )
+        else if ( isChannelLabelPopupTrigger( aView ) )
         {
-          contextMenu = createChannelLabelPopup( point, aEvent.getLocationOnScreen() );
+          contextMenu = createChannelLabelPopup( aPoint, aEvent.getLocationOnScreen() );
         }
 
         if ( contextMenu != null )
         {
           contextMenu.show( aEvent.getComponent(), aEvent.getX(), aEvent.getY() );
+          // Mark the event as consumed...
+          aEvent.consume();
         }
       }
       return popupTrigger;
     }
 
     /**
+     * Returns whether or not the 'edit channels' popup is to be shown.
+     * 
      * @param aView
-     * @return
+     *          the view to test, may be <code>null</code>.
+     * @return <code>true</code> if the 'edit channel' popup is to be shown,
+     *         <code>false</code> otherwise.
      */
-    private boolean isChannelLabelTrigger( final JComponent aView )
+    private boolean isChannelLabelPopupTrigger( final JComponent aView )
     {
       return ( aView instanceof ChannelLabelsView );
     }
 
     /**
+     * Returns whether or not the 'edit cursor' popup is to be shown.
+     * 
      * @param aView
-     * @return
+     *          the view to test, may be <code>null</code>.
+     * @return <code>true</code> if the 'edit cursor' popup is to be shown,
+     *         <code>false</code> otherwise.
      */
-    private boolean isCursorTrigger( final JComponent aView )
+    private boolean isCursorPopupTrigger( final JComponent aView )
     {
       return getModel().isCursorMode() && ( ( aView instanceof SignalView ) || ( aView instanceof TimeLineView ) );
+    }
+
+    /**
+     * Returns whether or not the given mouse event denotes a "edge warp"
+     * trigger event.
+     * 
+     * @param aEvent
+     *          the mouse event to test, cannot be <code>null</code>.
+     * @return <code>true</code> if the given mouse event represents a
+     *         "edge warp" trigger event, <code>false</code> otherwise.
+     */
+    private boolean isEdgeWarpTrigger( final MouseEvent aEvent )
+    {
+      return !aEvent.isConsumed() && isEdgeWarpTriggerModifier( aEvent ) && ( aEvent.getClickCount() > 0 );
+    }
+
+    /**
+     * Returns whether or not the given input event can be interpreted as a
+     * 'edge warp' trigger event.
+     * 
+     * @param aEvent
+     *          the input event to test, cannot be <code>null</code>.
+     * @return <code>true</code> if the given input event is a 'edge warp'
+     *         trigger event, <code>false</code> otherwise.
+     */
+    private boolean isEdgeWarpTriggerModifier( final InputEvent aEvent )
+    {
+      boolean modifierDown;
+      if ( Utils.isMacOS() )
+      {
+        // Is the CMD key...
+        modifierDown = aEvent.isMetaDown();
+      }
+      else
+      {
+        modifierDown = aEvent.isControlDown();
+      }
+      return modifierDown;
+    }
+
+    /**
+     * Returns whether or not the given mouse event denotes a popup trigger
+     * event.
+     * 
+     * @param aEvent
+     *          the mouse event to test, cannot be <code>null</code>.
+     * @return <code>true</code> if the given mouse event represents a popup
+     *         trigger event, <code>false</code> otherwise.
+     */
+    private boolean isPopupTrigger( final MouseEvent aEvent )
+    {
+      return !aEvent.isConsumed() && aEvent.isPopupTrigger();
+    }
+  }
+
+  /**
+   * Action to zoom all via '0' key.
+   */
+  final class ZoomAllAction extends AbstractAction
+  {
+    private static final long serialVersionUID = 1L;
+
+    @Override
+    public void actionPerformed( final ActionEvent aEvent )
+    {
+      zoomAll();
     }
   }
 
@@ -743,9 +795,51 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
     }
   }
 
+  /**
+   * Action to zoom in via '+' or '=' key.
+   */
+  final class ZoomInAction extends AbstractAction
+  {
+    private static final long serialVersionUID = 1L;
+
+    @Override
+    public void actionPerformed( final ActionEvent aEvent )
+    {
+      zoomIn();
+    }
+  }
+
+  /**
+   * Action to zoom to original via '1' key.
+   */
+  final class ZoomOriginalAction extends AbstractAction
+  {
+    private static final long serialVersionUID = 1L;
+
+    @Override
+    public void actionPerformed( final ActionEvent aEvent )
+    {
+      zoomOriginal();
+    }
+  }
+
+  /**
+   * Action to zoom out via '-' or '_' key.
+   */
+  final class ZoomOutAction extends AbstractAction
+  {
+    private static final long serialVersionUID = 1L;
+
+    @Override
+    public void actionPerformed( final ActionEvent aEvent )
+    {
+      zoomOut();
+    }
+  }
+
   // CONSTANTS
 
-  static final Cursor DEFAULT = Cursor.getDefaultCursor();
+  static final Cursor CURSOR_WAIT = Cursor.getPredefinedCursor( Cursor.WAIT_CURSOR );
   static final Cursor CURSOR_HOVER = Cursor.getPredefinedCursor( Cursor.CROSSHAIR_CURSOR );
   static final Cursor CURSOR_MOVE_CURSOR = Cursor.getPredefinedCursor( Cursor.MOVE_CURSOR );
   static final Cursor CURSOR_MOVE_TIMESTAMP = Cursor.getPredefinedCursor( Cursor.E_RESIZE_CURSOR );
@@ -827,6 +921,16 @@ public class SignalDiagramComponent extends JPanel implements Scrollable
       rootPane.setGlassPane( glassPane );
 
       configureEnclosingScrollPane();
+
+      ZoomInAction zoomInAction = new ZoomInAction();
+      ZoomOutAction zoomOutAction = new ZoomOutAction();
+
+      registerKeyBinding( this, '+', zoomInAction );
+      registerKeyBinding( this, '=', zoomInAction );
+      registerKeyBinding( this, '-', zoomOutAction );
+      registerKeyBinding( this, '_', zoomOutAction );
+      registerKeyBinding( this, '0', new ZoomAllAction() );
+      registerKeyBinding( this, '1', new ZoomOriginalAction() );
     }
     finally
     {

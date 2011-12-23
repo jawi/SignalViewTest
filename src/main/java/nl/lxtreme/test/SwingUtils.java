@@ -184,6 +184,56 @@ public final class SwingUtils
   }
 
   /**
+   * Registers a given keystroke to invoke a given action on the given
+   * component.
+   * 
+   * @param aComponent
+   *          the component to register the keystroke for;
+   * @param aKeyStroke
+   *          the keystroke (as plain char) to register;
+   * @param aAction
+   *          the action to invoke when the keystroke is typed.
+   */
+  public static void registerKeyBinding( final JComponent aComponent, final char aKey, final Action aAction )
+  {
+    registerKeyBinding( aComponent, KeyStroke.getKeyStroke( aKey ), aAction );
+  }
+
+  /**
+   * Registers a given keystroke to invoke a given action on the given
+   * component.
+   * 
+   * @param aComponent
+   *          the component to register the keystroke for;
+   * @param aKeyStroke
+   *          the keystroke to register;
+   * @param aAction
+   *          the action to invoke when the keystroke is typed.
+   */
+  public static void registerKeyBinding( final JComponent aComponent, final KeyStroke aKeyStroke, final Action aAction )
+  {
+    final String name = "KeyBinding.".concat( aKeyStroke.toString() );
+    aComponent.getInputMap().put( aKeyStroke, name );
+    aComponent.getActionMap().put( name, aAction );
+  }
+
+  /**
+   * Registers a given keystroke to invoke a given action on the given
+   * component.
+   * 
+   * @param aComponent
+   *          the component to register the keystroke for;
+   * @param aKeyStroke
+   *          the keystroke (as String) to register;
+   * @param aAction
+   *          the action to invoke when the keystroke is typed.
+   */
+  public static void registerKeyBinding( final JComponent aComponent, final String aKeyStroke, final Action aAction )
+  {
+    registerKeyBinding( aComponent, KeyStroke.getKeyStroke( aKeyStroke ), aAction );
+  }
+
+  /**
    * Creates (in a rather clumsy way) the font metrics for a given {@link Font}.
    * 
    * @param aFont

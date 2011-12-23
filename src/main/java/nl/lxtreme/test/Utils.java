@@ -226,6 +226,18 @@ public final class Utils
   }
 
   /**
+   * Returns whether the current host's operating system is Mac OS X.
+   * 
+   * @return <code>true</code> if running on Mac OS X, <code>false</code>
+   *         otherwise.
+   */
+  public static boolean isMacOS()
+  {
+    final String osName = System.getProperty( "os.name" );
+    return ( "Mac OS X".equalsIgnoreCase( osName ) || "Darwin".equalsIgnoreCase( osName ) );
+  }
+
+  /**
    * @param aI
    * @param aFreq1
    * @param aFreq2
