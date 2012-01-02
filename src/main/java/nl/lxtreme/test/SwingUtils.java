@@ -213,7 +213,7 @@ public final class SwingUtils
   public static void registerKeyBinding( final JComponent aComponent, final KeyStroke aKeyStroke, final Action aAction )
   {
     final String name = "KeyBinding.".concat( aKeyStroke.toString() );
-    aComponent.getInputMap().put( aKeyStroke, name );
+    aComponent.getInputMap( JComponent.WHEN_IN_FOCUSED_WINDOW ).put( aKeyStroke, name );
     aComponent.getActionMap().put( name, aAction );
   }
 
