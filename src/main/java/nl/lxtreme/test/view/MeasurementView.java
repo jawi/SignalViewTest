@@ -87,6 +87,8 @@ public class MeasurementView extends AbstractViewLayer implements IChannelChange
     @Override
     protected String doInBackground() throws Exception
     {
+      MeasurementView.this.progressBar.setVisible( true );
+
       final int mask = ( ( Channel )MeasurementView.this.channel.getSelectedItem() ).getMask();
       final long startTimestamp = ( ( Cursor )MeasurementView.this.cursorA.getSelectedItem() ).getTimestamp();
       final long endTimestamp = ( ( Cursor )MeasurementView.this.cursorB.getSelectedItem() ).getTimestamp();
@@ -152,6 +154,7 @@ public class MeasurementView extends AbstractViewLayer implements IChannelChange
     {
       try
       {
+        MeasurementView.this.progressBar.setVisible( false );
         MeasurementView.this.measurementInfo.setText( get() );
       }
       catch ( Exception exception )
@@ -170,6 +173,7 @@ public class MeasurementView extends AbstractViewLayer implements IChannelChange
   private JComboBox channel;
   private JComboBox cursorA;
   private JComboBox cursorB;
+  private JProgressBar progressBar;
 
   private JLabel measurementInfo;
 
@@ -371,23 +375,42 @@ public class MeasurementView extends AbstractViewLayer implements IChannelChange
   {
     this.channel = updateChannelComboBoxModel( new JComboBox() );
     this.channel.addActionListener( new CursorActionListener() );
+    // Make the component a bit smaller and a pop-down on OSX...
+    this.channel.putClientProperty( "JComponent.sizeVariant", "small" );
+    this.channel.putClientProperty( "JComboBox.isPopDown", Boolean.TRUE );
+
     this.cursorA = updateCursorComboBoxModel( new JComboBox() );
     this.cursorA.addActionListener( new ChannelActionListener() );
+    // Make the component a bit smaller and a pop-down on OSX...
+    this.cursorA.putClientProperty( "JComponent.sizeVariant", "small" );
+    this.cursorA.putClientProperty( "JComboBox.isPopDown", Boolean.TRUE );
+
     this.cursorB = updateCursorComboBoxModel( new JComboBox() );
     this.cursorB.addActionListener( new ChannelActionListener() );
+    // Make the component a bit smaller and a pop-down on OSX...
+    this.cursorB.putClientProperty( "JComponent.sizeVariant", "small" );
+    this.cursorB.putClientProperty( "JComboBox.isPopDown", Boolean.TRUE );
+
+    this.progressBar = new JProgressBar();
+    this.progressBar.setIndeterminate( true );
+    // On OSX this will display as a circular progress bar...
+    this.progressBar.putClientProperty( "JProgressBar.style", "circular" );
+    this.progressBar.setVisible( false );
 
     this.measurementInfo = new JLabel();
 
     setOpaque( false );
     setLayout( new BorderLayout() );
 
-    JPanel cursorPanel = new JPanel( new GridLayout( 3, 2 ) );
+    JPanel cursorPanel = new JPanel( new GridLayout( 4, 2 ) );
     cursorPanel.add( new JLabel( "Channel" ) );
     cursorPanel.add( this.channel );
     cursorPanel.add( new JLabel( "Cursor A" ) );
     cursorPanel.add( this.cursorA );
     cursorPanel.add( new JLabel( "Cursor B" ) );
     cursorPanel.add( this.cursorB );
+    cursorPanel.add( new JLabel( "" ) );
+    cursorPanel.add( this.progressBar );
 
     add( cursorPanel, BorderLayout.NORTH );
     add( this.measurementInfo, BorderLayout.CENTER );
