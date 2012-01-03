@@ -21,6 +21,7 @@ package nl.lxtreme.test;
 
 
 import java.awt.*;
+import java.lang.reflect.*;
 import java.util.*;
 
 
@@ -314,6 +315,17 @@ public final class Utils
     {
       throw new IllegalArgumentException( "Given string does NOT represent a valid color!" );
     }
+  }
+
+  /**
+   * @param aCollection
+   * @return
+   */
+  @SuppressWarnings( "unchecked" )
+  public static <T> T[] toArray( final Class<T> aType, final Collection<T> aCollection )
+  {
+    final T[] result = ( T[] )Array.newInstance( aType, aCollection.size() );
+    return aCollection.toArray( result );
   }
 
   /**

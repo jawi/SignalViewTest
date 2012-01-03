@@ -23,8 +23,10 @@ package nl.lxtreme.test.model;
 
 import java.util.*;
 
+import javax.swing.event.*;
+
 import nl.lxtreme.test.*;
-import nl.lxtreme.test.view.model.*;
+import nl.lxtreme.test.IChannelChangeListener.*;
 
 
 /**
@@ -39,6 +41,7 @@ public final class ChannelGroupManager implements IDataModelChangeListener
   // VARIABLES
 
   private final List<ChannelGroup> channelGroups;
+  private final EventListenerList eventListeners;
 
   private Channel[] channels;
 
@@ -46,14 +49,11 @@ public final class ChannelGroupManager implements IDataModelChangeListener
 
   /**
    * Creates a new {@link ChannelGroupManager} instance.
-   * 
-   * @param aModel
-   *          the signal diagram model to use, cannot be <code>null</code>.
    */
-  public ChannelGroupManager( final SignalDiagramModel aModel )
+  public ChannelGroupManager()
   {
     this.channelGroups = new ArrayList<ChannelGroup>();
-    this.channels = createChannels( aModel.getSampleWidth() );
+    this.eventListeners = new EventListenerList();
   }
 
   // METHODS
@@ -120,6 +120,17 @@ public final class ChannelGroupManager implements IDataModelChangeListener
   }
 
   /**
+   * Adds a channel change listener.
+   * 
+   * @param aListener
+   *          the listener to add, cannot be <code>null</code>.
+   */
+  public void addChannelChangeListener( final IChannelChangeListener aListener )
+  {
+    this.eventListeners.add( IChannelChangeListener.class, aListener );
+  }
+
+  /**
    * Adds a new channel group to this manager.
    * 
    * @param aName
@@ -179,6 +190,32 @@ public final class ChannelGroupManager implements IDataModelChangeListener
       {
         channelGroup.addChannel( this.channels[( i * maxJ ) + j] );
       }
+    }
+
+    fireChannelGroupStructureChangeEvent( getAssignedChannels() );
+  }
+
+  /**
+   * @param aEvent
+   */
+  public void fireChannelChangeEvent( final ChannelChangeEvent aEvent )
+  {
+    final IChannelChangeListener[] listeners = this.eventListeners.getListeners( IChannelChangeListener.class );
+    for ( IChannelChangeListener listener : listeners )
+    {
+      listener.channelChanged( aEvent );
+    }
+  }
+
+  /**
+   * @param aEvent
+   */
+  public void fireChannelMoveEvent( final ChannelMoveEvent aEvent )
+  {
+    final IChannelChangeListener[] listeners = this.eventListeners.getListeners( IChannelChangeListener.class );
+    for ( IChannelChangeListener listener : listeners )
+    {
+      listener.channelMoved( aEvent );
     }
   }
 
@@ -372,6 +409,17 @@ public final class ChannelGroupManager implements IDataModelChangeListener
   }
 
   /**
+   * Removes a channel change listener.
+   * 
+   * @param aListener
+   *          the listener to remove, cannot be <code>null</code>.
+   */
+  public void removeChannelChangeListener( final IChannelChangeListener aListener )
+  {
+    this.eventListeners.remove( IChannelChangeListener.class, aListener );
+  }
+
+  /**
    * Removes the channel group with the given name.
    * 
    * @param aName
@@ -391,6 +439,18 @@ public final class ChannelGroupManager implements IDataModelChangeListener
     if ( cg != null )
     {
       this.channelGroups.remove( cg );
+    }
+  }
+
+  /**
+   * @param aEvent
+   */
+  final void fireChannelGroupStructureChangeEvent( final Collection<Channel> aEvent )
+  {
+    final IChannelChangeListener[] listeners = this.eventListeners.getListeners( IChannelChangeListener.class );
+    for ( IChannelChangeListener listener : listeners )
+    {
+      listener.channelGroupStructureChanged( aEvent );
     }
   }
 

@@ -156,7 +156,8 @@ public class SignalDiagramModel
   {
     this.controller = aController;
 
-    this.channelGroupManager = new ChannelGroupManager( this );
+    this.channelGroupManager = new ChannelGroupManager();
+
     this.eventListeners = new EventListenerList();
     this.propertyChangeSupport = new PropertyChangeSupport( this );
 
@@ -362,14 +363,14 @@ public class SignalDiagramModel
   /**
    * @param aPoint
    */
-  public void fireMeasurementEvent( final SignalHoverInfo signalHover )
+  public void fireMeasurementEvent( final SignalHoverInfo aSignalHoverInfo )
   {
     final IMeasurementListener[] listeners = this.eventListeners.getListeners( IMeasurementListener.class );
     for ( IMeasurementListener listener : listeners )
     {
       if ( listener.isListening() )
       {
-        listener.handleMeasureEvent( signalHover );
+        listener.handleMeasureEvent( aSignalHoverInfo );
       }
     }
   }
@@ -488,6 +489,24 @@ public class SignalDiagramModel
       throw new IllegalArgumentException( "Invalid cursor index!" );
     }
     return this.cursors[aCursorIdx];
+  }
+
+  /**
+   * Returns all defined cursors.
+   * 
+   * @return an array of defined cursors, never <code>null</code>.
+   */
+  public Cursor[] getDefinedCursors()
+  {
+    List<Cursor> result = new ArrayList<Cursor>();
+    for ( Cursor c : this.cursors )
+    {
+      if ( c.isDefined() )
+      {
+        result.add( c );
+      }
+    }
+    return result.toArray( new Cursor[result.size()] );
   }
 
   /**

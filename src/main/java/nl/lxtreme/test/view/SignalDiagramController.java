@@ -53,6 +53,17 @@ public final class SignalDiagramController
   // METHODS
 
   /**
+   * Adds a channel change listener.
+   * 
+   * @param aListener
+   *          the listener to add, cannot be <code>null</code>.
+   */
+  public void addChannelChangeListener( final IChannelChangeListener aListener )
+  {
+    getSignalDiagramModel().getChannelGroupManager().addChannelChangeListener( aListener );
+  }
+
+  /**
    * Adds a cursor change listener.
    * 
    * @param aListener
@@ -165,6 +176,17 @@ public final class SignalDiagramController
   {
     this.signalDiagram.recalculateDimensions();
     this.signalDiagram.repaint( 25L );
+  }
+
+  /**
+   * Removes a channel change listener.
+   * 
+   * @param aListener
+   *          the listener to remove, cannot be <code>null</code>.
+   */
+  public void removeChannelChangeListener( final IChannelChangeListener aListener )
+  {
+    getSignalDiagramModel().getChannelGroupManager().removeChannelChangeListener( aListener );
   }
 
   /**

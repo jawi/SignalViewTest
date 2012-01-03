@@ -242,6 +242,7 @@ public class Main
   private SignalDetailsView signalDetails;
   private CaptureDetailsView captureDetails;
   private CursorDetailsView cursorDetails;
+  private MeasurementView measurementDetails;
   private JMenuBar menuBar;
 
   SignalDiagramController controller;
@@ -340,6 +341,13 @@ public class Main
         ToolWindowAnchor.RIGHT ); // Anchor
     group.addToolWindow( tw3 );
 
+    ToolWindow tw4 = wm.registerToolWindow( "Measurement", // Id
+        "Measurement", // Title
+        null, // Icon
+        this.measurementDetails, // Component
+        ToolWindowAnchor.RIGHT ); // Anchor
+    group.addToolWindow( tw4 );
+
     // Given string is based on some experiments with the best "default"
     // length...
     final int dockLength = SwingUtils.getStringWidth( "XXXXXXXXXXXXXXXXXXXXXXXXXXXX" );
@@ -347,6 +355,7 @@ public class Main
     tweakToolWindow( tw1, dockLength );
     tweakToolWindow( tw2, dockLength );
     tweakToolWindow( tw3, dockLength );
+    tweakToolWindow( tw4, dockLength );
 
     final JScrollPane contentPane = new JScrollPane( this.signalDiagram );
     contentPane.setHorizontalScrollBarPolicy( ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS );
@@ -478,6 +487,7 @@ public class Main
     this.signalDetails = SignalDetailsView.create( this.controller );
     this.captureDetails = CaptureDetailsView.create( this.controller );
     this.cursorDetails = CursorDetailsView.create( this.controller );
+    this.measurementDetails = MeasurementView.create( this.controller );
 
     this.controller.setDataModel( model );
 
