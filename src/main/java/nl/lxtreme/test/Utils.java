@@ -227,6 +227,28 @@ public final class Utils
   }
 
   /**
+   * Interpolates a gray-scale color between two given colors.
+   * 
+   * @param aBaseColor
+   * @param aSecondaryColor
+   * @param aDelta
+   * @return
+   */
+  public static Color interpolate( final Color aBaseColor, final Color aSecondaryColor, final float aDelta )
+  {
+    float[] acomp = aSecondaryColor.getRGBComponents( null );
+    float[] bcomp = aBaseColor.getRGBComponents( null );
+    float[] ccomp = new float[4];
+
+    for ( int i = 0; i < 4; i++ )
+    {
+      ccomp[i] = acomp[i] + ( ( bcomp[i] - acomp[i] ) * aDelta );
+    }
+
+    return new Color( ccomp[0], ccomp[1], ccomp[2], ccomp[3] );
+  }
+
+  /**
    * Returns whether the current host's operating system is Mac OS X.
    * 
    * @return <code>true</code> if running on Mac OS X, <code>false</code>

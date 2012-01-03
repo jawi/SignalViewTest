@@ -31,6 +31,7 @@ import javax.swing.*;
 import nl.lxtreme.test.*;
 import nl.lxtreme.test.model.*;
 import nl.lxtreme.test.model.Cursor;
+import nl.lxtreme.test.util.*;
 import nl.lxtreme.test.view.model.*;
 
 
@@ -87,7 +88,7 @@ public class MeasurementView extends AbstractViewLayer implements IChannelChange
     @Override
     protected String doInBackground() throws Exception
     {
-      MeasurementView.this.progressBar.setVisible( true );
+      MeasurementView.this.indicator.setVisible( true );
 
       final int mask = ( ( Channel )MeasurementView.this.channel.getSelectedItem() ).getMask();
       final long startTimestamp = ( ( Cursor )MeasurementView.this.cursorA.getSelectedItem() ).getTimestamp();
@@ -154,7 +155,7 @@ public class MeasurementView extends AbstractViewLayer implements IChannelChange
     {
       try
       {
-        MeasurementView.this.progressBar.setVisible( false );
+        MeasurementView.this.indicator.setVisible( false );
         MeasurementView.this.measurementInfo.setText( get() );
       }
       catch ( Exception exception )
@@ -173,7 +174,7 @@ public class MeasurementView extends AbstractViewLayer implements IChannelChange
   private JComboBox channel;
   private JComboBox cursorA;
   private JComboBox cursorB;
-  private JProgressBar progressBar;
+  private BusyIndicator indicator;
 
   private JLabel measurementInfo;
 
@@ -295,6 +296,11 @@ public class MeasurementView extends AbstractViewLayer implements IChannelChange
     {
       updateCursorModels();
     }
+
+    this.channel.setEnabled( false );
+    this.cursorA.setEnabled( false );
+    this.cursorB.setEnabled( false );
+    this.measurementInfo.setText( "" );
   }
 
   /**
@@ -307,6 +313,11 @@ public class MeasurementView extends AbstractViewLayer implements IChannelChange
     {
       updateCursorModels();
     }
+
+    this.channel.setEnabled( true );
+    this.cursorA.setEnabled( true );
+    this.cursorB.setEnabled( true );
+    this.measurementInfo.setText( "" );
   }
 
   /**
@@ -335,19 +346,39 @@ public class MeasurementView extends AbstractViewLayer implements IChannelChange
   }
 
   /**
-   * @return
+   * Determines whether all preconditions are met to perform a measurement.
+   * 
+   * @return <code>true</code> if a measurement can be performed,
+   *         <code>false</code> otherwise.
    */
   private boolean canPerformMeasurement()
   {
     final SignalDiagramModel model = getSignalDiagramModel();
 
-    boolean cursorMode = model.isCursorMode();
-    Cursor selectedCursor = ( Cursor )this.cursorA.getSelectedItem();
-    boolean cursorA_defined = ( selectedCursor != null ) && selectedCursor.isDefined();
-    selectedCursor = ( Cursor )this.cursorB.getSelectedItem();
-    boolean cursorB_defined = ( selectedCursor != null ) && selectedCursor.isDefined();
+    Channel channel = ( Channel )this.channel.getSelectedItem();
+    if ( ( channel == null ) || !channel.isEnabled() || !channel.isAssigned() )
+    {
+      return false;
+    }
 
-    return cursorMode && cursorA_defined && cursorB_defined;
+    if ( !model.isCursorMode() )
+    {
+      return false;
+    }
+
+    Cursor selectedCursorA = ( Cursor )this.cursorA.getSelectedItem();
+    if ( ( selectedCursorA == null ) || !selectedCursorA.isDefined() )
+    {
+      return false;
+    }
+
+    Cursor selectedCursorB = ( Cursor )this.cursorB.getSelectedItem();
+    if ( ( selectedCursorB == null ) || !selectedCursorB.isDefined() )
+    {
+      return false;
+    }
+
+    return selectedCursorA != selectedCursorB;
   }
 
   /**
@@ -378,39 +409,74 @@ public class MeasurementView extends AbstractViewLayer implements IChannelChange
     // Make the component a bit smaller and a pop-down on OSX...
     this.channel.putClientProperty( "JComponent.sizeVariant", "small" );
     this.channel.putClientProperty( "JComboBox.isPopDown", Boolean.TRUE );
+    this.channel.setEnabled( false );
 
     this.cursorA = updateCursorComboBoxModel( new JComboBox() );
     this.cursorA.addActionListener( new ChannelActionListener() );
     // Make the component a bit smaller and a pop-down on OSX...
     this.cursorA.putClientProperty( "JComponent.sizeVariant", "small" );
     this.cursorA.putClientProperty( "JComboBox.isPopDown", Boolean.TRUE );
+    this.cursorA.setEnabled( false );
 
     this.cursorB = updateCursorComboBoxModel( new JComboBox() );
     this.cursorB.addActionListener( new ChannelActionListener() );
     // Make the component a bit smaller and a pop-down on OSX...
     this.cursorB.putClientProperty( "JComponent.sizeVariant", "small" );
     this.cursorB.putClientProperty( "JComboBox.isPopDown", Boolean.TRUE );
+    this.cursorB.setEnabled( false );
 
-    this.progressBar = new JProgressBar();
-    this.progressBar.setIndeterminate( true );
-    // On OSX this will display as a circular progress bar...
-    this.progressBar.putClientProperty( "JProgressBar.style", "circular" );
-    this.progressBar.setVisible( false );
+    this.indicator = new BusyIndicator();
+    this.indicator.setVisible( false );
 
     this.measurementInfo = new JLabel();
 
     setOpaque( false );
     setLayout( new BorderLayout() );
 
-    JPanel cursorPanel = new JPanel( new GridLayout( 4, 2 ) );
-    cursorPanel.add( new JLabel( "Channel" ) );
-    cursorPanel.add( this.channel );
-    cursorPanel.add( new JLabel( "Cursor A" ) );
-    cursorPanel.add( this.cursorA );
-    cursorPanel.add( new JLabel( "Cursor B" ) );
-    cursorPanel.add( this.cursorB );
-    cursorPanel.add( new JLabel( "" ) );
-    cursorPanel.add( this.progressBar );
+    GridBagConstraints gbc = new GridBagConstraints( 0, 0, 1, 1, 1.0, 1.0, 0, GridBagConstraints.HORIZONTAL,
+        new Insets( 0, 0, 0, 0 ), 0, 0 );
+
+    JPanel cursorPanel = new JPanel( new GridBagLayout() );
+
+    gbc.gridx = 0;
+    gbc.gridy = 0;
+    gbc.anchor = GridBagConstraints.BASELINE_TRAILING;
+
+    cursorPanel.add( new JLabel( "Channel" ), gbc );
+
+    gbc.gridx = 1;
+    gbc.anchor = GridBagConstraints.BASELINE_LEADING;
+
+    cursorPanel.add( this.channel, gbc );
+
+    gbc.gridx = 0;
+    gbc.gridy = 1;
+    gbc.anchor = GridBagConstraints.BASELINE_TRAILING;
+
+    cursorPanel.add( new JLabel( "Cursor A" ), gbc );
+
+    gbc.gridx = 1;
+    gbc.anchor = GridBagConstraints.BASELINE_LEADING;
+
+    cursorPanel.add( this.cursorA, gbc );
+
+    gbc.gridx = 0;
+    gbc.gridy = 2;
+    gbc.anchor = GridBagConstraints.BASELINE_TRAILING;
+
+    cursorPanel.add( new JLabel( "Cursor B" ), gbc );
+
+    gbc.gridx = 1;
+    gbc.anchor = GridBagConstraints.BASELINE_LEADING;
+
+    cursorPanel.add( this.cursorB, gbc );
+
+    gbc.gridx = 0;
+    gbc.gridy = 3;
+    gbc.gridwidth = 3;
+    gbc.anchor = GridBagConstraints.CENTER;
+
+    cursorPanel.add( this.indicator, gbc );
 
     add( cursorPanel, BorderLayout.NORTH );
     add( this.measurementInfo, BorderLayout.CENTER );
