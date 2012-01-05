@@ -45,13 +45,19 @@ public class BusyIndicator extends JComponent
   private volatile int frameCounter;
   private final Timer timer;
 
-  private final int points;
+  /** number of bars in the indicator. */
+  private final int barCount;
+  /** the width (in px) of a single bar. */
   private final float barWidth;
+  /** the length (in px) of a single bar. */
   private final float barLength;
+  /** the number of pixels between the bar and the center of the indicator. */
   private final float centerDistance;
-
+  /** the 'normal' color for a single bar. */
   private final Color baseColor;
+  /** the 'highlight' color for a single bar. */
   private final Color highlightColor;
+  /** the number of bars that fade out while rotating the indicator. */
   private final int trailLength;
 
   // CONSTRUCTORS
@@ -61,14 +67,15 @@ public class BusyIndicator extends JComponent
    */
   public BusyIndicator()
   {
-    this.points = 12;
+    // Values are chosen to resemble the busy indicator of OSX...
+    this.barCount = 12;
     this.barWidth = 1.3f;
     this.barLength = 4.5f;
     this.centerDistance = 3.5f;
 
     this.baseColor = Color.LIGHT_GRAY;
     this.highlightColor = Color.BLACK;
-    this.trailLength = this.points / 2;
+    this.trailLength = this.barCount / 2;
 
     this.timer = new Timer( 75, new ActionListener()
     {
@@ -79,13 +86,15 @@ public class BusyIndicator extends JComponent
         repaint();
       }
     } );
-    // Set up the timer itself...
-    this.timer.setInitialDelay( 0 );
+    // Set up the timer itself; let it start soon and repeat itself, when needed
+    // coalesce events...
+    this.timer.setInitialDelay( 10 );
     this.timer.setRepeats( true );
     this.timer.setCoalesce( true );
 
     setOpaque( false );
 
+    // We're this big, and not bigger...
     Dimension dim = new Dimension( 24, 24 );
     setPreferredSize( dim );
     setMinimumSize( dim );
@@ -140,7 +149,7 @@ public class BusyIndicator extends JComponent
    */
   final void increaseFrameCounter()
   {
-    this.frameCounter = ( this.frameCounter + 1 ) % this.points;
+    this.frameCounter = ( this.frameCounter + 1 ) % this.barCount;
   }
 
   /**
@@ -163,11 +172,11 @@ public class BusyIndicator extends JComponent
         canvas.setColor( Color.GRAY );
 
         canvas.translate( getWidth() / 2, getHeight() / 2 );
-        for ( int i = 0; i < this.points; i++ )
+        for ( int i = 0; i < this.barCount; i++ )
         {
-          canvas.setColor( calcFrameColor( i ) );
+          canvas.setColor( calculateBarColor( i ) );
           canvas.fill( rect );
-          canvas.rotate( ( 2.0 * Math.PI ) / this.points );
+          canvas.rotate( ( 2.0 * Math.PI ) / this.barCount );
         }
       }
       else
@@ -184,14 +193,19 @@ public class BusyIndicator extends JComponent
   }
 
   /**
-   * @param i
-   * @return
+   * Calculates the bar-color for the bar with the given index depending on the
+   * current frame.
+   * 
+   * @param aBarIdx
+   *          the index of the bar to calculate the color for, >= 0 && <
+   *          {@link #barCount}.
+   * @return a color, never <code>null</code>.
    */
-  private Color calcFrameColor( final int i )
+  private Color calculateBarColor( final int aBarIdx )
   {
     for ( int t = 0; t < this.trailLength; t++ )
     {
-      if ( i == ( ( ( this.frameCounter - t ) + this.points ) % this.points ) )
+      if ( aBarIdx == ( ( ( this.frameCounter - t ) + this.barCount ) % this.barCount ) )
       {
         float terp = 1 - ( ( ( float )( this.trailLength - t ) ) / ( float )this.trailLength );
         return Utils.interpolate( this.baseColor, this.highlightColor, terp );

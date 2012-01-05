@@ -432,6 +432,7 @@ public class MeasurementView extends AbstractViewLayer implements IChannelChange
 
     setOpaque( false );
     setLayout( new BorderLayout() );
+    setBorder( BorderFactory.createEmptyBorder( 4, 4, 4, 4 ) );
 
     GridBagConstraints gbc = new GridBagConstraints( 0, 0, 1, 1, 1.0, 1.0, 0, GridBagConstraints.HORIZONTAL,
         new Insets( 0, 0, 0, 0 ), 0, 0 );

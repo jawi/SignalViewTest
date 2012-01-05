@@ -304,7 +304,7 @@ public class Main
     DockedTypeDescriptor desc = ( DockedTypeDescriptor )aWindow.getTypeDescriptor( ToolWindowType.DOCKED );
     desc.setDockLength( aDockLength );
     desc.setHideRepresentativeButtonOnVisible( true );
-    desc.setPopupMenuEnabled( true );
+    desc.setPopupMenuEnabled( false );
 
     aWindow.setAvailable( true );
     aWindow.setHideOnZeroTabs( true );
@@ -324,7 +324,7 @@ public class Main
         "Acquisition Details", // Title
         null, // Icon
         this.captureDetails, // Component
-        ToolWindowAnchor.RIGHT ); // Anchor
+        ToolWindowAnchor.BOTTOM ); // Anchor
     group.addToolWindow( tw1 );
 
     ToolWindow tw2 = wm.registerToolWindow( "Signal", // Id
@@ -345,7 +345,7 @@ public class Main
         "Measurement", // Title
         null, // Icon
         this.measurementDetails, // Component
-        ToolWindowAnchor.RIGHT ); // Anchor
+        ToolWindowAnchor.BOTTOM ); // Anchor
     group.addToolWindow( tw4 );
 
     // Given string is based on some experiments with the best "default"
