@@ -30,21 +30,20 @@ public class SimpleAnnotation implements Annotation<String>
 
   private final String annotation;
   private final int channel;
-  private final int startSampleIdx;
-  private final int endSampleIdx;
+  private final long startTimestamp;
+  private final long endTimestamp;
 
   // CONSTRUCTORS
 
   /**
    * Creates a new SimpleAnnotation instance.
    */
-  public SimpleAnnotation( final int aChannel, final String aAnnotation, final int aStartSampleIdx,
-      final int aEndSampleIdx )
+  public SimpleAnnotation( final int aChannel, final String aAnnotation, final int aStartTime, final int aEndTime )
   {
     this.channel = aChannel;
     this.annotation = aAnnotation;
-    this.startSampleIdx = aStartSampleIdx;
-    this.endSampleIdx = aEndSampleIdx;
+    this.startTimestamp = aStartTime;
+    this.endTimestamp = aEndTime;
   }
 
   /**
@@ -67,11 +66,11 @@ public class SimpleAnnotation implements Annotation<String>
     {
       return false;
     }
-    if ( this.startSampleIdx != other.startSampleIdx )
+    if ( this.startTimestamp != other.startTimestamp )
     {
       return false;
     }
-    if ( this.endSampleIdx != other.endSampleIdx )
+    if ( this.endTimestamp != other.endTimestamp )
     {
       return false;
     }
@@ -112,18 +111,18 @@ public class SimpleAnnotation implements Annotation<String>
    * {@inheritDoc}
    */
   @Override
-  public int getEndSampleIndex()
+  public long getEndTime()
   {
-    return this.endSampleIdx;
+    return this.endTimestamp;
   }
 
   /**
    * {@inheritDoc}
    */
   @Override
-  public int getStartSampleIndex()
+  public long getStartTime()
   {
-    return this.startSampleIdx;
+    return this.startTimestamp;
   }
 
   /**

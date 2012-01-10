@@ -212,6 +212,9 @@ public class SignalUI extends ComponentUI
     final int startIdx = aModel.getStartIndex( clip );
     final int endIdx = aModel.getEndIndex( clip, timestamps.length );
 
+    final long startTimestamp = timestamps[startIdx];
+    final long endTimestamp = timestamps[endIdx];
+
     final int signalHeight = aModel.getSignalHeight();
     final int signalOffset = aModel.getSignalOffset();
     final double zoomFactor = aModel.getZoomFactor();
@@ -262,18 +265,18 @@ public class SignalUI extends ComponentUI
             {
               final SimpleAnnotation ann = ( SimpleAnnotation )annotation;
 
-              final int annStartIdx = ann.getStartSampleIndex();
-              final int annEndIdx = ann.getEndSampleIndex();
+              final long annStartTime = ann.getStartTime();
+              final long annEndTime = ann.getEndTime();
 
-              if ( ( ( annStartIdx < startIdx ) && ( annEndIdx < startIdx ) )
-                  || ( ( annStartIdx > endIdx ) && ( annEndIdx > endIdx ) ) )
+              if ( ( ( annStartTime < startTimestamp ) && ( annEndTime < startTimestamp ) )
+                  || ( ( annStartTime > endTimestamp ) && ( annEndTime > endTimestamp ) ) )
               {
                 // Simple reject: annotation falls outside clip boundaries...
                 continue;
               }
 
-              int x1 = ( int )( timestamps[annStartIdx] * zoomFactor );
-              int x2 = ( int )( timestamps[annEndIdx] * zoomFactor );
+              int x1 = ( int )( annStartTime * zoomFactor );
+              int x2 = ( int )( annEndTime * zoomFactor );
               int y1 = 0;
               int y2 = signalHeight;
               int midY = signalHeight / 2;

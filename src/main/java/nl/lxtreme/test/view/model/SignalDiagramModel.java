@@ -1328,16 +1328,16 @@ public class SignalDiagramModel
     // XXX test
     this.annotations = new Annotation<?>[20];
     int channel = 0;
-    int idx = 10;
+    int timestamp = 10;
     for ( int i = 0; i < this.annotations.length; i++ )
     {
       if ( ( i != 0 ) && ( ( i % 4 ) == 0 ) )
       {
         channel++;
-        idx = 10 + ( channel * 5 );
+        timestamp = 10 + ( channel * 5 );
       }
-      this.annotations[i] = new SimpleAnnotation( channel, "Annotation " + i, idx, idx + 10 );
-      idx += 20;
+      this.annotations[i] = new SimpleAnnotation( channel, "Annotation " + i, timestamp, timestamp + 10 );
+      timestamp += 20;
     }
 
     final IDataModelChangeListener[] listeners = this.eventListeners.getListeners( IDataModelChangeListener.class );

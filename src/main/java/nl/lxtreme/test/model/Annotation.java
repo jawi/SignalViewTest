@@ -48,17 +48,17 @@ public interface Annotation<ANNOTATION_TYPE>
   int getChannel();
 
   /**
-   * Returns the index of the last sample included in this annotation.
+   * Returns the ending time stamp of this annotation.
    * 
-   * @return a sample index, >= 0.
+   * @return a time stamp.
    */
-  int getEndSampleIndex();
+  long getEndTime();
 
   /**
-   * Returns the index of the first sample included in this annotation.
+   * Returns the starting time stamp of this annotation.
    * 
-   * @return a sample index, >= 0.
+   * @return a time stamp.
    */
-  int getStartSampleIndex();
+  long getStartTime();
 
 }
