@@ -98,15 +98,20 @@ public class MeasurementView extends AbstractViewLayer implements IChannelChange
 
       final int startIdx = model.getTimestampIndex( startTimestamp );
       final int endIdx = model.getTimestampIndex( endTimestamp );
+
       final int[] values = model.getValues();
+      final long[] timestamps = model.getTimestamps();
 
       final double measureTime = ( double )Math.abs( endTimestamp - startTimestamp ) / model.getSampleRate();
 
-      int i = Math.max( 0, startIdx - 1 );
-      int lastBitValue = values[++i] & mask;
-
       int highCount = 0;
+      long highTime = 0;
       int lowCount = 0;
+      long lowTime = 0;
+
+      int i = startIdx;
+      long lastTransition = timestamps[i];
+      int lastBitValue = values[i++] & mask;
 
       for ( ; !isCancelled() && ( i <= endIdx ); i++ )
       {
@@ -114,16 +119,22 @@ public class MeasurementView extends AbstractViewLayer implements IChannelChange
 
         if ( lastBitValue != bitValue )
         {
-          if ( lastBitValue > bitValue )
+          final long periodTime = timestamps[i] - lastTransition;
+
+          if ( lastBitValue < bitValue )
           {
             // Low to high transition: previously seen a low-state...
             lowCount++;
+            lowTime += periodTime;
           }
-          else if ( lastBitValue < bitValue )
+          else if ( lastBitValue > bitValue )
           {
             // High to low transition: previously seen a high-state...
             highCount++;
+            highTime += periodTime;
           }
+
+          lastTransition = timestamps[i];
         }
 
         lastBitValue = bitValue;
@@ -131,17 +142,24 @@ public class MeasurementView extends AbstractViewLayer implements IChannelChange
 
       int pulseCount = ( lowCount + highCount ) / 2;
 
+      // Take the average high & low time per pulse...
+      double avgHighTime = ( highTime / ( double )highCount );
+      double avgLowTime = ( lowTime / ( double )lowCount );
+
+      double frequency = model.getSampleRate() / ( avgHighTime + avgLowTime );
+      double dutyCycle = avgHighTime / ( avgHighTime + avgLowTime );
+
       String timeText = displayTime( measureTime );
-      String frequencyText = displayFrequency( pulseCount / measureTime );
-      String dutyCycleText = String
-          .format( "%.3f%%", Double.valueOf( ( 100.0 * highCount ) / ( lowCount + highCount ) ) );
-      String pulseCountText = Integer.toString( pulseCount );
+      String frequencyText = displayFrequency( frequency );
+      String dutyCycleText = String.format( "%.3f%%", Double.valueOf( 100.0 * dutyCycle ) );
+      String pulseCountText = String.format( "%d (\u2191%d, \u2193%d)", Integer.valueOf( pulseCount ),
+          Integer.valueOf( lowCount ), Integer.valueOf( highCount ) );
 
       final StringBuilder sb = new StringBuilder( "<html><table>" );
       sb.append( "<tr><th align='right'>Time:</th><td>" ).append( timeText ).append( "</td>" );
-      sb.append( "<tr><th align='right'># of pulses:</th><td>" ).append( pulseCountText ).append( "</td>" );
       sb.append( "<tr><th align='right'>Frequency:</th><td>" ).append( frequencyText ).append( "</td>" );
       sb.append( "<tr><th align='right'>Duty cycle:</th><td>" ).append( dutyCycleText ).append( "</td>" );
+      sb.append( "<tr><th align='right'># of pulses:</th><td>" ).append( pulseCountText ).append( "</td>" );
       sb.append( "</table></html>" );
 
       return sb.toString();
